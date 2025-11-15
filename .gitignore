@@ -43,7 +43,19 @@ next-env.d.ts
 *.swo
 *~
 
-# PWA
+# PWA (auto-generated)
 public/sw.js
 public/workbox-*.js
 public/sw.js.map
+
+# IMPORTANT: The following files MUST be committed for deployment:
+# ✅ package.json (dependencies list)
+# ✅ package-lock.json (exact versions - CRITICAL for DigitalOcean!)
+# ✅ tsconfig.json (TypeScript config)
+# ✅ next.config.js (Next.js config)
+# ✅ tailwind.config.ts (Tailwind config)
+# ✅ postcss.config.js (PostCSS config)
+# ✅ .env.local.example (environment template, NOT .env.local!)
+# ✅ .do/ directory (DigitalOcean deployment config)
+# ✅ src/ directory (all source code)
+# ✅ public/ directory (static assets, icons, manifest)

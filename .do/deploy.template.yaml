@@ -10,7 +10,7 @@ spec:
         repo: xdaguy/thrive  # Change this to your GitHub repo
         branch: main
         deploy_on_push: true
-      build_command: npm ci && npm run build
+      build_command: npm install && npm run build
       run_command: npm run start
       environment_slug: node-js
       instance_count: 1
