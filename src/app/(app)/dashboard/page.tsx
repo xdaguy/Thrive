@@ -105,21 +105,21 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Welcome Section */}
-      <div className="animate-in flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+      <div className="animate-in flex items-start sm:items-center justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2">
             Welcome back{userName ? `, ${userName}` : ''}! 👋
           </h2>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
             Here's what's happening with your life today
           </p>
         </div>
         <button
           onClick={handleRefresh}
           disabled={loading}
-          className="btn-icon"
+          className="btn-icon flex-shrink-0 touch-manipulation"
           title="Refresh stats"
         >
           <RefreshCw className={`w-5 h-5 text-gray-600 dark:text-gray-400 ${loading ? 'animate-spin' : ''}`} />
@@ -127,122 +127,122 @@ export default function DashboardPage() {
       </div>
 
       {/* Quick Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Total Balance */}
-        <div className="card bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800">
-          <div className="flex items-start justify-between mb-4">
-            <div className="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-              <Wallet className="w-6 h-6 text-green-600 dark:text-green-400" />
+        <div className="card bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800 p-4 sm:p-5">
+          <div className="flex items-start justify-between mb-3 sm:mb-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+              <Wallet className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
             </div>
-            <span className="text-green-600 dark:text-green-400 text-sm font-medium">+12.5%</span>
+            <span className="text-green-600 dark:text-green-400 text-xs sm:text-sm font-medium">+12.5%</span>
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Balance</p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(stats.balance, currency)}</p>
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">Total Balance</p>
+          <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate">{formatCurrency(stats.balance, currency)}</p>
         </div>
 
         {/* Income This Month */}
-        <div className="card bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border-blue-200 dark:border-blue-800">
-          <div className="flex items-start justify-between mb-4">
-            <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+        <div className="card bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border-blue-200 dark:border-blue-800 p-4 sm:p-5">
+          <div className="flex items-start justify-between mb-3 sm:mb-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" />
             </div>
-            <span className="text-blue-600 dark:text-blue-400 text-sm font-medium">This month</span>
+            <span className="text-blue-600 dark:text-blue-400 text-xs sm:text-sm font-medium">This month</span>
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Income</p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(stats.monthlyIncome, currency)}</p>
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">Income</p>
+          <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate">{formatCurrency(stats.monthlyIncome, currency)}</p>
         </div>
 
         {/* Expenses This Month */}
-        <div className="card bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 border-orange-200 dark:border-orange-800">
-          <div className="flex items-start justify-between mb-4">
-            <div className="w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
-              <TrendingDown className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+        <div className="card bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 border-orange-200 dark:border-orange-800 p-4 sm:p-5">
+          <div className="flex items-start justify-between mb-3 sm:mb-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+              <TrendingDown className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600 dark:text-orange-400" />
             </div>
-            <span className="text-orange-600 dark:text-orange-400 text-sm font-medium">This month</span>
+            <span className="text-orange-600 dark:text-orange-400 text-xs sm:text-sm font-medium">This month</span>
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Expenses</p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(stats.monthlyExpenses, currency)}</p>
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">Expenses</p>
+          <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate">{formatCurrency(stats.monthlyExpenses, currency)}</p>
         </div>
 
         {/* Tasks Completed */}
-        <div className="card bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-purple-200 dark:border-purple-800">
-          <div className="flex items-start justify-between mb-4">
-            <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-              <CheckSquare className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+        <div className="card bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-purple-200 dark:border-purple-800 p-4 sm:p-5">
+          <div className="flex items-start justify-between mb-3 sm:mb-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+              <CheckSquare className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-400" />
             </div>
-            <span className="text-purple-600 dark:text-purple-400 text-sm font-medium">Today</span>
+            <span className="text-purple-600 dark:text-purple-400 text-xs sm:text-sm font-medium">Today</span>
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Tasks Done</p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.tasksCompleted}/{stats.totalTasks}</p>
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">Tasks Done</p>
+          <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats.tasksCompleted}/{stats.totalTasks}</p>
         </div>
       </div>
 
       {/* Quick Actions */}
-      <div className="card">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="card p-4 sm:p-5">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">Quick Actions</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3">
           <button 
             onClick={() => router.push('/finance')}
-            className="flex flex-col items-center gap-2 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="flex flex-col items-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-[0.98] transition-all touch-manipulation"
           >
-            <div className="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-green-600 dark:text-green-400" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
             </div>
-            <span className="text-sm font-medium text-gray-900 dark:text-white">Add Income</span>
+            <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white text-center">Add Income</span>
           </button>
 
           <button 
             onClick={() => router.push('/finance')}
-            className="flex flex-col items-center gap-2 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="flex flex-col items-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-[0.98] transition-all touch-manipulation"
           >
-            <div className="w-12 h-12 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-              <TrendingDown className="w-6 h-6 text-red-600 dark:text-red-400" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+              <TrendingDown className="w-5 h-5 sm:w-6 sm:h-6 text-red-600 dark:text-red-400" />
             </div>
-            <span className="text-sm font-medium text-gray-900 dark:text-white">Add Expense</span>
+            <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white text-center">Add Expense</span>
           </button>
 
           <button 
             onClick={() => router.push('/tasks')}
-            className="flex flex-col items-center gap-2 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="flex flex-col items-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-[0.98] transition-all touch-manipulation"
           >
-            <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-              <CheckSquare className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+              <CheckSquare className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" />
             </div>
-            <span className="text-sm font-medium text-gray-900 dark:text-white">Add Task</span>
+            <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white text-center">Add Task</span>
           </button>
 
           <button 
             onClick={() => router.push('/health')}
-            className="flex flex-col items-center gap-2 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="flex flex-col items-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-[0.98] transition-all touch-manipulation"
           >
-            <div className="w-12 h-12 rounded-xl bg-pink-100 dark:bg-pink-900/30 flex items-center justify-center">
-              <Heart className="w-6 h-6 text-pink-600 dark:text-pink-400" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-pink-100 dark:bg-pink-900/30 flex items-center justify-center">
+              <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-pink-600 dark:text-pink-400" />
             </div>
-            <span className="text-sm font-medium text-gray-900 dark:text-white">Log Health</span>
+            <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white text-center">Log Health</span>
           </button>
         </div>
       </div>
 
       {/* Today's Overview */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Tasks */}
-        <div className="card">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Today's Tasks</h3>
+        <div className="card p-4 sm:p-5">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Today's Tasks</h3>
             <button 
               onClick={() => router.push('/tasks')}
-              className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+              className="text-xs sm:text-sm text-blue-600 dark:text-blue-400 hover:underline touch-manipulation"
             >
               View all
             </button>
           </div>
           {tasks.length === 0 ? (
-            <div className="text-center py-12">
-              <CheckSquare className="w-12 h-12 text-gray-300 dark:text-gray-700 mx-auto mb-3" />
-              <p className="text-gray-500 dark:text-gray-400">No tasks due today</p>
+            <div className="text-center py-8 sm:py-12">
+              <CheckSquare className="w-10 h-10 sm:w-12 sm:h-12 text-gray-300 dark:text-gray-700 mx-auto mb-2 sm:mb-3" />
+              <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">No tasks due today</p>
               <button 
                 onClick={() => router.push('/tasks')}
-                className="mt-4 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                className="mt-3 sm:mt-4 text-xs sm:text-sm text-blue-600 dark:text-blue-400 hover:underline touch-manipulation"
               >
                 Add a task
               </button>
@@ -253,17 +253,17 @@ export default function DashboardPage() {
                 <div
                   key={task.id}
                   onClick={() => router.push('/tasks')}
-                  className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                  className="flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-[0.99] transition-all cursor-pointer touch-manipulation"
                 >
-                  <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                  <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
                     task.completed
                       ? 'bg-blue-500 border-blue-500'
                       : 'border-gray-300 dark:border-gray-600'
                   }`}>
-                    {task.completed && <CheckSquare className="w-3 h-3 text-white" />}
+                    {task.completed && <CheckSquare className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-medium truncate ${
+                    <p className={`text-xs sm:text-sm font-medium truncate ${
                       task.completed
                         ? 'text-gray-500 dark:text-gray-400 line-through'
                         : 'text-gray-900 dark:text-white'
@@ -272,7 +272,7 @@ export default function DashboardPage() {
                     </p>
                   </div>
                   {task.priority && (
-                    <span className={`text-xs px-2 py-1 rounded-full ${
+                    <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full flex-shrink-0 ${
                       task.priority === 'high'
                         ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
                         : task.priority === 'medium'
@@ -289,23 +289,23 @@ export default function DashboardPage() {
         </div>
 
         {/* Routines */}
-        <div className="card">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Daily Routines</h3>
+        <div className="card p-4 sm:p-5">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Daily Routines</h3>
             <button 
               onClick={() => router.push('/routines')}
-              className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+              className="text-xs sm:text-sm text-blue-600 dark:text-blue-400 hover:underline touch-manipulation"
             >
               View all
             </button>
           </div>
           {routines.length === 0 ? (
-            <div className="text-center py-12">
-              <Target className="w-12 h-12 text-gray-300 dark:text-gray-700 mx-auto mb-3" />
-              <p className="text-gray-500 dark:text-gray-400">No routines set</p>
+            <div className="text-center py-8 sm:py-12">
+              <Target className="w-10 h-10 sm:w-12 sm:h-12 text-gray-300 dark:text-gray-700 mx-auto mb-2 sm:mb-3" />
+              <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">No routines set</p>
               <button 
                 onClick={() => router.push('/routines')}
-                className="mt-4 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                className="mt-3 sm:mt-4 text-xs sm:text-sm text-blue-600 dark:text-blue-400 hover:underline touch-manipulation"
               >
                 Create a routine
               </button>
@@ -316,17 +316,17 @@ export default function DashboardPage() {
                 <div
                   key={routine.id}
                   onClick={() => router.push('/routines')}
-                  className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                  className="flex items-center justify-between p-2.5 sm:p-3 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-[0.99] transition-all cursor-pointer touch-manipulation"
                 >
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
-                      <Target className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                  <div className="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
+                      <Target className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600 dark:text-purple-400" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                      <p className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white truncate">
                         {routine.name}
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
+                      <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 capitalize">
                         {routine.timeOfDay} • {routine.items.length} items
                       </p>
                     </div>
