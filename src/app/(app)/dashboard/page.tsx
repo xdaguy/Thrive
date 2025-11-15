@@ -39,6 +39,7 @@ export default function DashboardPage() {
   async function loadStats() {
     try {
       const now = new Date()
+      
       const balance = await getTotalBalance()
       const income = await getMonthlyIncome(now.getFullYear(), now.getMonth())
       const expenses = await getMonthlyExpenses(now.getFullYear(), now.getMonth())
@@ -59,6 +60,7 @@ export default function DashboardPage() {
         return dueDate.getTime() === today.getTime()
       }).slice(0, 5) // Show max 5 tasks
 
+      // Set stats and UI state
       setStats({
         balance,
         monthlyIncome: income,
@@ -67,7 +69,7 @@ export default function DashboardPage() {
         totalTasks: total
       })
       setTasks(todaysTasks)
-      setRoutines(allRoutines.slice(0, 3)) // Show max 3 routines
+      setRoutines(allRoutines.slice(0, 3))
       setLoading(false)
     } catch (error) {
       console.error('Failed to load stats:', error)
@@ -311,20 +313,6 @@ export default function DashboardPage() {
               ))}
             </div>
           )}
-        </div>
-      </div>
-
-      {/* Recent Activity */}
-      <div className="card">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Activity</h3>
-        <div className="text-center py-12">
-          <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-3">
-            <span className="text-2xl">🎉</span>
-          </div>
-          <p className="text-gray-900 dark:text-white font-medium mb-1">Welcome to Thrive!</p>
-          <p className="text-gray-500 dark:text-gray-400 text-sm">
-            Start by adding your first income, expense, or task
-          </p>
         </div>
       </div>
     </div>
