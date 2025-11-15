@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Plus, CheckSquare, Square, Trash2, Calendar, Edit, Filter } from 'lucide-react'
 import { addTask, getAllTasks, toggleTaskCompletion, deleteTask, updateTask, type Task } from '@/lib/db/queries'
 import { formatDate } from '@/lib/constants'
@@ -8,6 +9,7 @@ import { DataEvents, DATA_EVENTS } from '@/lib/events'
 import { db } from '@/lib/db/schema'
 
 export default function TasksPage() {
+  const searchParams = useSearchParams()
   const [tasks, setTasks] = useState<Task[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -33,6 +35,14 @@ export default function TasksPage() {
       DataEvents.off(DATA_EVENTS.SETTINGS_CHANGED, loadDateFormat)
     }
   }, [])
+
+  useEffect(() => {
+    // Auto-open form when add parameter is present
+    const add = searchParams.get('add')
+    if (add === 'true') {
+      setShowForm(true)
+    }
+  }, [searchParams])
 
   async function loadDateFormat() {
     try {

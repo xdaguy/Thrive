@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { WeightTab } from '@/components/health/weight-tab'
 import { ExerciseTab } from '@/components/health/exercise-tab'
 import { MealsTab } from '@/components/health/meals-tab'
@@ -8,7 +9,25 @@ import { MealsTab } from '@/components/health/meals-tab'
 type Tab = 'weight' | 'exercise' | 'meals'
 
 export default function HealthPage() {
+  const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState<Tab>('weight')
+  const [shouldOpenForm, setShouldOpenForm] = useState(false)
+
+  useEffect(() => {
+    // Handle URL parameters for tab and form opening
+    const tab = searchParams.get('tab') as Tab
+    const add = searchParams.get('add')
+    
+    if (tab && ['weight', 'exercise', 'meals'].includes(tab)) {
+      setActiveTab(tab)
+    }
+    
+    if (add === 'true') {
+      setShouldOpenForm(true)
+      // Reset after triggering
+      setTimeout(() => setShouldOpenForm(false), 100)
+    }
+  }, [searchParams])
 
   return (
     <div className="space-y-6">
@@ -56,9 +75,9 @@ export default function HealthPage() {
         </div>
 
         <div className="p-6">
-          {activeTab === 'weight' && <WeightTab />}
-          {activeTab === 'exercise' && <ExerciseTab />}
-          {activeTab === 'meals' && <MealsTab />}
+          {activeTab === 'weight' && <WeightTab openForm={shouldOpenForm} />}
+          {activeTab === 'exercise' && <ExerciseTab openForm={shouldOpenForm} />}
+          {activeTab === 'meals' && <MealsTab openForm={shouldOpenForm} />}
         </div>
       </div>
     </div>

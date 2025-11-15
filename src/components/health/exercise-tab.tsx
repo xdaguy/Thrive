@@ -7,7 +7,11 @@ import { EXERCISE_TYPES, formatDate } from '@/lib/constants'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
 import { db } from '@/lib/db/schema'
 
-export function ExerciseTab() {
+interface ExerciseTabProps {
+  openForm?: boolean
+}
+
+export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -33,6 +37,13 @@ export function ExerciseTab() {
       DataEvents.off(DATA_EVENTS.SETTINGS_CHANGED, loadDateFormat)
     }
   }, [])
+
+  useEffect(() => {
+    // Auto-open form when openForm prop is true
+    if (openForm) {
+      setShowForm(true)
+    }
+  }, [openForm])
 
   async function loadDateFormat() {
     try {
