@@ -21,10 +21,8 @@ export function OnboardingCheck({ children }: { children: React.ReactNode }) {
         // If not on onboarding page and onboarding not complete, redirect
         if (!pathname.includes('/onboarding') && settings && !settings.onboardingComplete) {
           router.push('/onboarding')
-        } else if (pathname.includes('/onboarding') && settings?.onboardingComplete) {
-          // If on onboarding page but already complete, redirect to dashboard
-          router.push('/dashboard')
         }
+        // Note: Onboarding page itself handles redirect if already complete
       } catch (error) {
         console.error('Failed to check onboarding status:', error)
       } finally {
@@ -35,8 +33,8 @@ export function OnboardingCheck({ children }: { children: React.ReactNode }) {
     checkOnboarding()
   }, [pathname, router])
 
-  // Show loading state while checking
-  if (isChecking) {
+  // Skip loading state for onboarding page (it handles its own redirect)
+  if (isChecking && !pathname.includes('/onboarding')) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-[#0A0A0A] flex items-center justify-center">
         <div className="animate-pulse">

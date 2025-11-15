@@ -24,7 +24,7 @@ export default function LandingPage() {
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link 
-                href="/dashboard" 
+                href="/start" 
                 className="btn-primary w-full sm:w-auto text-center"
               >
                 Start Free
@@ -177,7 +177,7 @@ export default function LandingPage() {
             Join thousands taking control of their life. Start organizing everything in one beautiful app.
           </p>
           <Link 
-            href="/dashboard"
+            href="/start"
             className="inline-block bg-white text-blue-600 font-semibold rounded-xl px-8 py-4 hover:bg-blue-50 transition-colors duration-200 active:scale-[0.97]"
           >
             Get Started Free
