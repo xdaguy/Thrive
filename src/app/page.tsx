@@ -1,5 +1,9 @@
+'use client'
+
 import Link from 'next/link'
 import { Wallet, CheckSquare, Heart, RotateCw, Shield, Cloud, Smartphone, Github } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { fadeIn, slideUp, staggerContainer, staggerItem, cardHover } from '@/lib/animations'
 
 export default function LandingPage() {
   return (
@@ -8,41 +12,65 @@ export default function LandingPage() {
       <section className="relative overflow-hidden bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-[#0A0A0A] safe-area-top">
         <div className="container mx-auto px-4 py-16 md:py-24">
           <div className="text-center max-w-4xl mx-auto">
-            <div className="inline-block mb-4 px-4 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-sm font-medium animate-in">
+            <motion.div 
+              {...fadeIn}
+              transition={{ delay: 0.1 }}
+              className="inline-block mb-4 px-4 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-sm font-medium"
+            >
               100% Free Forever • Open Source • Privacy First
-            </div>
+            </motion.div>
             
-            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight animate-in">
+            <motion.h1 
+              {...fadeIn}
+              transition={{ delay: 0.2 }}
+              className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight"
+            >
               Take Control of <br className="hidden md:block" />
               <span className="text-blue-600 dark:text-blue-500">Your Entire Life</span>
-            </h1>
+            </motion.h1>
             
-            <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto animate-in">
+            <motion.p 
+              {...fadeIn}
+              transition={{ delay: 0.3 }}
+              className="text-lg md:text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto"
+            >
               The all-in-one app for managing finances, tasks, health, and daily routines. 
               Beautiful, powerful, and completely private. Works offline. No account needed.
-            </p>
+            </motion.p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Link 
-                href="/start" 
-                className="btn-primary w-full sm:w-auto text-center"
-              >
-                Start Free
-              </Link>
-              <a 
+            <motion.div 
+              {...fadeIn}
+              transition={{ delay: 0.4 }}
+              className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+            >
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Link 
+                  href="/start" 
+                  className="btn-primary w-full sm:w-auto text-center"
+                >
+                  Start Free
+                </Link>
+              </motion.div>
+              <motion.a
                 href="https://github.com/xdaguy/thrive" 
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-secondary w-full sm:w-auto flex items-center justify-center gap-2"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
                 <Github className="w-5 h-5" />
                 View on GitHub
-              </a>
-            </div>
+              </motion.a>
+            </motion.div>
             
-            <p className="text-sm text-gray-500 dark:text-gray-600 mt-4">
+            <motion.p 
+              {...fadeIn}
+              transition={{ delay: 0.5 }}
+              className="text-sm text-gray-500 dark:text-gray-600 mt-4"
+            >
               100% Free • No Account Needed • Ready in Seconds
-            </p>
+            </motion.p>
           </div>
         </div>
       </section>
@@ -50,16 +78,34 @@ export default function LandingPage() {
       {/* Features Grid */}
       <section className="py-16 md:py-24 bg-white dark:bg-[#0A0A0A]">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 dark:text-white mb-4">
+          <motion.h2 
+            {...fadeIn}
+            className="text-3xl md:text-4xl font-bold text-center text-gray-900 dark:text-white mb-4"
+          >
             Everything You Need to Thrive
-          </h2>
-          <p className="text-center text-gray-600 dark:text-gray-400 mb-12 max-w-2xl mx-auto">
+          </motion.h2>
+          <motion.p 
+            {...fadeIn}
+            transition={{ delay: 0.1 }}
+            className="text-center text-gray-600 dark:text-gray-400 mb-12 max-w-2xl mx-auto"
+          >
             Four powerful modules working together seamlessly. Track, organize, and improve every aspect of your life.
-          </p>
+          </motion.p>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <motion.div 
+            variants={staggerContainer}
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, amount: 0.3 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+          >
             {/* Finance Card */}
-            <div className="card group hover:scale-105 transition-transform">
+            <motion.div 
+              variants={staggerItem}
+              whileHover={{ scale: 1.05, y: -8 }}
+              transition={{ type: "spring", stiffness: 300 }}
+              className="card group"
+            >
               <div className="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                 <Wallet className="w-6 h-6 text-green-600 dark:text-green-400" />
               </div>
@@ -69,10 +115,15 @@ export default function LandingPage() {
               <p className="text-gray-600 dark:text-gray-400">
                 Complete money management. Track income, expenses, and debts with smart categorization and insights.
               </p>
-            </div>
+            </motion.div>
 
             {/* Tasks Card */}
-            <div className="card group hover:scale-105 transition-transform">
+            <motion.div 
+              variants={staggerItem}
+              whileHover={{ scale: 1.05, y: -8 }}
+              transition={{ type: "spring", stiffness: 300 }}
+              className="card group"
+            >
               <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                 <CheckSquare className="w-6 h-6 text-blue-600 dark:text-blue-400" />
               </div>
@@ -82,10 +133,15 @@ export default function LandingPage() {
               <p className="text-gray-600 dark:text-gray-400">
                 Smart task management with priorities, categories, and filters. Get more done, stress less.
               </p>
-            </div>
+            </motion.div>
 
             {/* Health Card */}
-            <div className="card group hover:scale-105 transition-transform">
+            <motion.div 
+              variants={staggerItem}
+              whileHover={{ scale: 1.05, y: -8 }}
+              transition={{ type: "spring", stiffness: 300 }}
+              className="card group"
+            >
               <div className="w-12 h-12 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                 <Heart className="w-6 h-6 text-red-600 dark:text-red-400" />
               </div>
@@ -95,10 +151,15 @@ export default function LandingPage() {
               <p className="text-gray-600 dark:text-gray-400">
                 Complete wellness tracking. Monitor weight, log workouts, and track meals all in one place.
               </p>
-            </div>
+            </motion.div>
 
             {/* Routines Card */}
-            <div className="card group hover:scale-105 transition-transform">
+            <motion.div 
+              variants={staggerItem}
+              whileHover={{ scale: 1.05, y: -8 }}
+              transition={{ type: "spring", stiffness: 300 }}
+              className="card group"
+            >
               <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                 <RotateCw className="w-6 h-6 text-purple-600 dark:text-purple-400" />
               </div>
@@ -108,8 +169,8 @@ export default function LandingPage() {
               <p className="text-gray-600 dark:text-gray-400">
                 Build powerful daily routines. Create habits that stick with streak tracking and progress visualization.
               </p>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
