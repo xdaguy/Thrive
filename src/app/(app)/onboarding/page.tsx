@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { User, DollarSign, Scale, Calendar, ArrowRight, Sparkles, Database, Cloud, HardDrive } from 'lucide-react'
+import { User, DollarSign, Scale, Calendar, ArrowRight, Sparkles, Database, Cloud, HardDrive, UserPlus, Upload, FileUp } from 'lucide-react'
 import { db } from '@/lib/db/schema'
 
 const CURRENCIES = [
@@ -24,7 +24,8 @@ const DATE_FORMATS = [
 
 export default function OnboardingPage() {
   const router = useRouter()
-  const [step, setStep] = useState(1)
+  const [step, setStep] = useState(0)
+  const [userType, setUserType] = useState<'new' | 'existing' | null>(null)
   const [formData, setFormData] = useState({
     name: '',
     currency: 'USD',
@@ -69,6 +70,90 @@ export default function OnboardingPage() {
     }
   }
 
+  async function handleRestoreFromBackup() {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.json'
+    
+    input.onchange = async (e: any) => {
+      const file = e.target.files[0]
+      if (!file) return
+
+      try {
+        const text = await file.text()
+        const data = JSON.parse(text)
+
+        // Validate data structure
+        if (!data.version || !data.exportDate) {
+          alert('❌ Invalid backup file format')
+          return
+        }
+
+        const confirmed = confirm(
+          '✅ Restore from Backup\n\n' +
+          `This will restore ALL your data including:\n\n` +
+          `• Settings and preferences\n` +
+          `• ${data.income?.length || 0} income entries\n` +
+          `• ${data.expenses?.length || 0} expense entries\n` +
+          `• ${data.debts?.length || 0} debts\n` +
+          `• ${data.tasks?.length || 0} tasks\n` +
+          `• ${data.weight?.length || 0} weight entries\n` +
+          `• ${data.exercise?.length || 0} exercises\n` +
+          `• ${data.meals?.length || 0} meals\n` +
+          `• ${data.routines?.length || 0} routines\n\n` +
+          `Backup Date: ${new Date(data.exportDate).toLocaleDateString()}\n\n` +
+          'Continue with restore?'
+        )
+
+        if (!confirmed) return
+
+        // Clear existing data first
+        await db.income.clear()
+        await db.expenses.clear()
+        await db.debts.clear()
+        await db.tasks.clear()
+        await db.weight.clear()
+        await db.exercise.clear()
+        await db.meals.clear()
+        await db.routines.clear()
+        await db.routineCompletions.clear()
+
+        // Restore data
+        if (data.income?.length) await db.income.bulkAdd(data.income)
+        if (data.expenses?.length) await db.expenses.bulkAdd(data.expenses)
+        if (data.debts?.length) await db.debts.bulkAdd(data.debts)
+        if (data.tasks?.length) await db.tasks.bulkAdd(data.tasks)
+        if (data.weight?.length) await db.weight.bulkAdd(data.weight)
+        if (data.exercise?.length) await db.exercise.bulkAdd(data.exercise)
+        if (data.meals?.length) await db.meals.bulkAdd(data.meals)
+        if (data.routines?.length) await db.routines.bulkAdd(data.routines)
+        if (data.routineCompletions?.length) await db.routineCompletions.bulkAdd(data.routineCompletions)
+
+        // Restore settings (most important for existing users!)
+        if (data.settings?.length) {
+          const userSettings = data.settings.find((s: any) => s.id === 'user_settings')
+          if (userSettings) {
+            await db.settings.put({
+              ...userSettings,
+              onboardingComplete: true, // Mark onboarding as complete
+              updatedAt: new Date()
+            })
+          }
+        }
+
+        alert('✅ Backup restored successfully! Welcome back!')
+        
+        // Redirect to dashboard
+        router.push('/dashboard')
+      } catch (error) {
+        console.error('Failed to restore backup:', error)
+        alert('❌ Failed to restore backup. Please check the file and try again.')
+      }
+    }
+
+    input.click()
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
@@ -85,22 +170,150 @@ export default function OnboardingPage() {
           </p>
         </div>
 
-        {/* Progress Steps */}
-        <div className="flex items-center justify-center gap-2 mb-8">
-          {[1, 2, 3, 4, 5].map((s) => (
-            <div
-              key={s}
-              className={`h-2 rounded-full transition-all ${
-                s <= step
-                  ? 'bg-blue-600 dark:bg-blue-400 w-16'
-                  : 'bg-gray-300 dark:bg-gray-700 w-8'
-              }`}
-            />
-          ))}
-        </div>
+        {/* Progress Steps - Only show for new users after Step 0 */}
+        {step > 0 && (
+          <div className="flex items-center justify-center gap-2 mb-8">
+            {[1, 2, 3, 4, 5].map((s) => (
+              <div
+                key={s}
+                className={`h-2 rounded-full transition-all ${
+                  s <= step
+                    ? 'bg-blue-600 dark:bg-blue-400 w-16'
+                    : 'bg-gray-300 dark:bg-gray-700 w-8'
+                }`}
+              />
+            ))}
+          </div>
+        )}
 
         {/* Form */}
         <div className="card space-y-6">
+          {/* Step 0: New or Existing User */}
+          {step === 0 && (
+            <div className="animate-in fade-in duration-300">
+              <div className="text-center mb-8">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                  Welcome to Thrive!
+                </h2>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Let's get you started
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* New User */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUserType('new')
+                    setStep(1)
+                  }}
+                  className="p-6 border-2 border-gray-200 dark:border-gray-700 rounded-xl hover:border-blue-500 dark:hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all text-left group"
+                >
+                  <div className="flex flex-col items-center text-center">
+                    <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                      <UserPlus className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                      I'm New Here
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Set up your account and start fresh
+                    </p>
+                  </div>
+                </button>
+
+                {/* Existing User */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUserType('existing')
+                  }}
+                  className="p-6 border-2 border-gray-200 dark:border-gray-700 rounded-xl hover:border-green-500 dark:hover:border-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-all text-left group"
+                >
+                  <div className="flex flex-col items-center text-center">
+                    <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                      <FileUp className="w-8 h-8 text-green-600 dark:text-green-400" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                      I Have Data
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Restore from backup or sync with cloud
+                    </p>
+                  </div>
+                </button>
+              </div>
+
+              {/* Existing User Options */}
+              {userType === 'existing' && (
+                <div className="mt-6 animate-in fade-in duration-300">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 text-center">
+                    Restore Your Data
+                  </h3>
+                  
+                  <div className="space-y-3">
+                    {/* Upload Backup */}
+                    <button
+                      type="button"
+                      onClick={handleRestoreFromBackup}
+                      className="w-full p-4 border-2 border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 rounded-xl hover:border-blue-500 dark:hover:border-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <Upload className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div className="flex-1 text-left">
+                          <div className="font-semibold text-gray-900 dark:text-white mb-1">
+                            Upload Backup File
+                          </div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
+                            Restore from a .json backup file
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Cloud Options (Coming Soon) */}
+                    <button
+                      type="button"
+                      disabled
+                      className="w-full p-4 border-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 rounded-xl opacity-60 cursor-not-allowed"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <Cloud className="w-6 h-6 text-gray-500 dark:text-gray-400" />
+                        </div>
+                        <div className="flex-1 text-left">
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className="font-semibold text-gray-700 dark:text-gray-300">
+                              Sync from Cloud
+                            </div>
+                            <span className="text-xs px-2 py-0.5 bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full">
+                              Coming Soon
+                            </span>
+                          </div>
+                          <div className="text-sm text-gray-500 dark:text-gray-500">
+                            Google Drive, Dropbox, OneDrive
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Back to Selection */}
+                    <button
+                      type="button"
+                      onClick={() => setUserType(null)}
+                      className="w-full text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                    >
+                      ← Back to selection
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Step 1: Name */}
           {step === 1 && (
             <div className="animate-in fade-in duration-300">
@@ -419,46 +632,48 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* Navigation Buttons */}
-          <div className="flex gap-3 pt-4">
-            {step > 1 && (
-              <button
-                type="button"
-                onClick={() => setStep(step - 1)}
-                className="btn-secondary flex-1"
-              >
-                Back
-              </button>
-            )}
-            
-            {step < 5 ? (
-              <button
-                type="button"
-                onClick={() => {
-                  if (step === 1 && !formData.name.trim()) {
-                    alert('Please enter your name')
-                    return
-                  }
-                  setStep(step + 1)
-                }}
-                className="btn-primary flex-1 flex items-center justify-center gap-2"
-              >
-                Next
-                <ArrowRight className="w-5 h-5" />
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={async () => {
-                  await handleSubmit()
-                }}
-                className="btn-primary flex-1 flex items-center justify-center gap-2"
-              >
-                <Sparkles className="w-5 h-5" />
-                Get Started
-              </button>
-            )}
-          </div>
+          {/* Navigation Buttons - Only show when step > 0 */}
+          {step > 0 && (
+            <div className="flex gap-3 pt-4">
+              {step > 1 && (
+                <button
+                  type="button"
+                  onClick={() => setStep(step - 1)}
+                  className="btn-secondary flex-1"
+                >
+                  Back
+                </button>
+              )}
+              
+              {step < 5 ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (step === 1 && !formData.name.trim()) {
+                      alert('Please enter your name')
+                      return
+                    }
+                    setStep(step + 1)
+                  }}
+                  className="btn-primary flex-1 flex items-center justify-center gap-2"
+                >
+                  Next
+                  <ArrowRight className="w-5 h-5" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await handleSubmit()
+                  }}
+                  className="btn-primary flex-1 flex items-center justify-center gap-2"
+                >
+                  <Sparkles className="w-5 h-5" />
+                  Get Started
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Summary Preview (Step 5) */}
