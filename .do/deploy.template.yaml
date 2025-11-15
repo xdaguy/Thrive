@@ -7,7 +7,7 @@ spec:
   services:
     - name: web
       github:
-        repo: yourusername/thrive  # Change this to your GitHub repo
+        repo: xdaguy/thrive  # Change this to your GitHub repo
         branch: main
         deploy_on_push: true
       build_command: npm ci && npm run build

@@ -3,7 +3,7 @@ region: nyc
 services:
   - name: web
     github:
-      repo: yourusername/thrive
+      repo: xdaguy/thrive
       branch: main
       deploy_on_push: true
     build_command: npm run build
