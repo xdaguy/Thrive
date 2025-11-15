@@ -387,100 +387,6 @@ Decrypted data contains all collections above.
 
 ---
 
-## 🗺️ Development Roadmap
-
-### Phase 1: Foundation (Week 1-2)
-- Project setup (Next.js + TypeScript + Tailwind)
-- shadcn/ui configuration
-- Layout (header, nav, footer)
-- Theme system (light/dark)
-- PWA setup
-- IndexedDB with Dexie.js
-- Basic routing
-
-### Phase 2: Finance Module (Week 3)
-- Income tracking (UI + logic)
-- Expense tracking (UI + logic)
-- Debt management (UI + logic)
-- Category management
-- List views with filters
-- Quick add forms
-
-### Phase 3: Tasks Module (Week 4)
-- Task list UI
-- Task CRUD operations
-- Priority and category filters
-- Completion tracking
-- Reminder system
-- Browser notifications
-
-### Phase 4: Health Module (Week 5)
-- Weight tracking
-- Exercise logging
-- Meal tracking
-- Photo uploads
-
-### Phase 5: Routines Module (Week 6)
-- Routine creation
-- Item management
-- Daily checklist
-- Completion tracking
-- Streak calculation
-
-### Phase 6: Dashboard & Analytics (Week 7)
-- Dashboard layout
-- Overview widgets
-- Quick stats
-- Financial charts
-- Health charts
-- Habit visualizations
-
-### Phase 7: Data Management (Week 8)
-- Export (JSON, CSV)
-- Import (JSON)
-- Bulk operations
-- Search functionality
-- Settings page
-
-### Phase 8: Cloud Sync (Week 9-10)
-- Google OAuth
-- Drive API integration
-- Encryption
-- Sync engine
-- Conflict resolution
-- Sync status UI
-
-### Phase 9: Polish (Week 11)
-- Performance optimization
-- Loading states
-- Error handling
-- Responsive refinement
-- Accessibility audit
-- Cross-browser testing
-
-### Phase 10: Testing & Docs (Week 12)
-- Unit tests
-- Integration tests
-- E2E tests (Playwright)
-- Documentation
-- Deployment guide
-
-### Phase 11: Launch ✅ COMPLETED
-- ✅ Deploy to DigitalOcean App Platform
-- ✅ Landing page
-- ✅ Live at: https://thrive-23ifz.ondigitalocean.app/
-- 🔜 Demo video
-- 🔜 ProductHunt launch
-
-### Future
-- Dropbox/OneDrive integration
-- Advanced analytics
-- Budget planning
-- Goal setting
-- Mobile app (React Native)
-
----
-
 ## 🎨 Design System
 
 ### Color Palette
@@ -631,21 +537,49 @@ npm run type-check
 
 ---
 
-## 🤝 Contributing (Future)
+## 🤝 Contributing
 
-We welcome contributions! Please see [CONTRIBUTING.md](docs/CONTRIBUTING.md) for guidelines.
+We welcome contributions! Thrive is open source and community-driven.
 
-### Development Setup
-1. Fork the repository
-2. Create feature branch
-3. Make changes with tests
-4. Submit pull request
+### How to Contribute
+
+1. **Fork** the repository: [https://github.com/xdaguy/thrive/fork](https://github.com/xdaguy/thrive/fork)
+2. **Clone** your fork:
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/thrive.git
+   ```
+3. **Create** a feature branch:
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+4. **Make** your changes and commit:
+   ```bash
+   git commit -m "feat: add your feature"
+   ```
+5. **Push** to your fork:
+   ```bash
+   git push origin feature/your-feature-name
+   ```
+6. **Open** a Pull Request on GitHub
 
 ### Code Standards
-- TypeScript strict mode
-- ESLint + Prettier
-- Conventional commits
-- Test coverage >80%
+- TypeScript strict mode enabled
+- ESLint configuration must pass
+- Follow existing code style
+- Test your changes locally (`npm run build`)
+- Use conventional commit messages
+
+### Areas for Contribution
+- 🐛 **Bug fixes** - Report or fix issues
+- ✨ **New features** - Enhance existing modules
+- 📝 **Documentation** - Improve guides and docs
+- 🎨 **UI/UX** - Design improvements
+- 🔒 **Security** - Security enhancements
+- ♿ **Accessibility** - A11y improvements
+
+### Getting Help
+- **Issues:** [https://github.com/xdaguy/thrive/issues](https://github.com/xdaguy/thrive/issues)
+- **Discussions:** Use GitHub Issues for questions
 
 ---
 
