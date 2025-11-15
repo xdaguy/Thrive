@@ -196,21 +196,22 @@ export default function RoutinesPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+      <div className="flex items-start sm:items-center justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2">
             Daily Routines
           </h2>
-          <p className="text-gray-600 dark:text-gray-400">
-            Build lasting habits with daily routines
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+            Build lasting habits
           </p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="btn-primary flex items-center gap-2"
+          className="btn-primary flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base py-2 sm:py-2.5 flex-shrink-0"
         >
-          <Plus className="w-5 h-5" />
-          Create Routine
+          <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+          <span className="hidden sm:inline">Create</span>
+          <span className="sm:hidden">New</span>
         </button>
       </div>
 
@@ -362,76 +363,76 @@ export default function RoutinesPage() {
             const progress = completion?.completionRate || 0
 
             return (
-              <div key={routine.id} className="card">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <div key={routine.id} className="card p-4">
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-1.5">
                       {routine.name}
                     </h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs px-2 py-1 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 capitalize">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 capitalize">
                         {routine.timeOfDay}
                       </span>
                       {streak > 0 && (
-                        <span className="text-xs px-2 py-1 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 flex items-center gap-1">
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 flex items-center gap-1">
                           <Trophy className="w-3 h-3" />
-                          {streak} day streak
+                          {streak}d
                         </span>
                       )}
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-shrink-0">
                     <button
                       onClick={() => handleEdit(routine)}
-                      className="btn-icon text-blue-600 dark:text-blue-400"
-                      title="Edit routine"
+                      className="btn-icon text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                      title="Edit"
                     >
-                      <Edit className="w-5 h-5" />
+                      <Edit className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(routine.id)}
-                      className="btn-icon text-red-600 dark:text-red-400"
-                      title="Delete routine"
+                      className="btn-icon text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      title="Delete"
                     >
-                      <Trash2 className="w-5 h-5" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
 
                 {/* Progress Bar */}
-                <div className="mb-4">
-                  <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
-                    <span>Today's Progress</span>
+                <div className="mb-3">
+                  <div className="flex items-center justify-between text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1.5">
+                    <span>Progress</span>
                     <span className="font-medium">{progress}%</span>
                   </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 sm:h-2">
                     <div
-                      className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                      className="bg-green-500 h-1.5 sm:h-2 rounded-full transition-all duration-300"
                       style={{ width: `${progress}%` }}
                     />
                   </div>
                 </div>
 
                 {/* Checklist */}
-                <div className="space-y-2">
+                <div className="space-y-1.5 sm:space-y-2">
                   {routine.items.map((item) => {
                     const isCompleted = completedItems.includes(item.id)
                     return (
                       <button
                         key={item.id}
                         onClick={() => toggleRoutineItem(routine, item.id)}
-                        className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${
+                        className={`w-full flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-lg transition-all touch-manipulation ${
                           isCompleted
                             ? 'bg-green-50 dark:bg-green-900/20'
-                            : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'
+                            : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-[0.98]'
                         }`}
                       >
                         {isCompleted ? (
-                          <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                          <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 dark:text-green-400 flex-shrink-0" />
                         ) : (
-                          <Circle className="w-5 h-5 text-gray-400 dark:text-gray-600 flex-shrink-0" />
+                          <Circle className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 dark:text-gray-600 flex-shrink-0" />
                         )}
-                        <span className={`text-left ${
+                        <span className={`text-sm sm:text-base text-left ${
                           isCompleted
                             ? 'text-gray-600 dark:text-gray-400 line-through'
                             : 'text-gray-900 dark:text-white'
