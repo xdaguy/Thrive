@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { IncomeTab } from '@/components/finance/income-tab'
 import { ExpenseTab } from '@/components/finance/expense-tab'
+import { DebtTab } from '@/components/finance/debt-tab'
 
 type Tab = 'income' | 'expenses' | 'debts'
 
@@ -60,17 +61,7 @@ export default function FinancePage() {
         <div className="p-6">
           {activeTab === 'income' && <IncomeTab />}
           {activeTab === 'expenses' && <ExpenseTab />}
-          {activeTab === 'debts' && (
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">�</div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                Debt Tracking Coming Soon
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400">
-                Track money you owe and money owed to you
-              </p>
-            </div>
-          )}
+          {activeTab === 'debts' && <DebtTab />}
         </div>
       </div>
     </div>

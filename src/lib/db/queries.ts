@@ -177,27 +177,25 @@ export async function deleteMeal(id: string) {
 
 // Statistics
 export async function getMonthlyIncome(year: number, month: number) {
-  const startDate = new Date(year, month, 1)
-  const endDate = new Date(year, month + 1, 0)
+  const allIncome = await db.income.toArray()
   
-  const income = await db.income
-    .where('date')
-    .between(startDate, endDate)
-    .toArray()
-  
-  return income.reduce((sum, item) => sum + item.amount, 0)
+  return allIncome
+    .filter(item => {
+      const itemDate = new Date(item.date)
+      return itemDate.getFullYear() === year && itemDate.getMonth() === month
+    })
+    .reduce((sum, item) => sum + item.amount, 0)
 }
 
 export async function getMonthlyExpenses(year: number, month: number) {
-  const startDate = new Date(year, month, 1)
-  const endDate = new Date(year, month + 1, 0)
+  const allExpenses = await db.expenses.toArray()
   
-  const expenses = await db.expenses
-    .where('date')
-    .between(startDate, endDate)
-    .toArray()
-  
-  return expenses.reduce((sum, item) => sum + item.amount, 0)
+  return allExpenses
+    .filter(item => {
+      const itemDate = new Date(item.date)
+      return itemDate.getFullYear() === year && itemDate.getMonth() === month
+    })
+    .reduce((sum, item) => sum + item.amount, 0)
 }
 
 export async function getTotalBalance() {
@@ -211,27 +209,27 @@ export async function getTotalBalance() {
 }
 
 export async function getTasksCompletedToday() {
+  const allTasks = await db.tasks.toArray()
   const today = new Date()
   today.setHours(0, 0, 0, 0)
-  const tomorrow = new Date(today)
-  tomorrow.setDate(tomorrow.getDate() + 1)
   
-  const tasks = await db.tasks
-    .where('completedAt')
-    .between(today, tomorrow)
-    .toArray()
-  
-  return tasks.length
+  return allTasks.filter(task => {
+    if (!task.completedAt || !task.completed) return false
+    const completedDate = new Date(task.completedAt)
+    completedDate.setHours(0, 0, 0, 0)
+    return completedDate.getTime() === today.getTime()
+  }).length
 }
 
 export async function getTotalTasksToday() {
+  const allTasks = await db.tasks.toArray()
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   
-  const tasks = await db.tasks
-    .where('dueDate')
-    .equals(today)
-    .toArray()
-  
-  return tasks.length
+  return allTasks.filter(task => {
+    if (!task.dueDate) return false
+    const dueDate = new Date(task.dueDate)
+    dueDate.setHours(0, 0, 0, 0)
+    return dueDate.getTime() === today.getTime()
+  }).length
 }
