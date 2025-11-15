@@ -89,14 +89,23 @@ export function formatCurrencySimple(amount: number, currencyCode = 'USD'): stri
   return `${symbol}${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
-// Date formatter
-export function formatDate(date: Date | string): string {
+// Date formatter with format option
+export function formatDate(date: Date | string, format: string = 'MM/DD/YYYY'): string {
   const d = typeof date === 'string' ? new Date(date) : date
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  }).format(d)
+  
+  const day = d.getDate().toString().padStart(2, '0')
+  const month = (d.getMonth() + 1).toString().padStart(2, '0')
+  const year = d.getFullYear()
+  
+  switch (format) {
+    case 'DD/MM/YYYY':
+      return `${day}/${month}/${year}`
+    case 'YYYY-MM-DD':
+      return `${year}-${month}-${day}`
+    case 'MM/DD/YYYY':
+    default:
+      return `${month}/${day}/${year}`
+  }
 }
 
 // Relative time formatter

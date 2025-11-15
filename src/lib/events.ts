@@ -32,4 +32,5 @@ export const DATA_EVENTS = {
   WEIGHT_CHANGED: 'weight:changed',
   EXERCISE_CHANGED: 'exercise:changed',
   MEAL_CHANGED: 'meal:changed',
+  SETTINGS_CHANGED: 'settings:changed',
 }

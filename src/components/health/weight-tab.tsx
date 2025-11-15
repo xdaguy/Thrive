@@ -5,21 +5,45 @@ import { Plus, Scale, Trash2, TrendingDown, TrendingUp, Edit } from 'lucide-reac
 import { addWeight, getAllWeight, deleteWeight, updateWeight, type Weight } from '@/lib/db/queries'
 import { formatDate } from '@/lib/constants'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
+import { db } from '@/lib/db/schema'
 
 export function WeightTab() {
   const [weights, setWeights] = useState<Weight[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg')
+  const [dateFormat, setDateFormat] = useState('MM/DD/YYYY')
   const [formData, setFormData] = useState({
     weight: '',
-    unit: 'kg' as 'kg' | 'lbs',
     date: new Date().toISOString().split('T')[0],
     note: ''
   })
 
   useEffect(() => {
     loadWeights()
+    loadWeightUnit()
+
+    // Listen for settings changes
+    DataEvents.on(DATA_EVENTS.SETTINGS_CHANGED, loadWeightUnit)
+
+    return () => {
+      DataEvents.off(DATA_EVENTS.SETTINGS_CHANGED, loadWeightUnit)
+    }
   }, [])
+
+  async function loadWeightUnit() {
+    try {
+      const settings = await db.settings.get('user_settings')
+      if (settings?.weightUnit) {
+        setWeightUnit(settings.weightUnit)
+      }
+      if (settings?.dateFormat) {
+        setDateFormat(settings.dateFormat)
+      }
+    } catch (error) {
+      console.error('Failed to load weight unit:', error)
+    }
+  }
 
   async function loadWeights() {
     const data = await getAllWeight()
@@ -42,7 +66,7 @@ export function WeightTab() {
     
     const weightData = {
       weight,
-      unit: formData.unit,
+      unit: weightUnit,
       date: new Date(formData.date),
       note: formData.note
     }
@@ -56,7 +80,6 @@ export function WeightTab() {
 
     setFormData({
       weight: '',
-      unit: formData.unit,
       date: new Date().toISOString().split('T')[0],
       note: ''
     })
@@ -69,7 +92,6 @@ export function WeightTab() {
     setEditingId(weight.id!)
     setFormData({
       weight: weight.weight.toString(),
-      unit: weight.unit,
       date: new Date(weight.date).toISOString().split('T')[0],
       note: weight.note || ''
     })
@@ -80,7 +102,6 @@ export function WeightTab() {
     setEditingId(null)
     setFormData({
       weight: '',
-      unit: formData.unit,
       date: new Date().toISOString().split('T')[0],
       note: ''
     })
@@ -146,31 +167,20 @@ export function WeightTab() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Weight *
+                Weight ({weightUnit}) *
               </label>
               <input
                 type="number"
-                step="0.1"
                 required
+                step="0.1"
                 value={formData.weight}
                 onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
                 className="input"
                 placeholder="0.0"
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Unit *
-              </label>
-              <select
-                value={formData.unit}
-                onChange={(e) => setFormData({ ...formData, unit: e.target.value as any })}
-                className="input"
-              >
-                <option value="kg">kg</option>
-                <option value="lbs">lbs</option>
-              </select>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Unit preference: {weightUnit} (change in Settings)
+              </p>
             </div>
 
             <div>
@@ -184,6 +194,9 @@ export function WeightTab() {
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                 className="input"
               />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Date picker format is controlled by your browser
+              </p>
             </div>
 
             <div className="md:col-span-3">
@@ -238,7 +251,7 @@ export function WeightTab() {
                     {weight.weight} {weight.unit}
                   </p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {formatDate(weight.date)}
+                    {formatDate(weight.date, dateFormat)}
                     {weight.note && ` • ${weight.note}`}
                   </p>
                 </div>

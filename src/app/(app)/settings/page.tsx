@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Database, Cloud, Download, Upload, Trash2, Info, DollarSign, Weight as WeightIcon, Calendar, User } from 'lucide-react'
 import { db } from '@/lib/db/schema'
 import { useTheme } from 'next-themes'
+import { DataEvents, DATA_EVENTS } from '@/lib/events'
 
 export default function SettingsPage() {
   const [stats, setStats] = useState({
@@ -57,6 +58,8 @@ export default function SettingsPage() {
       [key]: value,
       updatedAt: new Date()
     })
+    // Emit event so other components can update
+    DataEvents.emit(DATA_EVENTS.SETTINGS_CHANGED)
   }
 
   async function handleExportData() {

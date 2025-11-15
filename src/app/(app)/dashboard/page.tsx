@@ -32,11 +32,13 @@ export default function DashboardPage() {
     DataEvents.on(DATA_EVENTS.INCOME_CHANGED, loadStats)
     DataEvents.on(DATA_EVENTS.EXPENSE_CHANGED, loadStats)
     DataEvents.on(DATA_EVENTS.TASK_CHANGED, loadStats)
+    DataEvents.on(DATA_EVENTS.SETTINGS_CHANGED, loadUserName)
     
     return () => {
       DataEvents.off(DATA_EVENTS.INCOME_CHANGED, loadStats)
       DataEvents.off(DATA_EVENTS.EXPENSE_CHANGED, loadStats)
       DataEvents.off(DATA_EVENTS.TASK_CHANGED, loadStats)
+      DataEvents.off(DATA_EVENTS.SETTINGS_CHANGED, loadUserName)
     }
   }, [])
 

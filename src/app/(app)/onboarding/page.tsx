@@ -37,11 +37,9 @@ export default function OnboardingPage() {
     if (e?.preventDefault) {
       e.preventDefault()
     }
-    console.log('Form submitted on step:', step)
 
     // Only submit on step 5
     if (step !== 5) {
-      console.log('Not on step 5, ignoring submit')
       return
     }
 
@@ -51,7 +49,6 @@ export default function OnboardingPage() {
       return
     }
 
-    console.log('Saving onboarding settings...')
     try {
       // Update settings with user preferences
       await db.settings.update('user_settings', {
@@ -64,7 +61,6 @@ export default function OnboardingPage() {
         // Note: storagePreference is saved for future use (cloud sync coming soon)
       })
 
-      console.log('Settings saved, redirecting to dashboard')
       // Redirect to dashboard
       router.push('/dashboard')
     } catch (error) {
@@ -439,12 +435,10 @@ export default function OnboardingPage() {
               <button
                 type="button"
                 onClick={() => {
-                  console.log('Next button clicked, current step:', step)
                   if (step === 1 && !formData.name.trim()) {
                     alert('Please enter your name')
                     return
                   }
-                  console.log('Moving to step:', step + 1)
                   setStep(step + 1)
                 }}
                 className="btn-primary flex-1 flex items-center justify-center gap-2"
@@ -456,7 +450,6 @@ export default function OnboardingPage() {
               <button
                 type="button"
                 onClick={async () => {
-                  console.log('Get Started button clicked')
                   await handleSubmit()
                 }}
                 className="btn-primary flex-1 flex items-center justify-center gap-2"

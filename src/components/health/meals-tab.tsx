@@ -3,13 +3,15 @@
 import { useState, useEffect } from 'react'
 import { Plus, Utensils, Trash2, CheckCircle, XCircle, Edit } from 'lucide-react'
 import { addMeal, getAllMeals, deleteMeal, updateMeal, type Meal } from '@/lib/db/queries'
-import { formatDate } from '@/lib/constants'
+import { MEAL_TYPES, formatDate } from '@/lib/constants'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
+import { db } from '@/lib/db/schema'
 
 export function MealsTab() {
   const [meals, setMeals] = useState<Meal[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [dateFormat, setDateFormat] = useState('MM/DD/YYYY')
   const [formData, setFormData] = useState({
     mealType: 'breakfast' as 'breakfast' | 'lunch' | 'dinner' | 'snack',
     description: '',
@@ -19,7 +21,26 @@ export function MealsTab() {
 
   useEffect(() => {
     loadMeals()
+    loadDateFormat()
+
+    // Listen for settings changes
+    DataEvents.on(DATA_EVENTS.SETTINGS_CHANGED, loadDateFormat)
+
+    return () => {
+      DataEvents.off(DATA_EVENTS.SETTINGS_CHANGED, loadDateFormat)
+    }
   }, [])
+
+  async function loadDateFormat() {
+    try {
+      const settings = await db.settings.get('user_settings')
+      if (settings?.dateFormat) {
+        setDateFormat(settings.dateFormat)
+      }
+    } catch (error) {
+      console.error('Failed to load date format:', error)
+    }
+  }
 
   async function loadMeals() {
     const data = await getAllMeals()
@@ -222,7 +243,7 @@ export function MealsTab() {
                     {meal.description}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                    {formatDate(meal.date)}
+                    {formatDate(meal.date, dateFormat)}
                   </p>
                 </div>
               </div>

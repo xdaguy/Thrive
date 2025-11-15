@@ -3,13 +3,15 @@
 import { useState, useEffect } from 'react'
 import { Plus, Dumbbell, Trash2, Edit } from 'lucide-react'
 import { addExercise, getAllExercise, deleteExercise, updateExercise, type Exercise } from '@/lib/db/queries'
-import { formatDate } from '@/lib/constants'
+import { EXERCISE_TYPES, formatDate } from '@/lib/constants'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
+import { db } from '@/lib/db/schema'
 
 export function ExerciseTab() {
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [dateFormat, setDateFormat] = useState('MM/DD/YYYY')
   const [formData, setFormData] = useState({
     type: 'cardio' as 'cardio' | 'gym' | 'sports' | 'other',
     name: '',
@@ -22,7 +24,26 @@ export function ExerciseTab() {
 
   useEffect(() => {
     loadExercises()
+    loadDateFormat()
+
+    // Listen for settings changes
+    DataEvents.on(DATA_EVENTS.SETTINGS_CHANGED, loadDateFormat)
+
+    return () => {
+      DataEvents.off(DATA_EVENTS.SETTINGS_CHANGED, loadDateFormat)
+    }
   }, [])
+
+  async function loadDateFormat() {
+    try {
+      const settings = await db.settings.get('user_settings')
+      if (settings?.dateFormat) {
+        setDateFormat(settings.dateFormat)
+      }
+    } catch (error) {
+      console.error('Failed to load date format:', error)
+    }
+  }
 
   async function loadExercises() {
     const data = await getAllExercise()
@@ -283,7 +304,7 @@ export function ExerciseTab() {
                     </span>
                   </div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {formatDate(exercise.date)} • {exercise.duration} min
+                    {formatDate(exercise.date, dateFormat)} • {exercise.duration} min
                     {exercise.sets && exercise.reps && ` • ${exercise.sets}x${exercise.reps}`}
                     {exercise.note && ` • ${exercise.note}`}
                   </p>

@@ -11,6 +11,7 @@ export function DebtTab() {
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [currency, setCurrency] = useState('USD')
+  const [dateFormat, setDateFormat] = useState('MM/DD/YYYY')
   const [formData, setFormData] = useState({
     type: 'i_owe' as 'owed_to_me' | 'i_owe',
     person: '',
@@ -24,6 +25,13 @@ export function DebtTab() {
   useEffect(() => {
     loadDebts()
     loadCurrency()
+
+    // Listen for settings changes
+    DataEvents.on(DATA_EVENTS.SETTINGS_CHANGED, loadCurrency)
+
+    return () => {
+      DataEvents.off(DATA_EVENTS.SETTINGS_CHANGED, loadCurrency)
+    }
   }, [])
 
   async function loadCurrency() {
@@ -31,6 +39,9 @@ export function DebtTab() {
       const settings = await db.settings.get('user_settings')
       if (settings?.currency) {
         setCurrency(settings.currency)
+      }
+      if (settings?.dateFormat) {
+        setDateFormat(settings.dateFormat)
       }
     } catch (error) {
       console.error('Failed to load currency:', error)
@@ -378,7 +389,7 @@ export function DebtTab() {
                       )}
                     </div>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                      Due: {formatDate(debt.dueDate)}
+                      Due: {formatDate(debt.dueDate, dateFormat)}
                       {debt.description && ` • ${debt.description}`}
                     </p>
                     {!isPaid && (

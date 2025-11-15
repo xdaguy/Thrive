@@ -5,12 +5,14 @@ import { Plus, CheckSquare, Square, Trash2, Calendar, Edit, Filter } from 'lucid
 import { addTask, getAllTasks, toggleTaskCompletion, deleteTask, updateTask, type Task } from '@/lib/db/queries'
 import { formatDate } from '@/lib/constants'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
+import { db } from '@/lib/db/schema'
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed' | 'overdue' | 'today'>('all')
+  const [dateFormat, setDateFormat] = useState('MM/DD/YYYY')
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -22,7 +24,26 @@ export default function TasksPage() {
 
   useEffect(() => {
     loadTasks()
+    loadDateFormat()
+
+    // Listen for settings changes
+    DataEvents.on(DATA_EVENTS.SETTINGS_CHANGED, loadDateFormat)
+
+    return () => {
+      DataEvents.off(DATA_EVENTS.SETTINGS_CHANGED, loadDateFormat)
+    }
   }, [])
+
+  async function loadDateFormat() {
+    try {
+      const settings = await db.settings.get('user_settings')
+      if (settings?.dateFormat) {
+        setDateFormat(settings.dateFormat)
+      }
+    } catch (error) {
+      console.error('Failed to load date format:', error)
+    }
+  }
 
   async function loadTasks() {
     const data = await getAllTasks()
@@ -386,7 +407,7 @@ export default function TasksPage() {
                   {task.dueDate && (
                     <span className="text-xs px-2 py-1 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
-                      {formatDate(task.dueDate)}
+                      {formatDate(task.dueDate, dateFormat)}
                     </span>
                   )}
                 </div>

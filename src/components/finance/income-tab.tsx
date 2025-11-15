@@ -15,6 +15,7 @@ export function IncomeTab() {
   const [customStartDate, setCustomStartDate] = useState('')
   const [customEndDate, setCustomEndDate] = useState('')
   const [currency, setCurrency] = useState('USD')
+  const [dateFormat, setDateFormat] = useState('MM/DD/YYYY')
   const [formData, setFormData] = useState({
     amount: '',
     category: INCOME_CATEGORIES[0],
@@ -27,6 +28,13 @@ export function IncomeTab() {
   useEffect(() => {
     loadIncomes()
     loadCurrency()
+
+    // Listen for settings changes
+    DataEvents.on(DATA_EVENTS.SETTINGS_CHANGED, loadCurrency)
+
+    return () => {
+      DataEvents.off(DATA_EVENTS.SETTINGS_CHANGED, loadCurrency)
+    }
   }, [])
 
   async function loadCurrency() {
@@ -34,6 +42,9 @@ export function IncomeTab() {
       const settings = await db.settings.get('user_settings')
       if (settings?.currency) {
         setCurrency(settings.currency)
+      }
+      if (settings?.dateFormat) {
+        setDateFormat(settings.dateFormat)
       }
     } catch (error) {
       console.error('Failed to load currency:', error)
@@ -400,7 +411,7 @@ export function IncomeTab() {
                     </span>
                   </div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {formatDate(income.date)}
+                    {formatDate(income.date, dateFormat)}
                     {income.description && ` • ${income.description}`}
                   </p>
                 </div>
