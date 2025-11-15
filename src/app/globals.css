@@ -45,10 +45,6 @@
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
-  
   body {
     @apply bg-white dark:bg-[#0A0A0A] text-[#1A1A1A] dark:text-[#F9FAFB];
   }
