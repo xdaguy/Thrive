@@ -3,7 +3,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { User, DollarSign, Scale, Calendar, ArrowRight, Sparkles, Database, Cloud, HardDrive, UserPlus, Upload, FileUp } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { db } from '@/lib/db/schema'
+import { fadeIn, slideRight, slideLeft, scaleIn } from '@/lib/animations'
 
 const CURRENCIES = [
   { code: 'USD', symbol: '$', name: 'US Dollar' },
@@ -158,39 +160,67 @@ export default function OnboardingPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4 sm:p-6 md:p-8">
       <div className="w-full max-w-2xl">
         {/* Header */}
-        <div className="text-center mb-6 sm:mb-8">
-          <div className="inline-flex items-center gap-2 mb-3 sm:mb-4">
+        <motion.div 
+          {...fadeIn}
+          className="text-center mb-6 sm:mb-8"
+        >
+          <motion.div 
+            {...scaleIn}
+            transition={{ delay: 0.2 }}
+            className="inline-flex items-center gap-2 mb-3 sm:mb-4"
+          >
             <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 dark:text-blue-400" />
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
               Welcome to Thrive
             </h1>
-          </div>
-          <p className="text-gray-600 dark:text-gray-400 text-base sm:text-lg px-4">
+          </motion.div>
+          <motion.p 
+            {...fadeIn}
+            transition={{ delay: 0.3 }}
+            className="text-gray-600 dark:text-gray-400 text-base sm:text-lg px-4"
+          >
             Let's personalize your experience
-          </p>
-        </div>
+          </motion.p>
+        </motion.div>
 
         {/* Progress Steps - Only show for new users after Step 0 */}
-        {step > 0 && (
-          <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-6 sm:mb-8 px-4">
-            {[1, 2, 3, 4, 5].map((s) => (
-              <div
-                key={s}
-                className={`h-1.5 sm:h-2 rounded-full transition-all ${
-                  s <= step
-                    ? 'bg-blue-600 dark:bg-blue-400 w-10 sm:w-12 md:w-16'
-                    : 'bg-gray-300 dark:bg-gray-700 w-6 sm:w-8'
-                }`}
-              />
-            ))}
-          </div>
-        )}
+        <AnimatePresence mode="wait">
+          {step > 0 && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="flex items-center justify-center gap-1.5 sm:gap-2 mb-6 sm:mb-8 px-4"
+            >
+              {[1, 2, 3, 4, 5].map((s, index) => (
+                <motion.div
+                  key={s}
+                  initial={{ scaleX: 0 }}
+                  animate={{ scaleX: 1 }}
+                  transition={{ delay: index * 0.05, duration: 0.3 }}
+                  className={`h-1.5 sm:h-2 rounded-full transition-all ${
+                    s <= step
+                      ? 'bg-blue-600 dark:bg-blue-400 w-10 sm:w-12 md:w-16'
+                      : 'bg-gray-300 dark:bg-gray-700 w-6 sm:w-8'
+                  }`}
+                />
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Form */}
         <div className="card space-y-6">
-          {/* Step 0: New or Existing User */}
-          {step === 0 && (
-            <div className="animate-in fade-in duration-300">
+          <AnimatePresence mode="wait">
+            {/* Step 0: New or Existing User */}
+            {step === 0 && (
+              <motion.div 
+                key="step-0"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              >
               <div className="text-center mb-6 sm:mb-8">
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2 px-4">
                   Welcome to Thrive!
@@ -311,12 +341,18 @@ export default function OnboardingPage() {
                   </div>
                 </div>
               )}
-            </div>
+            </motion.div>
           )}
 
           {/* Step 1: Name */}
           {step === 1 && (
-            <div className="animate-in fade-in duration-300">
+            <motion.div 
+              key="step-1"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            >
               <div className="text-center mb-5 sm:mb-6 px-4">
                 <div className="w-14 h-14 sm:w-16 sm:h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
                   <User className="w-7 h-7 sm:w-8 sm:h-8 text-blue-600 dark:text-blue-400" />
@@ -338,12 +374,18 @@ export default function OnboardingPage() {
                 autoFocus
                 required
               />
-            </div>
+            </motion.div>
           )}
 
           {/* Step 2: Currency */}
           {step === 2 && (
-            <div className="animate-in fade-in duration-300">
+            <motion.div 
+              key="step-2"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            >
               <div className="text-center mb-5 sm:mb-6 px-4">
                 <div className="w-14 h-14 sm:w-16 sm:h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
                   <DollarSign className="w-7 h-7 sm:w-8 sm:h-8 text-green-600 dark:text-green-400" />
@@ -378,12 +420,18 @@ export default function OnboardingPage() {
                   </button>
                 ))}
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* Step 3: Weight Unit */}
           {step === 3 && (
-            <div className="animate-in fade-in duration-300">
+            <motion.div 
+              key="step-3"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            >
               <div className="text-center mb-5 sm:mb-6 px-4">
                 <div className="w-14 h-14 sm:w-16 sm:h-16 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
                   <Scale className="w-7 h-7 sm:w-8 sm:h-8 text-purple-600 dark:text-purple-400" />
@@ -431,12 +479,18 @@ export default function OnboardingPage() {
                   </div>
                 </button>
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* Step 4: Date Format */}
           {step === 4 && (
-            <div className="animate-in fade-in duration-300">
+            <motion.div 
+              key="step-4"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            >
               <div className="text-center mb-5 sm:mb-6 px-4">
                 <div className="w-14 h-14 sm:w-16 sm:h-16 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
                   <Calendar className="w-7 h-7 sm:w-8 sm:h-8 text-orange-600 dark:text-orange-400" />
@@ -481,12 +535,18 @@ export default function OnboardingPage() {
                   </button>
                 ))}
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* Step 5: Data Storage */}
           {step === 5 && (
-            <div className="animate-in fade-in duration-300">
+            <motion.div 
+              key="step-5"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            >
               <div className="text-center mb-5 sm:mb-6 px-4">
                 <div className="w-14 h-14 sm:w-16 sm:h-16 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
                   <Database className="w-7 h-7 sm:w-8 sm:h-8 text-indigo-600 dark:text-indigo-400" />
@@ -629,8 +689,9 @@ export default function OnboardingPage() {
                   </p>
                 </div>
               </div>
-            </div>
+            </motion.div>
           )}
+          </AnimatePresence>
 
           {/* Navigation Buttons - Only show when step > 0 */}
           {step > 0 && (

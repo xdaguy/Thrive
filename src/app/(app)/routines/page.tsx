@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Plus, RotateCw, Trophy, Target, Trash2, CheckCircle, Circle, X, Edit } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { 
   addRoutine, 
   getAllRoutines, 
@@ -14,6 +15,7 @@ import {
 import { generateId, db } from '@/lib/db/schema'
 import type { Routine, RoutineItem, RoutineCompletion } from '@/lib/db/schema'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
+import { fadeIn, staggerContainer, staggerItem, scaleIn } from '@/lib/animations'
 
 export default function RoutinesPage() {
   const [routines, setRoutines] = useState<Routine[]>([])
@@ -194,9 +196,14 @@ export default function RoutinesPage() {
     : 0
 
   return (
-    <div className="space-y-6">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="space-y-6"
+    >
       {/* Header */}
-      <div className="flex items-start sm:items-center justify-between gap-3">
+      <motion.div {...fadeIn} className="flex items-start sm:items-center justify-between gap-3">
         <div className="flex-1 min-w-0">
           <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2">
             Daily Routines
@@ -213,11 +220,20 @@ export default function RoutinesPage() {
           <span className="hidden sm:inline">Create</span>
           <span className="sm:hidden">New</span>
         </button>
-      </div>
+      </motion.div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="card bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20">
+      <motion.div 
+        variants={staggerContainer}
+        initial="initial"
+        animate="animate"
+        className="grid grid-cols-1 sm:grid-cols-3 gap-4"
+      >
+        <motion.div 
+          variants={staggerItem}
+          whileHover={{ scale: 1.02, y: -4 }}
+          className="card bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20"
+        >
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
               <RotateCw className="w-6 h-6 text-purple-600 dark:text-purple-400" />
@@ -227,9 +243,13 @@ export default function RoutinesPage() {
               <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalRoutines}</p>
             </div>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="card bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20">
+        <motion.div 
+          variants={staggerItem}
+          whileHover={{ scale: 1.02, y: -4 }}
+          className="card bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20"
+        >
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
               <Trophy className="w-6 h-6 text-orange-600 dark:text-orange-400" />
@@ -239,9 +259,13 @@ export default function RoutinesPage() {
               <p className="text-2xl font-bold text-gray-900 dark:text-white">{bestStreak} days</p>
             </div>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="card bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20">
+        <motion.div 
+          variants={staggerItem}
+          whileHover={{ scale: 1.02, y: -4 }}
+          className="card bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20"
+        >
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
               <Target className="w-6 h-6 text-green-600 dark:text-green-400" />
@@ -251,8 +275,8 @@ export default function RoutinesPage() {
               <p className="text-2xl font-bold text-gray-900 dark:text-white">{todayProgress}%</p>
             </div>
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* Create Form */}
       {showForm && (
@@ -448,6 +472,6 @@ export default function RoutinesPage() {
           })}
         </div>
       )}
-    </div>
+    </motion.div>
   )
 }

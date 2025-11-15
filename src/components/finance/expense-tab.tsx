@@ -447,14 +447,16 @@ export function ExpenseTab({ openForm }: ExpenseTabProps = {}) {
                   {formatCurrency(expense.amount, currency)}
                 </p>
               </div>
-              <div className="pl-[52px] flex items-center justify-between gap-3">
-                <p className="text-sm text-gray-500 dark:text-gray-400 flex-1 min-w-0">
-                  {formatDate(expense.date, dateFormat)}
-                  {expense.description && ` • ${expense.description}`}
+              <div className="pl-[52px] flex items-start justify-between gap-3">
+                <div className="text-sm text-gray-500 dark:text-gray-400 flex-1 min-w-0">
+                  <p className="truncate">
+                    {formatDate(expense.date, dateFormat)}
+                    {expense.description && ` • ${expense.description}`}
+                  </p>
                   {expense.recurring && (
-                    <span className="text-xs ml-2">• Recurring</span>
+                    <span className="text-xs">Recurring</span>
                   )}
-                </p>
+                </div>
                 <div className="flex gap-2 flex-shrink-0">
                   <button
                     onClick={() => handleEdit(expense)}

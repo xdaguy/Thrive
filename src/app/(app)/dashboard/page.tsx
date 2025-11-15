@@ -3,11 +3,13 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Wallet, TrendingUp, TrendingDown, CheckSquare, Heart, Target, RefreshCw } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { getTotalBalance, getMonthlyIncome, getMonthlyExpenses, getTasksCompletedToday, getTotalTasksToday, getAllTasks, getAllRoutines } from '@/lib/db/queries'
 import { formatCurrency } from '@/lib/constants'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
 import type { Task, Routine } from '@/lib/db/schema'
 import { db } from '@/lib/db/schema'
+import { fadeIn, staggerContainer, staggerItem } from '@/lib/animations'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -105,9 +107,17 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="space-y-4 sm:space-y-6"
+    >
       {/* Welcome Section */}
-      <div className="animate-in flex items-start sm:items-center justify-between gap-3">
+      <motion.div 
+        {...fadeIn}
+        className="flex items-start sm:items-center justify-between gap-3"
+      >
         <div className="flex-1 min-w-0">
           <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2">
             Welcome back{userName ? `, ${userName}` : ''}! 👋
@@ -124,12 +134,22 @@ export default function DashboardPage() {
         >
           <RefreshCw className={`w-5 h-5 text-gray-600 dark:text-gray-400 ${loading ? 'animate-spin' : ''}`} />
         </button>
-      </div>
+      </motion.div>
 
       {/* Quick Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <motion.div 
+        variants={staggerContainer}
+        initial="initial"
+        animate="animate"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
+      >
         {/* Total Balance */}
-        <div className="card bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800 p-4 sm:p-5">
+        <motion.div 
+          variants={staggerItem}
+          whileHover={{ scale: 1.02, y: -4 }}
+          transition={{ type: "spring", stiffness: 300 }}
+          className="card bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800 p-4 sm:p-5"
+        >
           <div className="flex items-start justify-between mb-3 sm:mb-4">
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
               <Wallet className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
@@ -138,10 +158,15 @@ export default function DashboardPage() {
           </div>
           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">Total Balance</p>
           <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate">{formatCurrency(stats.balance, currency)}</p>
-        </div>
+        </motion.div>
 
         {/* Income This Month */}
-        <div className="card bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border-blue-200 dark:border-blue-800 p-4 sm:p-5">
+        <motion.div 
+          variants={staggerItem}
+          whileHover={{ scale: 1.02, y: -4 }}
+          transition={{ type: "spring", stiffness: 300 }}
+          className="card bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border-blue-200 dark:border-blue-800 p-4 sm:p-5"
+        >
           <div className="flex items-start justify-between mb-3 sm:mb-4">
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
               <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" />
@@ -150,10 +175,15 @@ export default function DashboardPage() {
           </div>
           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">Income</p>
           <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate">{formatCurrency(stats.monthlyIncome, currency)}</p>
-        </div>
+        </motion.div>
 
         {/* Expenses This Month */}
-        <div className="card bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 border-orange-200 dark:border-orange-800 p-4 sm:p-5">
+        <motion.div 
+          variants={staggerItem}
+          whileHover={{ scale: 1.02, y: -4 }}
+          transition={{ type: "spring", stiffness: 300 }}
+          className="card bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 border-orange-200 dark:border-orange-800 p-4 sm:p-5"
+        >
           <div className="flex items-start justify-between mb-3 sm:mb-4">
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
               <TrendingDown className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600 dark:text-orange-400" />
@@ -162,10 +192,15 @@ export default function DashboardPage() {
           </div>
           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">Expenses</p>
           <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate">{formatCurrency(stats.monthlyExpenses, currency)}</p>
-        </div>
+        </motion.div>
 
         {/* Tasks Completed */}
-        <div className="card bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-purple-200 dark:border-purple-800 p-4 sm:p-5">
+        <motion.div 
+          variants={staggerItem}
+          whileHover={{ scale: 1.02, y: -4 }}
+          transition={{ type: "spring", stiffness: 300 }}
+          className="card bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-purple-200 dark:border-purple-800 p-4 sm:p-5"
+        >
           <div className="flex items-start justify-between mb-3 sm:mb-4">
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
               <CheckSquare className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-400" />
@@ -174,8 +209,8 @@ export default function DashboardPage() {
           </div>
           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">Tasks Done</p>
           <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats.tasksCompleted}/{stats.totalTasks}</p>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* Quick Actions */}
       <div className="card p-4 sm:p-5">
@@ -337,6 +372,6 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   )
 }
