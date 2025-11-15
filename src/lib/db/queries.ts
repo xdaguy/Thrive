@@ -1,5 +1,8 @@
 import { db, generateId, type Income, type Expense, type Task, type Weight, type Exercise, type Meal } from './schema'
 
+// Re-export types for convenience
+export type { Income, Expense, Task, Weight, Exercise, Meal } from './schema'
+
 // Income Operations
 export async function addIncome(income: Omit<Income, 'id' | 'createdAt' | 'updatedAt'>) {
   const id = generateId()

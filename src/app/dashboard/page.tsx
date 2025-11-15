@@ -1,6 +1,39 @@
+'use client'
+
+import { useEffect, useState } from 'react'
 import { Wallet, TrendingUp, TrendingDown, CheckSquare, Heart, Target } from 'lucide-react'
+import { getTotalBalance, getMonthlyIncome, getMonthlyExpenses, getTasksCompletedToday, getTotalTasksToday } from '@/lib/db/queries'
+import { formatCurrency } from '@/lib/constants'
 
 export default function DashboardPage() {
+  const [stats, setStats] = useState({
+    balance: 0,
+    monthlyIncome: 0,
+    monthlyExpenses: 0,
+    tasksCompleted: 0,
+    totalTasks: 0
+  })
+
+  useEffect(() => {
+    loadStats()
+  }, [])
+
+  async function loadStats() {
+    const now = new Date()
+    const balance = await getTotalBalance()
+    const income = await getMonthlyIncome(now.getFullYear(), now.getMonth())
+    const expenses = await getMonthlyExpenses(now.getFullYear(), now.getMonth())
+    const completed = await getTasksCompletedToday()
+    const total = await getTotalTasksToday()
+
+    setStats({
+      balance,
+      monthlyIncome: income,
+      monthlyExpenses: expenses,
+      tasksCompleted: completed,
+      totalTasks: total
+    })
+  }
   return (
     <div className="space-y-6">
       {/* Welcome Section */}
@@ -24,7 +57,7 @@ export default function DashboardPage() {
             <span className="text-green-600 dark:text-green-400 text-sm font-medium">+12.5%</span>
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Balance</p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">$0.00</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(stats.balance)}</p>
         </div>
 
         {/* Income This Month */}
@@ -36,7 +69,7 @@ export default function DashboardPage() {
             <span className="text-blue-600 dark:text-blue-400 text-sm font-medium">This month</span>
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Income</p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">$0.00</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(stats.monthlyIncome)}</p>
         </div>
 
         {/* Expenses This Month */}
@@ -48,7 +81,7 @@ export default function DashboardPage() {
             <span className="text-orange-600 dark:text-orange-400 text-sm font-medium">This month</span>
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Expenses</p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">$0.00</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(stats.monthlyExpenses)}</p>
         </div>
 
         {/* Tasks Completed */}
@@ -60,7 +93,7 @@ export default function DashboardPage() {
             <span className="text-purple-600 dark:text-purple-400 text-sm font-medium">Today</span>
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Tasks Done</p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">0/0</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.tasksCompleted}/{stats.totalTasks}</p>
         </div>
       </div>
 
