@@ -348,113 +348,92 @@ export function DebtTab() {
             return (
               <div
                 key={debt.id}
-                className={`p-3 sm:p-4 rounded-xl border-2 transition-all ${
-                  isPaid
-                    ? 'bg-gray-50 dark:bg-gray-900 border-gray-300 dark:border-gray-700 opacity-60'
-                    : isOwedToMe
-                    ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
-                    : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                className={`card p-4 hover:shadow-md transition-all ${
+                  isPaid ? 'opacity-60' : ''
                 }`}
               >
-                <div className="flex items-start gap-2.5 sm:gap-4">
-                  <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                    isPaid
-                      ? 'bg-gray-200 dark:bg-gray-800'
-                      : isOwedToMe
-                      ? 'bg-green-100 dark:bg-green-900/30'
-                      : 'bg-red-100 dark:bg-red-900/30'
-                  }`}>
-                    {isPaid ? (
-                      <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600 dark:text-gray-400" />
-                    ) : (
-                      <AlertCircle className={`w-5 h-5 sm:w-6 sm:h-6 ${
-                        isOwedToMe ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-                      }`} />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2 mb-1">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h4 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white truncate">{debt.person}</h4>
-                          <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full flex-shrink-0 ${
-                            isOwedToMe
-                              ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
-                              : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
-                          }`}>
-                            {isOwedToMe ? 'Owed to me' : 'I owe'}
-                          </span>
-                          {isPaid && (
-                            <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 flex-shrink-0">
-                              Paid
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1 truncate">
-                          Due: {formatDate(debt.dueDate, dateFormat)}
-                          {debt.description && ` • ${debt.description}`}
-                        </p>
-                      </div>
-                      <p className={`text-base sm:text-lg font-bold flex-shrink-0 ${
-                        isPaid
-                          ? 'text-gray-600 dark:text-gray-400 line-through'
-                          : isOwedToMe
-                          ? 'text-green-600 dark:text-green-400'
-                          : 'text-red-600 dark:text-red-400'
-                      }`}>
-                        {formatCurrency(remaining, currency)}
-                      </p>
-                    </div>
-                    {debt.interestRate > 0 && (
-                      <span className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">
-                        {debt.interestRate}% interest
-                      </span>
-                    )}
-                    {!isPaid && (
-                      <div className="mt-2 flex items-center gap-2 text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">
-                        <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 sm:h-2">
-                          <div
-                            className={`h-1.5 sm:h-2 rounded-full ${
-                              isOwedToMe ? 'bg-green-500' : 'bg-red-500'
-                            }`}
-                            style={{ width: `${(debt.paidAmount / debt.amount) * 100}%` }}
-                          />
-                        </div>
-                        <span className="flex-shrink-0">
-                          {formatCurrency(debt.paidAmount, currency)} / {formatCurrency(debt.amount, currency)}
-                        </span>
-                      </div>
-                    )}
-                    <div className="flex gap-2 mt-2">
-                      {!isPaid && (
-                        <>
-                          <button
-                            onClick={() => handleEdit(debt)}
-                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs sm:text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors touch-manipulation"
-                            title="Edit debt"
-                          >
-                            <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => markAsPaid(debt.id)}
-                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs sm:text-sm font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors touch-manipulation"
-                            title="Mark as paid"
-                          >
-                            <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                            Paid
-                          </button>
-                        </>
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                      isPaid
+                        ? 'bg-gray-200 dark:bg-gray-800'
+                        : isOwedToMe
+                        ? 'bg-green-100 dark:bg-green-900/30'
+                        : 'bg-red-100 dark:bg-red-900/30'
+                    }`}>
+                      {isPaid ? (
+                        <CheckCircle className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                      ) : (
+                        <AlertCircle className={`w-5 h-5 ${
+                          isOwedToMe ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                        }`} />
                       )}
-                      <button
-                        onClick={() => handleDelete(debt.id)}
-                        className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs sm:text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors touch-manipulation"
-                        title="Delete debt"
-                      >
-                        <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        Delete
-                      </button>
                     </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-1.5">{debt.person}</h4>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`inline-block text-xs px-2 py-0.5 rounded-full ${
+                          isOwedToMe
+                            ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                            : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                        }`}>
+                          {isOwedToMe ? 'Owed to me' : 'I owe'}
+                        </span>
+                        {isPaid && (
+                          <span className="inline-block text-xs px-2 py-0.5 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+                            Paid
+                          </span>
+                        )}
+                        {debt.interestRate > 0 && (
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {debt.interestRate}% interest
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <p className={`text-xl font-bold flex-shrink-0 ${
+                    isPaid
+                      ? 'text-gray-600 dark:text-gray-400 line-through'
+                      : isOwedToMe
+                      ? 'text-green-600 dark:text-green-400'
+                      : 'text-red-600 dark:text-red-400'
+                  }`}>
+                    {formatCurrency(remaining, currency)}
+                  </p>
+                </div>
+                <div className="pl-[52px] flex items-center gap-3">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 truncate flex-1">
+                    {formatDate(debt.dueDate, dateFormat)}
+                    {debt.description && ` • ${debt.description}`}
+                    {!isPaid && debt.paidAmount > 0 && ` • ${formatCurrency(debt.paidAmount, currency)}/${formatCurrency(debt.amount, currency)}`}
+                  </p>
+                  <div className="flex gap-2 flex-shrink-0">
+                    {!isPaid && (
+                      <>
+                        <button
+                          onClick={() => handleEdit(debt)}
+                          className="btn-icon text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                          title="Edit"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => markAsPaid(debt.id)}
+                          className="btn-icon text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
+                          title="Mark as paid"
+                        >
+                          <CheckCircle className="w-4 h-4" />
+                        </button>
+                      </>
+                    )}
+                    <button
+                      onClick={() => handleDelete(debt.id)}
+                      className="btn-icon text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               </div>
