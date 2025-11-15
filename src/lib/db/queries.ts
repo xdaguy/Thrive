@@ -233,3 +233,101 @@ export async function getTotalTasksToday() {
     return dueDate.getTime() === today.getTime()
   }).length
 }
+
+// Routine Operations
+export async function addRoutine(routine: Omit<import('./schema').Routine, 'id' | 'createdAt' | 'updatedAt'>) {
+  const id = generateId()
+  const now = new Date()
+  
+  await db.routines.add({
+    ...routine,
+    id,
+    createdAt: now,
+    updatedAt: now
+  })
+  
+  return id
+}
+
+export async function getAllRoutines() {
+  return await db.routines.orderBy('createdAt').toArray()
+}
+
+export async function getRoutinesByTime(timeOfDay: 'morning' | 'afternoon' | 'evening' | 'night') {
+  return await db.routines.filter(r => r.timeOfDay === timeOfDay).toArray()
+}
+
+export async function updateRoutine(id: string, updates: Partial<import('./schema').Routine>) {
+  await db.routines.update(id, {
+    ...updates,
+    updatedAt: new Date()
+  })
+}
+
+export async function deleteRoutine(id: string) {
+  await db.routines.delete(id)
+  // Also delete all completions for this routine
+  const completions = await db.routineCompletions.filter(c => c.routineId === id).toArray()
+  for (const completion of completions) {
+    if (completion.id) await db.routineCompletions.delete(completion.id)
+  }
+}
+
+export async function addRoutineCompletion(completion: Omit<import('./schema').RoutineCompletion, 'id' | 'createdAt'>) {
+  const id = generateId()
+  
+  await db.routineCompletions.add({
+    ...completion,
+    id,
+    createdAt: new Date()
+  })
+  
+  return id
+}
+
+export async function getTodayRoutineCompletion(routineId: string) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  
+  const completions = await db.routineCompletions
+    .filter(c => c.routineId === routineId)
+    .toArray()
+  
+  return completions.find(c => {
+    const compDate = new Date(c.date)
+    compDate.setHours(0, 0, 0, 0)
+    return compDate.getTime() === today.getTime()
+  })
+}
+
+export async function getRoutineStreak(routineId: string) {
+  const completions = await db.routineCompletions
+    .filter(c => c.routineId === routineId)
+    .toArray()
+  
+  if (completions.length === 0) return 0
+  
+  // Sort by date descending
+  completions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  
+  let streak = 0
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  
+  for (let i = 0; i < completions.length; i++) {
+    const compDate = new Date(completions[i].date)
+    compDate.setHours(0, 0, 0, 0)
+    
+    const expectedDate = new Date(today)
+    expectedDate.setDate(expectedDate.getDate() - i)
+    expectedDate.setHours(0, 0, 0, 0)
+    
+    if (compDate.getTime() === expectedDate.getTime() && completions[i].completionRate === 100) {
+      streak++
+    } else {
+      break
+    }
+  }
+  
+  return streak
+}
