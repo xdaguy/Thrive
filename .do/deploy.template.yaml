@@ -1,0 +1,30 @@
+# DigitalOcean App Platform Deployment Configuration
+# This is the configuration that App Platform will use to deploy Thrive
+
+spec:
+  name: thrive
+  region: nyc
+  services:
+    - name: web
+      github:
+        repo: yourusername/thrive  # Change this to your GitHub repo
+        branch: main
+        deploy_on_push: true
+      build_command: npm ci && npm run build
+      run_command: npm run start
+      environment_slug: node-js
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      http_port: 3000
+      routes:
+        - path: /
+      health_check:
+        http_path: /
+      envs:
+        - key: NODE_ENV
+          value: "production"
+        - key: NEXT_PUBLIC_APP_NAME
+          value: "Thrive"
+        - key: NEXT_PUBLIC_APP_URL
+          scope: RUN_TIME
+          value: "${APP_URL}"

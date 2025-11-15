@@ -1,0 +1,24 @@
+name: thrive
+region: nyc
+services:
+  - name: web
+    github:
+      repo: yourusername/thrive
+      branch: main
+      deploy_on_push: true
+    build_command: npm run build
+    run_command: npm run start
+    environment_slug: node-js
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    http_port: 3000
+    routes:
+      - path: /
+    envs:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_APP_NAME
+        value: Thrive
+      - key: NEXT_PUBLIC_APP_URL
+        value: ${APP_URL}
+        type: SECRET
