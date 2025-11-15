@@ -1,0 +1,13 @@
+<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="192" height="192" rx="42" fill="#3B82F6"/>
+  
+  <!-- Letter T with leaf accent -->
+  <g transform="translate(96, 96)">
+    <!-- T shape -->
+    <path d="M -35 -50 L 35 -50 L 35 -30 L 10 -30 L 10 50 L -10 50 L -10 -30 L -35 -30 Z" fill="white"/>
+    
+    <!-- Small leaf accent on top right -->
+    <ellipse cx="25" cy="-45" rx="12" ry="8" fill="#10B981" transform="rotate(-30 25 -45)"/>
+  </g>
+</svg>

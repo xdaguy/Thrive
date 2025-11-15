@@ -174,20 +174,28 @@ export const db = new ThriveDB()
 
 // Initialize default settings
 export async function initializeSettings() {
-  const existing = await db.settings.get('user_settings')
-  
-  if (!existing) {
-    await db.settings.add({
-      id: 'user_settings',
-      onboardingComplete: false,
-      theme: 'system',
-      currency: 'USD',
-      weightUnit: 'kg',
-      dateFormat: 'MM/DD/YYYY',
-      syncEnabled: false,
-      encryptionEnabled: false,
-      updatedAt: new Date()
-    })
+  try {
+    const existing = await db.settings.get('user_settings')
+    
+    if (!existing) {
+      await db.settings.add({
+        id: 'user_settings',
+        onboardingComplete: false,
+        theme: 'system',
+        currency: 'USD',
+        weightUnit: 'kg',
+        dateFormat: 'MM/DD/YYYY',
+        syncEnabled: false,
+        encryptionEnabled: false,
+        updatedAt: new Date()
+      })
+    }
+  } catch (error: any) {
+    // Ignore constraint errors (settings already exist)
+    if (error.name !== 'ConstraintError') {
+      console.error('Failed to initialize settings:', error)
+      throw error
+    }
   }
 }
 

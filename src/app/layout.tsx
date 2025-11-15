@@ -15,6 +15,9 @@ export const metadata: Metadata = {
     statusBarStyle: 'black-translucent',
     title: 'Thrive',
   },
+  other: {
+    'mobile-web-app-capable': 'yes',
+  },
   formatDetection: {
     telephone: false,
   },
