@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from '@/components/providers/theme-provider'
+import { DBProvider } from '@/components/providers/db-provider'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
@@ -59,7 +60,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <DBProvider>
+            {children}
+          </DBProvider>
         </ThemeProvider>
       </body>
     </html>
