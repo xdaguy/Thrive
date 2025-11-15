@@ -7,7 +7,11 @@ import { MEAL_TYPES, formatDate } from '@/lib/constants'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
 import { db } from '@/lib/db/schema'
 
-export function MealsTab() {
+interface MealsTabProps {
+  openForm?: boolean
+}
+
+export function MealsTab({ openForm }: MealsTabProps = {}) {
   const [meals, setMeals] = useState<Meal[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -30,6 +34,13 @@ export function MealsTab() {
       DataEvents.off(DATA_EVENTS.SETTINGS_CHANGED, loadDateFormat)
     }
   }, [])
+
+  useEffect(() => {
+    // Auto-open form when openForm prop is true
+    if (openForm) {
+      setShowForm(true)
+    }
+  }, [openForm])
 
   async function loadDateFormat() {
     try {

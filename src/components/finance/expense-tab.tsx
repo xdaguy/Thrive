@@ -7,7 +7,11 @@ import { EXPENSE_CATEGORIES, PAYMENT_METHODS, formatCurrency, formatDate } from 
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
 import { db } from '@/lib/db/schema'
 
-export function ExpenseTab() {
+interface ExpenseTabProps {
+  openForm?: boolean
+}
+
+export function ExpenseTab({ openForm }: ExpenseTabProps = {}) {
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -36,6 +40,13 @@ export function ExpenseTab() {
       DataEvents.off(DATA_EVENTS.SETTINGS_CHANGED, loadCurrency)
     }
   }, [])
+
+  useEffect(() => {
+    // Auto-open form when openForm prop is true
+    if (openForm) {
+      setShowForm(true)
+    }
+  }, [openForm])
 
   async function loadCurrency() {
     try {

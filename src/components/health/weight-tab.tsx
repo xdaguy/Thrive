@@ -7,7 +7,11 @@ import { formatDate } from '@/lib/constants'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
 import { db } from '@/lib/db/schema'
 
-export function WeightTab() {
+interface WeightTabProps {
+  openForm?: boolean
+}
+
+export function WeightTab({ openForm }: WeightTabProps = {}) {
   const [weights, setWeights] = useState<Weight[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -30,6 +34,13 @@ export function WeightTab() {
       DataEvents.off(DATA_EVENTS.SETTINGS_CHANGED, loadWeightUnit)
     }
   }, [])
+
+  useEffect(() => {
+    // Auto-open form when openForm prop is true
+    if (openForm) {
+      setShowForm(true)
+    }
+  }, [openForm])
 
   async function loadWeightUnit() {
     try {

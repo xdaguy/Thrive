@@ -6,7 +6,11 @@ import { formatCurrency, formatDate } from '@/lib/constants'
 import { db, generateId, type Debt } from '@/lib/db/schema'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
 
-export function DebtTab() {
+interface DebtTabProps {
+  openForm?: boolean
+}
+
+export function DebtTab({ openForm }: DebtTabProps = {}) {
   const [debts, setDebts] = useState<Debt[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -33,6 +37,13 @@ export function DebtTab() {
       DataEvents.off(DATA_EVENTS.SETTINGS_CHANGED, loadCurrency)
     }
   }, [])
+
+  useEffect(() => {
+    // Auto-open form when openForm prop is true
+    if (openForm) {
+      setShowForm(true)
+    }
+  }, [openForm])
 
   async function loadCurrency() {
     try {

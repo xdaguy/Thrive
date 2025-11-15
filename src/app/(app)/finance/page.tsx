@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { IncomeTab } from '@/components/finance/income-tab'
 import { ExpenseTab } from '@/components/finance/expense-tab'
 import { DebtTab } from '@/components/finance/debt-tab'
@@ -8,7 +9,25 @@ import { DebtTab } from '@/components/finance/debt-tab'
 type Tab = 'income' | 'expenses' | 'debts'
 
 export default function FinancePage() {
+  const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState<Tab>('income')
+  const [shouldOpenForm, setShouldOpenForm] = useState(false)
+
+  useEffect(() => {
+    // Handle URL parameters for tab and form opening
+    const tab = searchParams.get('tab') as Tab
+    const add = searchParams.get('add')
+    
+    if (tab && ['income', 'expenses', 'debts'].includes(tab)) {
+      setActiveTab(tab)
+    }
+    
+    if (add === 'true') {
+      setShouldOpenForm(true)
+      // Reset after triggering
+      setTimeout(() => setShouldOpenForm(false), 100)
+    }
+  }, [searchParams])
 
   return (
     <div className="space-y-6">
@@ -59,9 +78,9 @@ export default function FinancePage() {
 
         {/* Tab Content */}
         <div className="p-6">
-          {activeTab === 'income' && <IncomeTab />}
-          {activeTab === 'expenses' && <ExpenseTab />}
-          {activeTab === 'debts' && <DebtTab />}
+          {activeTab === 'income' && <IncomeTab openForm={shouldOpenForm} />}
+          {activeTab === 'expenses' && <ExpenseTab openForm={shouldOpenForm} />}
+          {activeTab === 'debts' && <DebtTab openForm={shouldOpenForm} />}
         </div>
       </div>
     </div>

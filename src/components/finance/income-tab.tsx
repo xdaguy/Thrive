@@ -7,7 +7,11 @@ import { INCOME_CATEGORIES, formatCurrency, formatDate } from '@/lib/constants'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
 import { db } from '@/lib/db/schema'
 
-export function IncomeTab() {
+interface IncomeTabProps {
+  openForm?: boolean
+}
+
+export function IncomeTab({ openForm }: IncomeTabProps = {}) {
   const [incomes, setIncomes] = useState<Income[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -36,6 +40,13 @@ export function IncomeTab() {
       DataEvents.off(DATA_EVENTS.SETTINGS_CHANGED, loadCurrency)
     }
   }, [])
+
+  useEffect(() => {
+    // Auto-open form when openForm prop is true
+    if (openForm) {
+      setShowForm(true)
+    }
+  }, [openForm])
 
   async function loadCurrency() {
     try {

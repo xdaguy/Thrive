@@ -182,7 +182,7 @@ export default function DashboardPage() {
         <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">Quick Actions</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3">
           <button 
-            onClick={() => router.push('/finance')}
+            onClick={() => router.push('/finance?tab=income&add=true')}
             className="flex flex-col items-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-[0.98] transition-all touch-manipulation"
           >
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
@@ -192,7 +192,7 @@ export default function DashboardPage() {
           </button>
 
           <button 
-            onClick={() => router.push('/finance')}
+            onClick={() => router.push('/finance?tab=expenses&add=true')}
             className="flex flex-col items-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-[0.98] transition-all touch-manipulation"
           >
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
@@ -202,7 +202,7 @@ export default function DashboardPage() {
           </button>
 
           <button 
-            onClick={() => router.push('/tasks')}
+            onClick={() => router.push('/tasks?add=true')}
             className="flex flex-col items-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-[0.98] transition-all touch-manipulation"
           >
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
@@ -212,7 +212,7 @@ export default function DashboardPage() {
           </button>
 
           <button 
-            onClick={() => router.push('/health')}
+            onClick={() => router.push('/health?tab=weight&add=true')}
             className="flex flex-col items-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-[0.98] transition-all touch-manipulation"
           >
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-pink-100 dark:bg-pink-900/30 flex items-center justify-center">
