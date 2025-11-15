@@ -1,0 +1,157 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Light theme variables */
+  --bg-primary: 255 255 255;
+  --bg-secondary: 248 249 250;
+  --bg-tertiary: 241 243 245;
+  
+  --text-primary: 26 26 26;
+  --text-secondary: 107 114 128;
+  --text-tertiary: 156 163 175;
+  
+  --border: 229 231 235;
+  --border-light: 243 244 246;
+  
+  --primary: 37 99 235;
+  --primary-hover: 29 78 216;
+  --primary-light: 219 234 254;
+  
+  --accent: 139 92 246;
+  --accent-light: 237 233 254;
+}
+
+.dark {
+  /* Dark theme variables */
+  --bg-primary: 10 10 10;
+  --bg-secondary: 26 26 26;
+  --bg-tertiary: 42 42 42;
+  
+  --text-primary: 249 250 251;
+  --text-secondary: 209 213 219;
+  --text-tertiary: 156 163 175;
+  
+  --border: 42 42 42;
+  --border-light: 26 26 26;
+  
+  --primary: 59 130 246;
+  --primary-hover: 37 99 235;
+  --primary-light: 30 58 138;
+  
+  --accent: 167 139 250;
+  --accent-light: 76 29 149;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-white dark:bg-[#0A0A0A] text-[#1A1A1A] dark:text-[#F9FAFB];
+  }
+  
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  /* Remove tap highlight on mobile */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 dark:bg-gray-700 rounded-lg;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400 dark:bg-gray-600;
+  }
+}
+
+@layer components {
+  /* Button styles */
+  .btn-primary {
+    @apply bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold rounded-xl px-6 py-3 transition-all duration-200 active:scale-[0.97] shadow-sm;
+  }
+  
+  .btn-secondary {
+    @apply bg-transparent border-2 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100 font-semibold rounded-xl px-6 py-3 transition-all duration-200;
+  }
+  
+  .btn-icon {
+    @apply w-11 h-11 flex items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200;
+  }
+  
+  /* Card styles */
+  .card {
+    @apply bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm transition-shadow duration-200 hover:shadow-md;
+  }
+  
+  /* Input styles */
+  .input {
+    @apply w-full h-11 px-4 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-[#1A1A1A] text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 transition-all duration-200;
+  }
+  
+  /* Utility classes */
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .safe-area-left {
+    padding-left: env(safe-area-inset-left);
+  }
+  
+  .safe-area-right {
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+@layer utilities {
+  /* Animation utilities */
+  .animate-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  
+  /* Skeleton loading */
+  .skeleton {
+    @apply bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 bg-[length:200%_100%] animate-shimmer rounded;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

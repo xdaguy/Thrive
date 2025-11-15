@@ -1,0 +1,48 @@
+{
+  "name": "thrive",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Your all-in-one personal management system for finance, tasks, health, and daily routines",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "next": "^14.2.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "dexie": "^4.0.1",
+    "dexie-react-hooks": "^1.1.7",
+    "zustand": "^4.5.0",
+    "date-fns": "^3.3.0",
+    "lucide-react": "^0.344.0",
+    "react-hook-form": "^7.50.0",
+    "@hookform/resolvers": "^3.3.4",
+    "zod": "^3.22.4",
+    "recharts": "^2.12.0",
+    "next-themes": "^0.2.1",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.0",
+    "tailwind-merge": "^2.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "typescript": "^5.3.0",
+    "tailwindcss": "^3.4.0",
+    "postcss": "^8.4.0",
+    "autoprefixer": "^10.4.0",
+    "eslint": "^8.56.0",
+    "eslint-config-next": "^14.2.0",
+    "@tailwindcss/forms": "^0.5.7",
+    "@next/bundle-analyzer": "^14.2.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}
