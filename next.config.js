@@ -3,10 +3,12 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   
-  // PWA Configuration
+  // Remove console.log in production but keep console.error and console.warn
   ...(process.env.NODE_ENV === 'production' && {
     compiler: {
-      removeConsole: true,
+      removeConsole: {
+        exclude: ['error', 'warn'],
+      },
     },
   }),
 
