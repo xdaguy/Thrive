@@ -10,6 +10,7 @@ export function DebtTab() {
   const [debts, setDebts] = useState<Debt[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [currency, setCurrency] = useState('USD')
   const [formData, setFormData] = useState({
     type: 'i_owe' as 'owed_to_me' | 'i_owe',
     person: '',
@@ -22,7 +23,19 @@ export function DebtTab() {
 
   useEffect(() => {
     loadDebts()
+    loadCurrency()
   }, [])
+
+  async function loadCurrency() {
+    try {
+      const settings = await db.settings.get('user_settings')
+      if (settings?.currency) {
+        setCurrency(settings.currency)
+      }
+    } catch (error) {
+      console.error('Failed to load currency:', error)
+    }
+  }
 
   async function loadDebts() {
     const data = await db.debts.orderBy('createdAt').reverse().toArray()
@@ -158,7 +171,7 @@ export function DebtTab() {
         <div className="card bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20">
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Owed to Me</p>
           <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-            {formatCurrency(totalOwedToMe)}
+            {formatCurrency(totalOwedToMe, currency)}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             {owedToMe.length} active debt(s)
@@ -168,7 +181,7 @@ export function DebtTab() {
         <div className="card bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20">
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">I Owe</p>
           <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-            {formatCurrency(totalIOwe)}
+            {formatCurrency(totalIOwe, currency)}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             {iOwe.length} active debt(s)
@@ -379,7 +392,7 @@ export function DebtTab() {
                           />
                         </div>
                         <span>
-                          {formatCurrency(debt.paidAmount)} / {formatCurrency(debt.amount)}
+                          {formatCurrency(debt.paidAmount, currency)} / {formatCurrency(debt.amount, currency)}
                         </span>
                       </div>
                     )}
@@ -392,7 +405,7 @@ export function DebtTab() {
                         ? 'text-green-600 dark:text-green-400'
                         : 'text-red-600 dark:text-red-400'
                     }`}>
-                      {formatCurrency(remaining)}
+                      {formatCurrency(remaining, currency)}
                     </p>
                     {debt.interestRate > 0 && (
                       <span className="text-xs text-gray-500 dark:text-gray-400">

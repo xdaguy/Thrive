@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Database, Cloud, Download, Upload, Trash2, Info, DollarSign, Weight as WeightIcon, Calendar } from 'lucide-react'
+import { Database, Cloud, Download, Upload, Trash2, Info, DollarSign, Weight as WeightIcon, Calendar, User } from 'lucide-react'
 import { db } from '@/lib/db/schema'
 import { useTheme } from 'next-themes'
 
@@ -16,8 +16,10 @@ export default function SettingsPage() {
     meals: 0,
     routines: 0
   })
+  const [name, setName] = useState('')
   const [currency, setCurrency] = useState('USD')
   const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg')
+  const [dateFormat, setDateFormat] = useState('MM/DD/YYYY')
   const [mounted, setMounted] = useState(false)
   const { theme, setTheme } = useTheme()
 
@@ -43,8 +45,10 @@ export default function SettingsPage() {
   async function loadPreferences() {
     const settings = await db.settings.get('user_settings')
     if (settings) {
+      setName(settings.name || '')
       setCurrency(settings.currency)
       setWeightUnit(settings.weightUnit)
+      setDateFormat(settings.dateFormat)
     }
   }
 
@@ -229,6 +233,16 @@ export default function SettingsPage() {
     await savePreference('weightUnit', newUnit)
   }
 
+  async function handleNameChange(newName: string) {
+    setName(newName)
+    await savePreference('name', newName)
+  }
+
+  async function handleDateFormatChange(newFormat: string) {
+    setDateFormat(newFormat)
+    await savePreference('dateFormat', newFormat)
+  }
+
   const totalEntries = Object.values(stats).reduce((sum, count) => sum + count, 0)
 
   return (
@@ -297,6 +311,20 @@ export default function SettingsPage() {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+              <User className="w-4 h-4" />
+              Your Name
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => handleNameChange(e.target.value)}
+              className="input"
+              placeholder="Enter your name"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
               <DollarSign className="w-4 h-4" />
               Currency
             </label>
@@ -342,6 +370,22 @@ export default function SettingsPage() {
                 Pounds (lbs)
               </button>
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+              <Calendar className="w-4 h-4" />
+              Date Format
+            </label>
+            <select
+              value={dateFormat}
+              onChange={(e) => handleDateFormatChange(e.target.value)}
+              className="input"
+            >
+              <option value="MM/DD/YYYY">MM/DD/YYYY (12/31/2025)</option>
+              <option value="DD/MM/YYYY">DD/MM/YYYY (31/12/2025)</option>
+              <option value="YYYY-MM-DD">YYYY-MM-DD (2025-12-31)</option>
+            </select>
           </div>
         </div>
       </div>

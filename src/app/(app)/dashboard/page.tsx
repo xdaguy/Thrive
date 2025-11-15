@@ -7,6 +7,7 @@ import { getTotalBalance, getMonthlyIncome, getMonthlyExpenses, getTasksComplete
 import { formatCurrency } from '@/lib/constants'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
 import type { Task, Routine } from '@/lib/db/schema'
+import { db } from '@/lib/db/schema'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -19,9 +20,12 @@ export default function DashboardPage() {
   })
   const [tasks, setTasks] = useState<Task[]>([])
   const [routines, setRoutines] = useState<Routine[]>([])
+  const [userName, setUserName] = useState<string>('')
+  const [currency, setCurrency] = useState('USD')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    loadUserName()
     loadStats()
     
     // Listen to data change events
@@ -35,6 +39,20 @@ export default function DashboardPage() {
       DataEvents.off(DATA_EVENTS.TASK_CHANGED, loadStats)
     }
   }, [])
+
+  async function loadUserName() {
+    try {
+      const settings = await db.settings.get('user_settings')
+      if (settings?.name) {
+        setUserName(settings.name)
+      }
+      if (settings?.currency) {
+        setCurrency(settings.currency)
+      }
+    } catch (error) {
+      console.error('Failed to load user name:', error)
+    }
+  }
 
   async function loadStats() {
     try {
@@ -88,7 +106,7 @@ export default function DashboardPage() {
       <div className="animate-in flex items-center justify-between">
         <div>
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Welcome back! 👋
+            Welcome back{userName ? `, ${userName}` : ''}! 👋
           </h2>
           <p className="text-gray-600 dark:text-gray-400">
             Here's what's happening with your life today
@@ -115,7 +133,7 @@ export default function DashboardPage() {
             <span className="text-green-600 dark:text-green-400 text-sm font-medium">+12.5%</span>
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Balance</p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(stats.balance)}</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(stats.balance, currency)}</p>
         </div>
 
         {/* Income This Month */}
@@ -127,7 +145,7 @@ export default function DashboardPage() {
             <span className="text-blue-600 dark:text-blue-400 text-sm font-medium">This month</span>
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Income</p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(stats.monthlyIncome)}</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(stats.monthlyIncome, currency)}</p>
         </div>
 
         {/* Expenses This Month */}
@@ -139,7 +157,7 @@ export default function DashboardPage() {
             <span className="text-orange-600 dark:text-orange-400 text-sm font-medium">This month</span>
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Expenses</p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(stats.monthlyExpenses)}</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(stats.monthlyExpenses, currency)}</p>
         </div>
 
         {/* Tasks Completed */}

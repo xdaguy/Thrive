@@ -123,6 +123,8 @@ export interface RoutineCompletion {
 
 export interface Settings {
   id: 'user_settings'
+  name?: string
+  onboardingComplete: boolean
   theme: 'light' | 'dark' | 'system'
   currency: string
   weightUnit: 'kg' | 'lbs'
@@ -177,6 +179,7 @@ export async function initializeSettings() {
   if (!existing) {
     await db.settings.add({
       id: 'user_settings',
+      onboardingComplete: false,
       theme: 'system',
       currency: 'USD',
       weightUnit: 'kg',

@@ -61,6 +61,18 @@ export const ROUTINE_TIMES = [
   'night'
 ] as const
 
+// Get currency symbol mapping
+export const CURRENCY_SYMBOLS: Record<string, string> = {
+  'USD': '$',
+  'EUR': '€',
+  'GBP': '£',
+  'INR': '₹',
+  'JPY': '¥',
+  'CNY': '¥',
+  'AUD': 'A$',
+  'CAD': 'C$'
+}
+
 // Currency formatter
 export function formatCurrency(amount: number, currency = 'USD'): string {
   return new Intl.NumberFormat('en-US', {
@@ -69,6 +81,12 @@ export function formatCurrency(amount: number, currency = 'USD'): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   }).format(amount)
+}
+
+// Simple currency formatter with symbol (for components that can't be async)
+export function formatCurrencySimple(amount: number, currencyCode = 'USD'): string {
+  const symbol = CURRENCY_SYMBOLS[currencyCode] || '$'
+  return `${symbol}${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
 // Date formatter

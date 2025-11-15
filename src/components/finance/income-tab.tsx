@@ -5,6 +5,7 @@ import { Plus, TrendingUp, Trash2, Edit, Calendar } from 'lucide-react'
 import { addIncome, getAllIncome, deleteIncome, updateIncome, type Income } from '@/lib/db/queries'
 import { INCOME_CATEGORIES, formatCurrency, formatDate } from '@/lib/constants'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
+import { db } from '@/lib/db/schema'
 
 export function IncomeTab() {
   const [incomes, setIncomes] = useState<Income[]>([])
@@ -13,6 +14,7 @@ export function IncomeTab() {
   const [dateFilter, setDateFilter] = useState<'all' | 'month' | 'year' | 'custom'>('all')
   const [customStartDate, setCustomStartDate] = useState('')
   const [customEndDate, setCustomEndDate] = useState('')
+  const [currency, setCurrency] = useState('USD')
   const [formData, setFormData] = useState({
     amount: '',
     category: INCOME_CATEGORIES[0],
@@ -24,7 +26,19 @@ export function IncomeTab() {
 
   useEffect(() => {
     loadIncomes()
+    loadCurrency()
   }, [])
+
+  async function loadCurrency() {
+    try {
+      const settings = await db.settings.get('user_settings')
+      if (settings?.currency) {
+        setCurrency(settings.currency)
+      }
+    } catch (error) {
+      console.error('Failed to load currency:', error)
+    }
+  }
 
   async function loadIncomes() {
     const data = await getAllIncome()
@@ -221,7 +235,7 @@ export function IncomeTab() {
              dateFilter === 'year' ? 'This Year' : 'Selected Range'}
           </p>
           <p className="text-3xl font-bold text-green-600 dark:text-green-400">
-            {formatCurrency(totalIncome)}
+            {formatCurrency(totalIncome, currency)}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             {filteredIncomes.length} {filteredIncomes.length === 1 ? 'entry' : 'entries'}
@@ -231,7 +245,7 @@ export function IncomeTab() {
           <div className="card">
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">All Time Total</p>
             <p className="text-2xl font-bold text-gray-900 dark:text-white">
-              {formatCurrency(allTimeIncome)}
+              {formatCurrency(allTimeIncome, currency)}
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               {incomes.length} total {incomes.length === 1 ? 'entry' : 'entries'}
@@ -392,7 +406,7 @@ export function IncomeTab() {
                 </div>
                 <div className="text-right">
                   <p className="text-lg font-bold text-green-600 dark:text-green-400">
-                    {formatCurrency(income.amount)}
+                    {formatCurrency(income.amount, currency)}
                   </p>
                   {income.recurring && (
                     <span className="text-xs text-gray-500 dark:text-gray-400">Recurring</span>

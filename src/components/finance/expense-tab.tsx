@@ -5,6 +5,7 @@ import { Plus, TrendingDown, Trash2, Edit, Calendar } from 'lucide-react'
 import { addExpense, getAllExpenses, deleteExpense, updateExpense, type Expense } from '@/lib/db/queries'
 import { EXPENSE_CATEGORIES, PAYMENT_METHODS, formatCurrency, formatDate } from '@/lib/constants'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
+import { db } from '@/lib/db/schema'
 
 export function ExpenseTab() {
   const [expenses, setExpenses] = useState<Expense[]>([])
@@ -13,6 +14,7 @@ export function ExpenseTab() {
   const [dateFilter, setDateFilter] = useState<'all' | 'month' | 'year' | 'custom'>('all')
   const [customStartDate, setCustomStartDate] = useState('')
   const [customEndDate, setCustomEndDate] = useState('')
+  const [currency, setCurrency] = useState('USD')
   const [formData, setFormData] = useState({
     amount: '',
     category: EXPENSE_CATEGORIES[0],
@@ -24,7 +26,19 @@ export function ExpenseTab() {
 
   useEffect(() => {
     loadExpenses()
+    loadCurrency()
   }, [])
+
+  async function loadCurrency() {
+    try {
+      const settings = await db.settings.get('user_settings')
+      if (settings?.currency) {
+        setCurrency(settings.currency)
+      }
+    } catch (error) {
+      console.error('Failed to load currency:', error)
+    }
+  }
 
   async function loadExpenses() {
     const data = await getAllExpenses()
@@ -221,7 +235,7 @@ export function ExpenseTab() {
              dateFilter === 'year' ? 'This Year' : 'Selected Range'}
           </p>
           <p className="text-3xl font-bold text-red-600 dark:text-red-400">
-            {formatCurrency(totalExpenses)}
+            {formatCurrency(totalExpenses, currency)}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             {filteredExpenses.length} {filteredExpenses.length === 1 ? 'entry' : 'entries'}
@@ -231,7 +245,7 @@ export function ExpenseTab() {
           <div className="card">
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">All Time Total</p>
             <p className="text-2xl font-bold text-gray-900 dark:text-white">
-              {formatCurrency(allTimeExpenses)}
+              {formatCurrency(allTimeExpenses, currency)}
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               {expenses.length} total {expenses.length === 1 ? 'entry' : 'entries'}
@@ -394,7 +408,7 @@ export function ExpenseTab() {
                 </div>
                 <div className="text-right">
                   <p className="text-lg font-bold text-red-600 dark:text-red-400">
-                    {formatCurrency(expense.amount)}
+                    {formatCurrency(expense.amount, currency)}
                   </p>
                   {expense.recurring && (
                     <span className="text-xs text-gray-500 dark:text-gray-400">Recurring</span>
