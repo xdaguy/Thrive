@@ -43,14 +43,12 @@ export default function LandingPage() {
               transition={{ delay: 0.4 }}
               className="flex flex-col sm:flex-row gap-4 justify-center items-center"
             >
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Link 
-                  href="/start" 
-                  className="btn-primary w-full sm:w-auto text-center"
-                >
-                  Start Free
-                </Link>
-              </motion.div>
+              <Link 
+                href="/start" 
+                className="btn-primary w-full sm:w-auto text-center inline-block"
+              >
+                Start Free
+              </Link>
               <motion.a
                 href="https://github.com/xdaguy/thrive" 
                 target="_blank"
