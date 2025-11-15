@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { db, initializeSettings } from '@/lib/db/schema'
 
@@ -8,8 +8,15 @@ export function OnboardingCheck({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
   const [isChecking, setIsChecking] = useState(true)
+  const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null)
+  const hasChecked = useRef(false)
 
   useEffect(() => {
+    // Only check ONCE on initial mount, not on every route change
+    if (hasChecked.current) {
+      return
+    }
+
     async function checkOnboarding() {
       try {
         // Initialize settings if they don't exist
@@ -17,14 +24,18 @@ export function OnboardingCheck({ children }: { children: React.ReactNode }) {
         
         // Check if onboarding is complete
         const settings = await db.settings.get('user_settings')
+        const isComplete = settings?.onboardingComplete || false
+        
+        setOnboardingComplete(isComplete)
+        hasChecked.current = true
         
         // If not on onboarding page and onboarding not complete, redirect
-        if (!pathname.includes('/onboarding') && settings && !settings.onboardingComplete) {
+        if (!pathname.includes('/onboarding') && !isComplete) {
           router.push('/onboarding')
         }
-        // Note: Onboarding page itself handles redirect if already complete
       } catch (error) {
         console.error('Failed to check onboarding status:', error)
+        hasChecked.current = true
       } finally {
         setIsChecking(false)
       }
@@ -33,8 +44,8 @@ export function OnboardingCheck({ children }: { children: React.ReactNode }) {
     checkOnboarding()
   }, [pathname, router])
 
-  // Skip loading state for onboarding page (it handles its own redirect)
-  if (isChecking && !pathname.includes('/onboarding')) {
+  // Only show loading on FIRST check, not on route changes
+  if (isChecking && !hasChecked.current) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-[#0A0A0A] flex items-center justify-center">
         <div className="animate-pulse">
