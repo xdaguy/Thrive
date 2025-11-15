@@ -11,7 +11,7 @@ export function ExpenseTab() {
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [dateFilter, setDateFilter] = useState<'all' | 'month' | 'year' | 'custom'>('all')
+  const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'month' | 'year' | 'custom'>('all')
   const [customStartDate, setCustomStartDate] = useState('')
   const [customEndDate, setCustomEndDate] = useState('')
   const [currency, setCurrency] = useState('USD')
@@ -138,11 +138,19 @@ export function ExpenseTab() {
   }
 
   // Filter expenses based on date range
-  const filteredExpenses = expenses.filter(expense => {
+  const filteredExpenses = expenses.filter((expense) => {
     const expenseDate = new Date(expense.date)
+    expenseDate.setHours(0, 0, 0, 0)
     const now = new Date()
     
     switch (dateFilter) {
+      case 'all':
+        return true
+      case 'today': {
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        return expenseDate.getTime() === today.getTime()
+      }
       case 'month': {
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
@@ -168,15 +176,15 @@ export function ExpenseTab() {
   const allTimeExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Date Filter */}
-      <div className="card">
-        <div className="flex flex-wrap items-center gap-3">
-          <Calendar className="w-5 h-5 text-gray-400" />
-          <div className="flex flex-wrap gap-2">
+      <div className="card p-3 sm:p-4 md:p-5">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+          <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 flex-shrink-0" />
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-1.5 sm:gap-2">
             <button
               onClick={() => setDateFilter('all')}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors touch-manipulation ${
                 dateFilter === 'all'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
@@ -185,8 +193,18 @@ export function ExpenseTab() {
               All Time
             </button>
             <button
+              onClick={() => setDateFilter('today')}
+              className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors touch-manipulation ${
+                dateFilter === 'today'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
+            >
+              Today
+            </button>
+            <button
               onClick={() => setDateFilter('month')}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors touch-manipulation ${
                 dateFilter === 'month'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
@@ -196,7 +214,7 @@ export function ExpenseTab() {
             </button>
             <button
               onClick={() => setDateFilter('year')}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors touch-manipulation ${
                 dateFilter === 'year'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
@@ -206,7 +224,7 @@ export function ExpenseTab() {
             </button>
             <button
               onClick={() => setDateFilter('custom')}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors touch-manipulation col-span-2 ${
                 dateFilter === 'custom'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
@@ -216,20 +234,20 @@ export function ExpenseTab() {
             </button>
           </div>
           {dateFilter === 'custom' && (
-            <div className="flex items-center gap-2 ml-auto">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:ml-auto w-full sm:w-auto">
               <input
                 type="date"
                 value={customStartDate}
                 onChange={(e) => setCustomStartDate(e.target.value)}
-                className="input text-sm py-1"
+                className="input text-xs sm:text-sm py-1.5 sm:py-1"
                 placeholder="Start date"
               />
-              <span className="text-gray-500">to</span>
+              <span className="text-gray-500 text-center sm:inline hidden">to</span>
               <input
                 type="date"
                 value={customEndDate}
                 onChange={(e) => setCustomEndDate(e.target.value)}
-                className="input text-sm py-1"
+                className="input text-xs sm:text-sm py-1.5 sm:py-1"
                 placeholder="End date"
               />
             </div>
@@ -238,24 +256,25 @@ export function ExpenseTab() {
       </div>
 
       {/* Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="card">
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-            {dateFilter === 'all' ? 'Total Expenses' : 
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+        <div className="card p-4 sm:p-5">
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">
+            {dateFilter === 'all' ? 'Total Expenses' :
+             dateFilter === 'today' ? 'Today' :
              dateFilter === 'month' ? 'This Month' :
              dateFilter === 'year' ? 'This Year' : 'Selected Range'}
           </p>
-          <p className="text-3xl font-bold text-red-600 dark:text-red-400">
+          <p className="text-2xl sm:text-3xl font-bold text-red-600 dark:text-red-400 truncate">
             {formatCurrency(totalExpenses, currency)}
           </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mt-1">
             {filteredExpenses.length} {filteredExpenses.length === 1 ? 'entry' : 'entries'}
           </p>
         </div>
         {dateFilter !== 'all' && (
-          <div className="card">
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">All Time Total</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">
+          <div className="card p-4 sm:p-5">
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">All Time Total</p>
+            <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate">
               {formatCurrency(allTimeExpenses, currency)}
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -263,12 +282,12 @@ export function ExpenseTab() {
             </p>
           </div>
         )}
-        <div className="card md:col-start-3 flex items-center justify-center">
+        <div className="card md:col-start-3 flex items-center justify-center p-3 sm:p-4">
           <button
             onClick={() => setShowForm(!showForm)}
-            className="btn-primary flex items-center gap-2"
+            className="btn-primary flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base py-2 sm:py-2.5 touch-manipulation"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
             Add Expense
           </button>
         </div>
@@ -399,48 +418,52 @@ export function ExpenseTab() {
           filteredExpenses.map((expense) => (
             <div
               key={expense.id}
-              className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors"
+              className="p-3 sm:p-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors"
             >
-              <div className="flex items-center gap-4 flex-1">
-                <div className="w-12 h-12 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                  <TrendingDown className="w-6 h-6 text-red-600 dark:text-red-400" />
+              <div className="flex items-start gap-2.5 sm:gap-4">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
+                  <TrendingDown className="w-5 h-5 sm:w-6 sm:h-6 text-red-600 dark:text-red-400" />
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-semibold text-gray-900 dark:text-white">{expense.category}</h4>
-                    <span className="text-xs px-2 py-1 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
-                      {expense.paymentMethod}
-                    </span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white truncate">{expense.category}</h4>
+                        <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 flex-shrink-0">
+                          {expense.paymentMethod}
+                        </span>
+                      </div>
+                      <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">
+                        {formatDate(expense.date, dateFormat)}
+                        {expense.description && ` • ${expense.description}`}
+                      </p>
+                    </div>
+                    <p className="text-base sm:text-lg font-bold text-red-600 dark:text-red-400 flex-shrink-0">
+                      {formatCurrency(expense.amount, currency)}
+                    </p>
                   </div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {formatDate(expense.date, dateFormat)}
-                    {expense.description && ` • ${expense.description}`}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-lg font-bold text-red-600 dark:text-red-400">
-                    {formatCurrency(expense.amount, currency)}
-                  </p>
                   {expense.recurring && (
-                    <span className="text-xs text-gray-500 dark:text-gray-400">Recurring</span>
+                    <span className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">Recurring</span>
                   )}
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      onClick={() => handleEdit(expense)}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs sm:text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors touch-manipulation"
+                      title="Edit expense"
+                    >
+                      <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(expense.id)}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs sm:text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors touch-manipulation"
+                      title="Delete expense"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      Delete
+                    </button>
+                  </div>
                 </div>
-              </div>
-              <div className="ml-4 flex gap-2">
-                <button
-                  onClick={() => handleEdit(expense)}
-                  className="btn-icon text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                  title="Edit expense"
-                >
-                  <Edit className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => handleDelete(expense.id)}
-                  className="btn-icon text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                  title="Delete expense"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
               </div>
             </div>
           ))
