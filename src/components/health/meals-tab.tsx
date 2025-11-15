@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Plus, Utensils, Trash2, CheckCircle, XCircle } from 'lucide-react'
 import { addMeal, getAllMeals, deleteMeal, type Meal } from '@/lib/db/queries'
 import { formatDate } from '@/lib/constants'
+import { DataEvents, DATA_EVENTS } from '@/lib/events'
 
 export function MealsTab() {
   const [meals, setMeals] = useState<Meal[]>([])
@@ -42,6 +43,7 @@ export function MealsTab() {
     })
     setShowForm(false)
     loadMeals()
+    DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
   }
 
   async function handleDelete(id: string | undefined) {
@@ -49,6 +51,7 @@ export function MealsTab() {
     if (confirm('Delete this meal entry?')) {
       await deleteMeal(id)
       loadMeals()
+      DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
     }
   }
 

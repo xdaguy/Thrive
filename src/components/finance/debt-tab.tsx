@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Plus, CreditCard, Trash2, AlertCircle, CheckCircle } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/constants'
 import { db, generateId, type Debt } from '@/lib/db/schema'
+import { DataEvents, DATA_EVENTS } from '@/lib/events'
 
 export function DebtTab() {
   const [debts, setDebts] = useState<Debt[]>([])
@@ -58,6 +59,7 @@ export function DebtTab() {
     })
     setShowForm(false)
     loadDebts()
+    DataEvents.emit(DATA_EVENTS.EXPENSE_CHANGED)
   }
 
   async function handleDelete(id: string | undefined) {
@@ -65,6 +67,7 @@ export function DebtTab() {
     if (confirm('Delete this debt entry?')) {
       await db.debts.delete(id)
       loadDebts()
+      DataEvents.emit(DATA_EVENTS.EXPENSE_CHANGED)
     }
   }
 
@@ -79,6 +82,7 @@ export function DebtTab() {
       updatedAt: new Date()
     })
     loadDebts()
+    DataEvents.emit(DATA_EVENTS.EXPENSE_CHANGED)
   }
 
   const owedToMe = debts.filter(d => d.type === 'owed_to_me' && d.status === 'active')

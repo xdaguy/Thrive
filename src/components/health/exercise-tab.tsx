@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Plus, Dumbbell, Trash2 } from 'lucide-react'
 import { addExercise, getAllExercise, deleteExercise, type Exercise } from '@/lib/db/queries'
 import { formatDate } from '@/lib/constants'
+import { DataEvents, DATA_EVENTS } from '@/lib/events'
 
 export function ExerciseTab() {
   const [exercises, setExercises] = useState<Exercise[]>([])
@@ -51,6 +52,7 @@ export function ExerciseTab() {
     })
     setShowForm(false)
     loadExercises()
+    DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
   }
 
   async function handleDelete(id: string | undefined) {
@@ -58,6 +60,7 @@ export function ExerciseTab() {
     if (confirm('Delete this exercise?')) {
       await deleteExercise(id)
       loadExercises()
+      DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
     }
   }
 

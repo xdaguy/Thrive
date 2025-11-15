@@ -12,6 +12,7 @@ import {
 } from '@/lib/db/queries'
 import { generateId, db } from '@/lib/db/schema'
 import type { Routine, RoutineItem, RoutineCompletion } from '@/lib/db/schema'
+import { DataEvents, DATA_EVENTS } from '@/lib/events'
 
 export default function RoutinesPage() {
   const [routines, setRoutines] = useState<Routine[]>([])
@@ -91,6 +92,7 @@ export default function RoutinesPage() {
     })
     setShowForm(false)
     loadRoutines()
+    DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
   }
 
   async function handleDelete(id: string | undefined) {
@@ -98,6 +100,7 @@ export default function RoutinesPage() {
     if (confirm('Delete this routine? All completion history will be lost.')) {
       await deleteRoutine(id)
       loadRoutines()
+      DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
     }
   }
 
@@ -135,6 +138,7 @@ export default function RoutinesPage() {
     }
     
     loadRoutines()
+    DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
   }
 
   const totalRoutines = routines.length

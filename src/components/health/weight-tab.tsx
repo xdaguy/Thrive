@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Plus, Scale, Trash2, TrendingDown, TrendingUp } from 'lucide-react'
 import { addWeight, getAllWeight, deleteWeight, type Weight } from '@/lib/db/queries'
 import { formatDate } from '@/lib/constants'
+import { DataEvents, DATA_EVENTS } from '@/lib/events'
 
 export function WeightTab() {
   const [weights, setWeights] = useState<Weight[]>([])
@@ -42,6 +43,7 @@ export function WeightTab() {
     })
     setShowForm(false)
     loadWeights()
+    DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
   }
 
   async function handleDelete(id: string | undefined) {
@@ -49,6 +51,7 @@ export function WeightTab() {
     if (confirm('Delete this weight entry?')) {
       await deleteWeight(id)
       loadWeights()
+      DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
     }
   }
 
