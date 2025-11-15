@@ -33,8 +33,10 @@ export default function OnboardingPage() {
     storagePreference: 'local' as 'local' | 'google' | 'dropbox' | 'onedrive'
   })
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
+  async function handleSubmit(e?: any) {
+    if (e?.preventDefault) {
+      e.preventDefault()
+    }
     console.log('Form submitted on step:', step)
 
     // Only submit on step 5
@@ -102,7 +104,7 @@ export default function OnboardingPage() {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="card space-y-6">
+        <div className="card space-y-6">
           {/* Step 1: Name */}
           {step === 1 && (
             <div className="animate-in fade-in duration-300">
@@ -452,7 +454,11 @@ export default function OnboardingPage() {
               </button>
             ) : (
               <button
-                type="submit"
+                type="button"
+                onClick={async () => {
+                  console.log('Get Started button clicked')
+                  await handleSubmit()
+                }}
                 className="btn-primary flex-1 flex items-center justify-center gap-2"
               >
                 <Sparkles className="w-5 h-5" />
@@ -460,7 +466,7 @@ export default function OnboardingPage() {
               </button>
             )}
           </div>
-        </form>
+        </div>
 
         {/* Summary Preview (Step 5) */}
         {step === 5 && (
