@@ -1,14 +1,15 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Utensils, Trash2, CheckCircle, XCircle } from 'lucide-react'
-import { addMeal, getAllMeals, deleteMeal, type Meal } from '@/lib/db/queries'
+import { Plus, Utensils, Trash2, CheckCircle, XCircle, Edit } from 'lucide-react'
+import { addMeal, getAllMeals, deleteMeal, updateMeal, type Meal } from '@/lib/db/queries'
 import { formatDate } from '@/lib/constants'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
 
 export function MealsTab() {
   const [meals, setMeals] = useState<Meal[]>([])
   const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     mealType: 'breakfast' as 'breakfast' | 'lunch' | 'dinner' | 'snack',
     description: '',
@@ -28,12 +29,19 @@ export function MealsTab() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     
-    await addMeal({
+    const mealData = {
       mealType: formData.mealType,
       description: formData.description,
       asExpected: formData.asExpected,
       date: new Date(formData.date)
-    })
+    }
+    
+    if (editingId) {
+      await updateMeal(editingId, mealData)
+      setEditingId(null)
+    } else {
+      await addMeal(mealData)
+    }
 
     setFormData({
       mealType: 'breakfast',
@@ -44,6 +52,28 @@ export function MealsTab() {
     setShowForm(false)
     loadMeals()
     DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
+  }
+
+  async function handleEdit(meal: Meal) {
+    setEditingId(meal.id!)
+    setFormData({
+      mealType: meal.mealType as any,
+      description: meal.description,
+      asExpected: meal.asExpected,
+      date: new Date(meal.date).toISOString().split('T')[0]
+    })
+    setShowForm(true)
+  }
+  
+  function handleCancelEdit() {
+    setEditingId(null)
+    setFormData({
+      mealType: 'breakfast',
+      description: '',
+      asExpected: true,
+      date: new Date().toISOString().split('T')[0]
+    })
+    setShowForm(false)
   }
 
   async function handleDelete(id: string | undefined) {
@@ -82,7 +112,9 @@ export function MealsTab() {
 
       {showForm && (
         <form onSubmit={handleSubmit} className="card animate-in space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Log Meal</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            {editingId ? 'Edit Meal' : 'Log Meal'}
+          </h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -143,8 +175,10 @@ export function MealsTab() {
           </div>
 
           <div className="flex gap-3">
-            <button type="submit" className="btn-primary">Save</button>
-            <button type="button" onClick={() => setShowForm(false)} className="btn-secondary">
+            <button type="submit" className="btn-primary">
+              {editingId ? 'Update' : 'Save'}
+            </button>
+            <button type="button" onClick={handleCancelEdit} className="btn-secondary">
               Cancel
             </button>
           </div>
@@ -192,12 +226,22 @@ export function MealsTab() {
                   </p>
                 </div>
               </div>
-              <button
-                onClick={() => handleDelete(meal.id)}
-                className="btn-icon text-red-600 dark:text-red-400"
-              >
-                <Trash2 className="w-5 h-5" />
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleEdit(meal)}
+                  className="btn-icon text-blue-600 dark:text-blue-400"
+                  title="Edit meal"
+                >
+                  <Edit className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => handleDelete(meal.id)}
+                  className="btn-icon text-red-600 dark:text-red-400"
+                  title="Delete meal"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+              </div>
             </div>
           ))
         )}

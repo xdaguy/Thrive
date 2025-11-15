@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, CreditCard, Trash2, AlertCircle, CheckCircle } from 'lucide-react'
+import { Plus, CreditCard, Trash2, AlertCircle, CheckCircle, Edit } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/constants'
 import { db, generateId, type Debt } from '@/lib/db/schema'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
@@ -9,6 +9,7 @@ import { DataEvents, DATA_EVENTS } from '@/lib/events'
 export function DebtTab() {
   const [debts, setDebts] = useState<Debt[]>([])
   const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     type: 'i_owe' as 'owed_to_me' | 'i_owe',
     person: '',
@@ -31,22 +32,53 @@ export function DebtTab() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     
-    const id = generateId()
-    const now = new Date()
+    // Validation
+    const amount = parseFloat(formData.amount)
+    const paidAmount = formData.paidAmount ? parseFloat(formData.paidAmount) : 0
+    const interestRate = formData.interestRate ? parseFloat(formData.interestRate) : 0
     
-    await db.debts.add({
-      id,
+    if (amount <= 0) {
+      alert('Amount must be greater than 0')
+      return
+    }
+    if (amount > 1000000000) {
+      alert('Amount seems unrealistically high. Please check.')
+      return
+    }
+    if (paidAmount < 0 || paidAmount > amount) {
+      alert('Paid amount must be between 0 and total amount')
+      return
+    }
+    if (interestRate < 0 || interestRate > 100) {
+      alert('Interest rate must be between 0 and 100%')
+      return
+    }
+    
+    const debtData = {
       type: formData.type,
       person: formData.person,
-      amount: parseFloat(formData.amount),
-      paidAmount: formData.paidAmount ? parseFloat(formData.paidAmount) : 0,
+      amount,
+      paidAmount,
       dueDate: formData.dueDate ? new Date(formData.dueDate) : new Date(),
-      interestRate: formData.interestRate ? parseFloat(formData.interestRate) : 0,
+      interestRate,
       description: formData.description,
-      status: 'active',
-      createdAt: now,
-      updatedAt: now
-    })
+      status: paidAmount >= amount ? 'paid' : 'active' as 'active' | 'paid',
+      updatedAt: new Date()
+    }
+    
+    if (editingId) {
+      // Update existing debt
+      await db.debts.update(editingId, debtData)
+      setEditingId(null)
+    } else {
+      // Add new debt
+      const id = generateId()
+      await db.debts.add({
+        ...debtData,
+        id,
+        createdAt: new Date()
+      })
+    }
 
     setFormData({
       type: 'i_owe',
@@ -60,6 +92,34 @@ export function DebtTab() {
     setShowForm(false)
     loadDebts()
     DataEvents.emit(DATA_EVENTS.EXPENSE_CHANGED)
+  }
+
+  async function handleEdit(debt: Debt) {
+    setEditingId(debt.id!)
+    setFormData({
+      type: debt.type,
+      person: debt.person,
+      amount: debt.amount.toString(),
+      paidAmount: debt.paidAmount.toString(),
+      dueDate: new Date(debt.dueDate).toISOString().split('T')[0],
+      interestRate: debt.interestRate.toString(),
+      description: debt.description || ''
+    })
+    setShowForm(true)
+  }
+  
+  function handleCancelEdit() {
+    setEditingId(null)
+    setFormData({
+      type: 'i_owe',
+      person: '',
+      amount: '',
+      paidAmount: '',
+      dueDate: '',
+      interestRate: '',
+      description: ''
+    })
+    setShowForm(false)
   }
 
   async function handleDelete(id: string | undefined) {
@@ -129,7 +189,9 @@ export function DebtTab() {
       {/* Add Form */}
       {showForm && (
         <form onSubmit={handleSubmit} className="card animate-in space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Add Debt</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            {editingId ? 'Edit Debt' : 'Add Debt'}
+          </h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -230,8 +292,10 @@ export function DebtTab() {
           </div>
 
           <div className="flex gap-3">
-            <button type="submit" className="btn-primary">Save Debt</button>
-            <button type="button" onClick={() => setShowForm(false)} className="btn-secondary">
+            <button type="submit" className="btn-primary">
+              {editingId ? 'Update Debt' : 'Save Debt'}
+            </button>
+            <button type="button" onClick={handleCancelEdit} className="btn-secondary">
               Cancel
             </button>
           </div>
@@ -339,17 +403,27 @@ export function DebtTab() {
                 </div>
                 <div className="ml-4 flex gap-2">
                   {!isPaid && (
-                    <button
-                      onClick={() => markAsPaid(debt.id)}
-                      className="btn-icon text-green-600 dark:text-green-400"
-                      title="Mark as paid"
-                    >
-                      <CheckCircle className="w-5 h-5" />
-                    </button>
+                    <>
+                      <button
+                        onClick={() => handleEdit(debt)}
+                        className="btn-icon text-blue-600 dark:text-blue-400"
+                        title="Edit debt"
+                      >
+                        <Edit className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => markAsPaid(debt.id)}
+                        className="btn-icon text-green-600 dark:text-green-400"
+                        title="Mark as paid"
+                      >
+                        <CheckCircle className="w-5 h-5" />
+                      </button>
+                    </>
                   )}
                   <button
                     onClick={() => handleDelete(debt.id)}
                     className="btn-icon text-red-600 dark:text-red-400"
+                    title="Delete debt"
                   >
                     <Trash2 className="w-5 h-5" />
                   </button>

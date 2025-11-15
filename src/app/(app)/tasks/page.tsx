@@ -1,15 +1,16 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, CheckSquare, Square, Trash2, Calendar } from 'lucide-react'
-import { addTask, getAllTasks, toggleTaskCompletion, deleteTask, type Task } from '@/lib/db/queries'
+import { Plus, CheckSquare, Square, Trash2, Calendar, Edit, Filter } from 'lucide-react'
+import { addTask, getAllTasks, toggleTaskCompletion, deleteTask, updateTask, type Task } from '@/lib/db/queries'
 import { formatDate } from '@/lib/constants'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [showForm, setShowForm] = useState(false)
-  const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all')
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [filter, setFilter] = useState<'all' | 'pending' | 'completed' | 'overdue' | 'today'>('all')
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -31,15 +32,34 @@ export default function TasksPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     
-    await addTask({
-      title: formData.title,
+    // Validation
+    if (!formData.title.trim()) {
+      alert('Title is required')
+      return
+    }
+    if (formData.title.length > 200) {
+      alert('Title is too long (max 200 characters)')
+      return
+    }
+    
+    const taskData = {
+      title: formData.title.trim(),
       description: formData.description,
       priority: formData.priority,
       dueDate: formData.dueDate ? new Date(formData.dueDate) : undefined,
       category: formData.category,
-      tags: formData.tags ? formData.tags.split(',').map(t => t.trim()) : [],
+      tags: formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(t => t) : [],
       completed: false
-    })
+    }
+    
+    if (editingId) {
+      // Update existing task
+      await updateTask(editingId, taskData)
+      setEditingId(null)
+    } else {
+      // Add new task
+      await addTask(taskData)
+    }
 
     setFormData({
       title: '',
@@ -61,6 +81,32 @@ export default function TasksPage() {
     DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
   }
 
+  async function handleEdit(task: Task) {
+    setEditingId(task.id!)
+    setFormData({
+      title: task.title,
+      description: task.description || '',
+      priority: task.priority as any,
+      dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',
+      category: task.category || '',
+      tags: task.tags ? task.tags.join(', ') : ''
+    })
+    setShowForm(true)
+  }
+  
+  function handleCancelEdit() {
+    setEditingId(null)
+    setFormData({
+      title: '',
+      description: '',
+      priority: 'medium',
+      dueDate: '',
+      category: '',
+      tags: ''
+    })
+    setShowForm(false)
+  }
+
   async function handleDelete(id: string | undefined) {
     if (!id) return
     if (confirm('Delete this task?')) {
@@ -71,13 +117,40 @@ export default function TasksPage() {
   }
 
   const filteredTasks = tasks.filter(task => {
+    const now = new Date()
+    now.setHours(0, 0, 0, 0)
+    const dueDate = task.dueDate ? new Date(task.dueDate) : null
+    if (dueDate) dueDate.setHours(0, 0, 0, 0)
+    
     if (filter === 'pending') return !task.completed
     if (filter === 'completed') return task.completed
+    if (filter === 'overdue') {
+      return !task.completed && dueDate && dueDate < now
+    }
+    if (filter === 'today') {
+      return !task.completed && dueDate && dueDate.getTime() === now.getTime()
+    }
     return true
   })
 
   const pendingCount = tasks.filter(t => !t.completed).length
   const completedCount = tasks.filter(t => t.completed).length
+  const overdueCount = tasks.filter(t => {
+    if (t.completed || !t.dueDate) return false
+    const now = new Date()
+    now.setHours(0, 0, 0, 0)
+    const dueDate = new Date(t.dueDate)
+    dueDate.setHours(0, 0, 0, 0)
+    return dueDate < now
+  }).length
+  const todayCount = tasks.filter(t => {
+    if (t.completed || !t.dueDate) return false
+    const now = new Date()
+    now.setHours(0, 0, 0, 0)
+    const dueDate = new Date(t.dueDate)
+    dueDate.setHours(0, 0, 0, 0)
+    return dueDate.getTime() === now.getTime()
+  }).length
 
   return (
     <div className="space-y-6">
@@ -100,43 +173,72 @@ export default function TasksPage() {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex gap-2">
-        <button
-          onClick={() => setFilter('all')}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-            filter === 'all'
-              ? 'bg-blue-600 dark:bg-blue-500 text-white'
-              : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
-          }`}
-        >
-          All ({tasks.length})
-        </button>
-        <button
-          onClick={() => setFilter('pending')}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-            filter === 'pending'
-              ? 'bg-blue-600 dark:bg-blue-500 text-white'
-              : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
-          }`}
-        >
-          Pending ({pendingCount})
-        </button>
-        <button
-          onClick={() => setFilter('completed')}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-            filter === 'completed'
-              ? 'bg-blue-600 dark:bg-blue-500 text-white'
-              : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
-          }`}
-        >
-          Completed ({completedCount})
-        </button>
+      <div className="card">
+        <div className="flex items-center gap-3">
+          <Filter className="w-5 h-5 text-gray-400" />
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setFilter('all')}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                filter === 'all'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
+            >
+              All ({tasks.length})
+            </button>
+            <button
+              onClick={() => setFilter('today')}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                filter === 'today'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
+            >
+              Today ({todayCount})
+            </button>
+            <button
+              onClick={() => setFilter('overdue')}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                filter === 'overdue'
+                  ? 'bg-red-600 text-white'
+                  : overdueCount > 0
+                  ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
+            >
+              Overdue ({overdueCount})
+            </button>
+            <button
+              onClick={() => setFilter('pending')}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                filter === 'pending'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
+            >
+              Pending ({pendingCount})
+            </button>
+            <button
+              onClick={() => setFilter('completed')}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                filter === 'completed'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
+            >
+              Completed ({completedCount})
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Add Form */}
       {showForm && (
         <form onSubmit={handleSubmit} className="card animate-in space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Add Task</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            {editingId ? 'Edit Task' : 'Add Task'}
+          </h3>
           
           <div className="space-y-4">
             <div>
@@ -209,8 +311,10 @@ export default function TasksPage() {
           </div>
 
           <div className="flex gap-3">
-            <button type="submit" className="btn-primary">Save Task</button>
-            <button type="button" onClick={() => setShowForm(false)} className="btn-secondary">
+            <button type="submit" className="btn-primary">
+              {editingId ? 'Update Task' : 'Save Task'}
+            </button>
+            <button type="button" onClick={handleCancelEdit} className="btn-secondary">
               Cancel
             </button>
           </div>
@@ -288,12 +392,24 @@ export default function TasksPage() {
                 </div>
               </div>
 
-              <button
-                onClick={() => handleDelete(task.id)}
-                className="btn-icon text-red-600 dark:text-red-400"
-              >
-                <Trash2 className="w-5 h-5" />
-              </button>
+              <div className="flex gap-2">
+                {!task.completed && (
+                  <button
+                    onClick={() => handleEdit(task)}
+                    className="btn-icon text-blue-600 dark:text-blue-400"
+                    title="Edit task"
+                  >
+                    <Edit className="w-5 h-5" />
+                  </button>
+                )}
+                <button
+                  onClick={() => handleDelete(task.id)}
+                  className="btn-icon text-red-600 dark:text-red-400"
+                  title="Delete task"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+              </div>
             </div>
           ))
         )}

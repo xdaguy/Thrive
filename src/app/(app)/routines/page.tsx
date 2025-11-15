@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, RotateCw, Trophy, Target, Trash2, CheckCircle, Circle, X } from 'lucide-react'
+import { Plus, RotateCw, Trophy, Target, Trash2, CheckCircle, Circle, X, Edit } from 'lucide-react'
 import { 
   addRoutine, 
   getAllRoutines, 
-  deleteRoutine, 
+  deleteRoutine,
+  updateRoutine,
   getTodayRoutineCompletion,
   addRoutineCompletion,
   getRoutineStreak 
@@ -19,6 +20,7 @@ export default function RoutinesPage() {
   const [completions, setCompletions] = useState<Record<string, RoutineCompletion>>({})
   const [streaks, setStreaks] = useState<Record<string, number>>({})
   const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     name: '',
     timeOfDay: 'morning' as 'morning' | 'afternoon' | 'evening' | 'night',
@@ -79,11 +81,29 @@ export default function RoutinesPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     
-    await addRoutine({
-      name: formData.name,
+    // Validation
+    if (!formData.name.trim()) {
+      alert('Routine name is required')
+      return
+    }
+    const validItems = formData.items.filter(item => item.name.trim() !== '')
+    if (validItems.length === 0) {
+      alert('At least one routine item is required')
+      return
+    }
+    
+    const routineData = {
+      name: formData.name.trim(),
       timeOfDay: formData.timeOfDay,
-      items: formData.items.filter(item => item.name.trim() !== '')
-    })
+      items: validItems
+    }
+    
+    if (editingId) {
+      await updateRoutine(editingId, routineData)
+      setEditingId(null)
+    } else {
+      await addRoutine(routineData)
+    }
 
     setFormData({
       name: '',
@@ -93,6 +113,30 @@ export default function RoutinesPage() {
     setShowForm(false)
     loadRoutines()
     DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
+  }
+
+  async function handleEdit(routine: Routine) {
+    setEditingId(routine.id!)
+    setFormData({
+      name: routine.name,
+      timeOfDay: routine.timeOfDay,
+      items: routine.items.map((item, index) => ({
+        id: item.id || generateId(),
+        name: item.name,
+        order: index
+      }))
+    })
+    setShowForm(true)
+  }
+  
+  function handleCancelEdit() {
+    setEditingId(null)
+    setFormData({
+      name: '',
+      timeOfDay: 'morning',
+      items: [{ id: generateId(), name: '', order: 0 }]
+    })
+    setShowForm(false)
   }
 
   async function handleDelete(id: string | undefined) {
@@ -212,7 +256,9 @@ export default function RoutinesPage() {
       {/* Create Form */}
       {showForm && (
         <form onSubmit={handleSubmit} className="card animate-in space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Create Routine</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            {editingId ? 'Edit Routine' : 'Create Routine'}
+          </h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -284,8 +330,10 @@ export default function RoutinesPage() {
           </div>
 
           <div className="flex gap-3">
-            <button type="submit" className="btn-primary">Create Routine</button>
-            <button type="button" onClick={() => setShowForm(false)} className="btn-secondary">
+            <button type="submit" className="btn-primary">
+              {editingId ? 'Update Routine' : 'Create Routine'}
+            </button>
+            <button type="button" onClick={handleCancelEdit} className="btn-secondary">
               Cancel
             </button>
           </div>
@@ -332,12 +380,22 @@ export default function RoutinesPage() {
                       )}
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleDelete(routine.id)}
-                    className="btn-icon text-red-600 dark:text-red-400"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleEdit(routine)}
+                      className="btn-icon text-blue-600 dark:text-blue-400"
+                      title="Edit routine"
+                    >
+                      <Edit className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(routine.id)}
+                      className="btn-icon text-red-600 dark:text-red-400"
+                      title="Delete routine"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Progress Bar */}

@@ -129,6 +129,10 @@ export async function getAllWeight() {
   return await db.weight.orderBy('date').reverse().toArray()
 }
 
+export async function updateWeight(id: string, updates: Partial<Weight>) {
+  await db.weight.update(id, updates)
+}
+
 export async function deleteWeight(id: string) {
   await db.weight.delete(id)
 }
@@ -150,6 +154,10 @@ export async function getAllExercise() {
   return await db.exercise.orderBy('date').reverse().toArray()
 }
 
+export async function updateExercise(id: string, updates: Partial<Exercise>) {
+  await db.exercise.update(id, updates)
+}
+
 export async function deleteExercise(id: string) {
   await db.exercise.delete(id)
 }
@@ -169,6 +177,10 @@ export async function addMeal(meal: Omit<Meal, 'id' | 'createdAt'>) {
 
 export async function getAllMeals() {
   return await db.meals.orderBy('date').reverse().toArray()
+}
+
+export async function updateMeal(id: string, updates: Partial<Meal>) {
+  await db.meals.update(id, updates)
 }
 
 export async function deleteMeal(id: string) {

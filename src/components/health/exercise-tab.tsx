@@ -1,14 +1,15 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Dumbbell, Trash2 } from 'lucide-react'
-import { addExercise, getAllExercise, deleteExercise, type Exercise } from '@/lib/db/queries'
+import { Plus, Dumbbell, Trash2, Edit } from 'lucide-react'
+import { addExercise, getAllExercise, deleteExercise, updateExercise, type Exercise } from '@/lib/db/queries'
 import { formatDate } from '@/lib/constants'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
 
 export function ExerciseTab() {
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     type: 'cardio' as 'cardio' | 'gym' | 'sports' | 'other',
     name: '',
@@ -31,15 +32,33 @@ export function ExerciseTab() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     
-    await addExercise({
+    // Validation
+    const duration = parseInt(formData.duration)
+    if (duration <= 0) {
+      alert('Duration must be greater than 0')
+      return
+    }
+    if (duration > 1440) {
+      alert('Duration seems too long (max 24 hours)')
+      return
+    }
+    
+    const exerciseData = {
       type: formData.type,
       name: formData.name,
-      duration: parseInt(formData.duration),
+      duration,
       sets: formData.sets ? parseInt(formData.sets) : undefined,
       reps: formData.reps ? parseInt(formData.reps) : undefined,
       date: new Date(formData.date),
       note: formData.note
-    })
+    }
+    
+    if (editingId) {
+      await updateExercise(editingId, exerciseData)
+      setEditingId(null)
+    } else {
+      await addExercise(exerciseData)
+    }
 
     setFormData({
       type: 'cardio',
@@ -53,6 +72,34 @@ export function ExerciseTab() {
     setShowForm(false)
     loadExercises()
     DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
+  }
+
+  async function handleEdit(exercise: Exercise) {
+    setEditingId(exercise.id!)
+    setFormData({
+      type: exercise.type as any,
+      name: exercise.name,
+      duration: exercise.duration.toString(),
+      sets: exercise.sets?.toString() || '',
+      reps: exercise.reps?.toString() || '',
+      date: new Date(exercise.date).toISOString().split('T')[0],
+      note: exercise.note || ''
+    })
+    setShowForm(true)
+  }
+  
+  function handleCancelEdit() {
+    setEditingId(null)
+    setFormData({
+      type: 'cardio',
+      name: '',
+      duration: '',
+      sets: '',
+      reps: '',
+      date: new Date().toISOString().split('T')[0],
+      note: ''
+    })
+    setShowForm(false)
   }
 
   async function handleDelete(id: string | undefined) {
@@ -89,7 +136,9 @@ export function ExerciseTab() {
 
       {showForm && (
         <form onSubmit={handleSubmit} className="card animate-in space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Log Exercise</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            {editingId ? 'Edit Exercise' : 'Log Exercise'}
+          </h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -194,8 +243,10 @@ export function ExerciseTab() {
           </div>
 
           <div className="flex gap-3">
-            <button type="submit" className="btn-primary">Save</button>
-            <button type="button" onClick={() => setShowForm(false)} className="btn-secondary">
+            <button type="submit" className="btn-primary">
+              {editingId ? 'Update' : 'Save'}
+            </button>
+            <button type="button" onClick={handleCancelEdit} className="btn-secondary">
               Cancel
             </button>
           </div>
@@ -238,12 +289,22 @@ export function ExerciseTab() {
                   </p>
                 </div>
               </div>
-              <button
-                onClick={() => handleDelete(exercise.id)}
-                className="btn-icon text-red-600 dark:text-red-400"
-              >
-                <Trash2 className="w-5 h-5" />
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleEdit(exercise)}
+                  className="btn-icon text-blue-600 dark:text-blue-400"
+                  title="Edit exercise"
+                >
+                  <Edit className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => handleDelete(exercise.id)}
+                  className="btn-icon text-red-600 dark:text-red-400"
+                  title="Delete exercise"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+              </div>
             </div>
           ))
         )}

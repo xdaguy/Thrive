@@ -1,14 +1,15 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Scale, Trash2, TrendingDown, TrendingUp } from 'lucide-react'
-import { addWeight, getAllWeight, deleteWeight, type Weight } from '@/lib/db/queries'
+import { Plus, Scale, Trash2, TrendingDown, TrendingUp, Edit } from 'lucide-react'
+import { addWeight, getAllWeight, deleteWeight, updateWeight, type Weight } from '@/lib/db/queries'
 import { formatDate } from '@/lib/constants'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
 
 export function WeightTab() {
   const [weights, setWeights] = useState<Weight[]>([])
   const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     weight: '',
     unit: 'kg' as 'kg' | 'lbs',
@@ -28,12 +29,30 @@ export function WeightTab() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     
-    await addWeight({
-      weight: parseFloat(formData.weight),
+    // Validation
+    const weight = parseFloat(formData.weight)
+    if (weight <= 0) {
+      alert('Weight must be greater than 0')
+      return
+    }
+    if (weight > 1000) {
+      alert('Weight seems unrealistic. Please check.')
+      return
+    }
+    
+    const weightData = {
+      weight,
       unit: formData.unit,
       date: new Date(formData.date),
       note: formData.note
-    })
+    }
+    
+    if (editingId) {
+      await updateWeight(editingId, weightData)
+      setEditingId(null)
+    } else {
+      await addWeight(weightData)
+    }
 
     setFormData({
       weight: '',
@@ -44,6 +63,28 @@ export function WeightTab() {
     setShowForm(false)
     loadWeights()
     DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
+  }
+
+  async function handleEdit(weight: Weight) {
+    setEditingId(weight.id!)
+    setFormData({
+      weight: weight.weight.toString(),
+      unit: weight.unit,
+      date: new Date(weight.date).toISOString().split('T')[0],
+      note: weight.note || ''
+    })
+    setShowForm(true)
+  }
+  
+  function handleCancelEdit() {
+    setEditingId(null)
+    setFormData({
+      weight: '',
+      unit: formData.unit,
+      date: new Date().toISOString().split('T')[0],
+      note: ''
+    })
+    setShowForm(false)
   }
 
   async function handleDelete(id: string | undefined) {
@@ -98,7 +139,9 @@ export function WeightTab() {
 
       {showForm && (
         <form onSubmit={handleSubmit} className="card animate-in space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Log Weight</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            {editingId ? 'Edit Weight' : 'Log Weight'}
+          </h3>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
@@ -158,8 +201,10 @@ export function WeightTab() {
           </div>
 
           <div className="flex gap-3">
-            <button type="submit" className="btn-primary">Save</button>
-            <button type="button" onClick={() => setShowForm(false)} className="btn-secondary">
+            <button type="submit" className="btn-primary">
+              {editingId ? 'Update' : 'Save'}
+            </button>
+            <button type="button" onClick={handleCancelEdit} className="btn-secondary">
               Cancel
             </button>
           </div>
@@ -198,12 +243,22 @@ export function WeightTab() {
                   </p>
                 </div>
               </div>
-              <button
-                onClick={() => handleDelete(weight.id)}
-                className="btn-icon text-red-600 dark:text-red-400"
-              >
-                <Trash2 className="w-5 h-5" />
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleEdit(weight)}
+                  className="btn-icon text-blue-600 dark:text-blue-400"
+                  title="Edit weight"
+                >
+                  <Edit className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => handleDelete(weight.id)}
+                  className="btn-icon text-red-600 dark:text-red-400"
+                  title="Delete weight"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+              </div>
             </div>
           ))
         )}
