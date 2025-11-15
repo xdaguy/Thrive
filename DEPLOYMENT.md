@@ -32,7 +32,7 @@ git add .
 git commit -m "Initial commit - Thrive app ready for deployment"
 
 # Add GitHub remote (replace with your repo URL)
-git remote add origin https://github.com/yourusername/thrive.git
+git remote add origin https://github.com/xdaguy/thrive.git
 
 # Push to GitHub
 git push -u origin main
@@ -65,7 +65,7 @@ Make sure these files are in your repo:
 
 ### 2.3 Configure Repository
 
-1. **Select Repository:** Choose `yourusername/thrive`
+1. **Select Repository:** Choose `xdaguy/thrive`
 2. **Select Branch:** Choose `main` (or your default branch)
 3. **Autodeploy:** Enable "Autodeploy code changes" ✅
 4. Click **"Next"**
@@ -472,7 +472,7 @@ After successful deployment:
 git init
 git add .
 git commit -m "Initial commit"
-git remote add origin https://github.com/yourusername/thrive.git
+git remote add origin https://github.com/xdaguy/thrive.git
 git push -u origin main
 
 # Then follow Step 2 in DigitalOcean dashboard
@@ -492,8 +492,9 @@ git push -u origin main
 - Deployment: https://nextjs.org/docs/deployment
 
 **Thrive Project:**
-- GitHub: https://github.com/yourusername/thrive
-- Issues: https://github.com/yourusername/thrive/issues
+- GitHub: https://github.com/xdaguy/thrive
+- Issues: https://github.com/xdaguy/thrive/issues
+- Live App: https://thrive-23ifz.ondigitalocean.app/
 
 ---
 
