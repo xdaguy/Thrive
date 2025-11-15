@@ -1,11 +1,16 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Home, Wallet, CheckSquare, Heart, RotateCw, Settings } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { db } from '@/lib/db/schema'
+import { DataEvents, DATA_EVENTS } from '@/lib/events'
 
 export function Sidebar() {
   const pathname = usePathname()
+  const [userName, setUserName] = useState('User')
+  const [storageType, setStorageType] = useState('Local Storage')
 
   const navItems = [
     { icon: Home, label: 'Dashboard', href: '/dashboard' },
@@ -15,6 +20,50 @@ export function Sidebar() {
     { icon: RotateCw, label: 'Routines', href: '/routines' },
     { icon: Settings, label: 'Settings', href: '/settings' },
   ]
+
+  useEffect(() => {
+    loadUserInfo()
+
+    // Listen for settings changes
+    DataEvents.on(DATA_EVENTS.SETTINGS_CHANGED, loadUserInfo)
+
+    return () => {
+      DataEvents.off(DATA_EVENTS.SETTINGS_CHANGED, loadUserInfo)
+    }
+  }, [])
+
+  async function loadUserInfo() {
+    try {
+      const settings = await db.settings.get('user_settings')
+      if (settings?.name) {
+        setUserName(settings.name)
+      }
+      
+      // Map storage provider to display text
+      if (settings?.syncEnabled && settings?.syncProvider) {
+        const providerNames = {
+          'google': 'Google Drive',
+          'dropbox': 'Dropbox',
+          'onedrive': 'OneDrive'
+        }
+        setStorageType(providerNames[settings.syncProvider] || 'Cloud Storage')
+      } else {
+        setStorageType('Local Storage')
+      }
+    } catch (error) {
+      console.error('Failed to load user info:', error)
+    }
+  }
+
+  // Get user initials (first letter of each word, max 2)
+  const getUserInitial = () => {
+    if (!userName || userName === 'User') return 'U'
+    const words = userName.trim().split(' ')
+    if (words.length === 1) {
+      return words[0][0].toUpperCase()
+    }
+    return (words[0][0] + words[words.length - 1][0]).toUpperCase()
+  }
 
   return (
     <aside className="hidden md:flex flex-col w-64 bg-white dark:bg-[#1A1A1A] border-r border-gray-200 dark:border-gray-800 h-screen sticky top-0">
@@ -51,15 +100,15 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* User Section (placeholder) */}
+      {/* User Section */}
       <div className="p-4 border-t border-gray-200 dark:border-gray-800">
         <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800">
           <div className="w-8 h-8 rounded-full bg-blue-600 dark:bg-blue-500 flex items-center justify-center">
-            <span className="text-white text-sm font-medium">U</span>
+            <span className="text-white text-sm font-medium">{getUserInitial()}</span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">User</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Local Storage</p>
+            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{userName}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{storageType}</p>
           </div>
         </div>
       </div>
