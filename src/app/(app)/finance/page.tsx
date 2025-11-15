@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
 import { IncomeTab } from '@/components/finance/income-tab'
 import { ExpenseTab } from '@/components/finance/expense-tab'
 import { DebtTab } from '@/components/finance/debt-tab'
+import { fadeIn, tabContent } from '@/lib/animations'
 
 type Tab = 'income' | 'expenses' | 'debts'
 
@@ -30,16 +32,21 @@ export default function FinancePage() {
   }, [searchParams])
 
   return (
-    <div className="space-y-6">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="space-y-6"
+    >
       {/* Header */}
-      <div>
+      <motion.div {...fadeIn}>
         <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
           Finance
         </h2>
         <p className="text-gray-600 dark:text-gray-400">
           Track your income, expenses, and debts
         </p>
-      </div>
+      </motion.div>
 
       {/* Tabs */}
       <div className="card p-0 overflow-hidden">
@@ -77,12 +84,18 @@ export default function FinancePage() {
         </div>
 
         {/* Tab Content */}
-        <div className="p-6">
-          {activeTab === 'income' && <IncomeTab openForm={shouldOpenForm} />}
-          {activeTab === 'expenses' && <ExpenseTab openForm={shouldOpenForm} />}
-          {activeTab === 'debts' && <DebtTab openForm={shouldOpenForm} />}
-        </div>
+        <AnimatePresence mode="wait">
+          <motion.div 
+            key={activeTab}
+            {...tabContent}
+            className="p-6"
+          >
+            {activeTab === 'income' && <IncomeTab openForm={shouldOpenForm} />}
+            {activeTab === 'expenses' && <ExpenseTab openForm={shouldOpenForm} />}
+            {activeTab === 'debts' && <DebtTab openForm={shouldOpenForm} />}
+          </motion.div>
+        </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   )
 }

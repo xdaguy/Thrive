@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { Database, Cloud, Download, Upload, Trash2, Info, DollarSign, Weight as WeightIcon, Calendar, User } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { db } from '@/lib/db/schema'
 import { useTheme } from 'next-themes'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
+import { fadeIn, staggerContainer, staggerItem } from '@/lib/animations'
 
 export default function SettingsPage() {
   const [stats, setStats] = useState({
@@ -249,18 +251,27 @@ export default function SettingsPage() {
   const totalEntries = Object.values(stats).reduce((sum, count) => sum + count, 0)
 
   return (
-    <div className="space-y-6">
-      <div>
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="space-y-6"
+    >
+      <motion.div {...fadeIn}>
         <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
           Settings
         </h2>
         <p className="text-gray-600 dark:text-gray-400">
           Manage your preferences and data
         </p>
-      </div>
+      </motion.div>
 
       {/* Data Statistics */}
-      <div className="card">
+      <motion.div 
+        {...fadeIn}
+        transition={{ delay: 0.1 }}
+        className="card"
+      >
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
           <Database className="w-5 h-5" />
           Your Data
@@ -304,10 +315,14 @@ export default function SettingsPage() {
             <strong className="text-gray-900 dark:text-white">Total: {totalEntries} entries</strong> stored locally in your browser
           </p>
         </div>
-      </div>
+      </motion.div>
 
       {/* Preferences */}
-      <div className="card">
+      <motion.div 
+        {...fadeIn}
+        transition={{ delay: 0.2 }}
+        className="card"
+      >
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           Preferences
         </h3>
@@ -391,10 +406,14 @@ export default function SettingsPage() {
             </select>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* About Thrive */}
-      <div className="card">
+      <motion.div 
+        {...fadeIn}
+        transition={{ delay: 0.25 }}
+        className="card"
+      >
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
           <Info className="w-5 h-5" />
           About Thrive
@@ -407,10 +426,14 @@ export default function SettingsPage() {
             Thrive is an open-source personal management app that keeps your data local and private.
           </p>
         </div>
-      </div>
+      </motion.div>
 
       {/* Data Management */}
-      <div className="card">
+      <motion.div 
+        {...fadeIn}
+        transition={{ delay: 0.3 }}
+        className="card"
+      >
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
           <Database className="w-5 h-5" />
           Data Management
@@ -458,10 +481,14 @@ export default function SettingsPage() {
             <span className="text-sm text-red-600 dark:text-red-400 font-medium">Delete</span>
           </button>
         </div>
-      </div>
+      </motion.div>
 
       {/* Cloud Sync */}
-      <div className="card">
+      <motion.div 
+        {...fadeIn}
+        transition={{ delay: 0.33 }}
+        className="card"
+      >
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
           <Cloud className="w-5 h-5" />
           Cloud Sync
@@ -475,10 +502,14 @@ export default function SettingsPage() {
         <button className="w-full btn-primary">
           Connect Google Drive (Coming Soon)
         </button>
-      </div>
+      </motion.div>
 
       {/* Theme */}
-      <div className="card">
+      <motion.div 
+        {...fadeIn}
+        transition={{ delay: 0.35 }}
+        className="card"
+      >
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           Appearance
         </h3>
@@ -522,10 +553,14 @@ export default function SettingsPage() {
             </button>
           </div>
         )}
-      </div>
+      </motion.div>
 
       {/* Links */}
-      <div className="card">
+      <motion.div 
+        {...fadeIn}
+        transition={{ delay: 0.4 }}
+        className="card"
+      >
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           Resources
         </h3>
@@ -543,7 +578,7 @@ export default function SettingsPage() {
             🐛 Report a Bug
           </a>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   )
 }

@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Plus, CheckSquare, Square, Trash2, Calendar, Edit, Filter } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { addTask, getAllTasks, toggleTaskCompletion, deleteTask, updateTask, type Task } from '@/lib/db/queries'
 import { formatDate } from '@/lib/constants'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
 import { db } from '@/lib/db/schema'
+import { fadeIn, listItem, staggerContainer, staggerItem } from '@/lib/animations'
 
 export default function TasksPage() {
   const searchParams = useSearchParams()
@@ -184,8 +186,13 @@ export default function TasksPage() {
   }).length
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="space-y-6"
+    >
+      <motion.div {...fadeIn} className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
             Tasks
@@ -201,7 +208,7 @@ export default function TasksPage() {
           <Plus className="w-5 h-5" />
           Add Task
         </button>
-      </div>
+      </motion.div>
 
       {/* Filter Tabs */}
       <div className="card">
@@ -368,10 +375,14 @@ export default function TasksPage() {
             </button>
           </div>
         ) : (
-          filteredTasks.map((task) => (
-            <div
-              key={task.id}
-              className={`flex items-start gap-4 p-4 bg-white dark:bg-[#1A1A1A] border rounded-xl transition-all hover:shadow-md ${
+          <AnimatePresence mode="popLayout">
+            {filteredTasks.map((task) => (
+              <motion.div
+                key={task.id}
+                {...listItem}
+                layout
+                whileHover={{ scale: 1.01, y: -2 }}
+                className={`flex items-start gap-4 p-4 bg-white dark:bg-[#1A1A1A] border rounded-xl transition-all hover:shadow-md ${
                 task.completed
                   ? 'border-green-200 dark:border-green-900/30 opacity-60'
                   : 'border-gray-200 dark:border-gray-800'
@@ -441,10 +452,11 @@ export default function TasksPage() {
                   <Trash2 className="w-5 h-5" />
                 </button>
               </div>
-            </div>
-          ))
+            </motion.div>
+          ))}
+          </AnimatePresence>
         )}
       </div>
-    </div>
+    </motion.div>
   )
 }

@@ -79,27 +79,45 @@
 }
 
 @layer components {
-  /* Button styles */
+  /* Button styles - Enhanced with micro-interactions */
   .btn-primary {
-    @apply bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold rounded-xl px-6 py-3 transition-all duration-200 active:scale-[0.97] shadow-sm;
+    @apply bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold rounded-xl px-6 py-3 transition-all duration-300 active:scale-[0.96] shadow-sm hover:shadow-lg hover:-translate-y-0.5;
   }
   
   .btn-secondary {
-    @apply bg-transparent border-2 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100 font-semibold rounded-xl px-6 py-3 transition-all duration-200;
+    @apply bg-transparent border-2 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 text-gray-900 dark:text-gray-100 font-semibold rounded-xl px-6 py-3 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5;
   }
   
   .btn-icon {
-    @apply w-11 h-11 flex items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200;
+    @apply w-11 h-11 flex items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 hover:scale-110 active:scale-95;
   }
   
-  /* Card styles */
+  /* Card styles - Premium hover effects */
   .card {
-    @apply bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm transition-shadow duration-200 hover:shadow-md;
+    @apply bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm transition-all duration-300 hover:shadow-xl hover:border-gray-300 dark:hover:border-gray-700;
   }
   
-  /* Input styles */
+  .card-interactive {
+    @apply card hover:-translate-y-1 cursor-pointer active:scale-[0.99];
+  }
+  
+  /* Input styles - Smooth focus states */
   .input {
-    @apply w-full h-11 px-4 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-[#1A1A1A] text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 transition-all duration-200;
+    @apply w-full h-11 px-4 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-[#1A1A1A] text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600;
+  }
+  
+  /* Magnetic hover effect */
+  .magnetic {
+    @apply transition-transform duration-200 ease-out;
+  }
+  
+  .magnetic:hover {
+    @apply scale-105;
+  }
+  
+  /* Smooth link transitions */
+  .link {
+    @apply transition-all duration-200 hover:translate-x-1;
   }
   
   /* Utility classes */
