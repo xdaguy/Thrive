@@ -374,12 +374,18 @@ export default function OnboardingPage() {
                 autoFocus
                 required
               />
-            </div>
+            </motion.div>
           )}
 
           {/* Step 2: Currency */}
           {step === 2 && (
-            <div className="animate-in fade-in duration-300">
+            <motion.div 
+              key="step-2"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            >
               <div className="text-center mb-5 sm:mb-6 px-4">
                 <div className="w-14 h-14 sm:w-16 sm:h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
                   <DollarSign className="w-7 h-7 sm:w-8 sm:h-8 text-green-600 dark:text-green-400" />
@@ -414,12 +420,18 @@ export default function OnboardingPage() {
                   </button>
                 ))}
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* Step 3: Weight Unit */}
           {step === 3 && (
-            <div className="animate-in fade-in duration-300">
+            <motion.div 
+              key="step-3"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            >
               <div className="text-center mb-5 sm:mb-6 px-4">
                 <div className="w-14 h-14 sm:w-16 sm:h-16 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
                   <Scale className="w-7 h-7 sm:w-8 sm:h-8 text-purple-600 dark:text-purple-400" />
@@ -467,12 +479,18 @@ export default function OnboardingPage() {
                   </div>
                 </button>
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* Step 4: Date Format */}
           {step === 4 && (
-            <div className="animate-in fade-in duration-300">
+            <motion.div 
+              key="step-4"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            >
               <div className="text-center mb-5 sm:mb-6 px-4">
                 <div className="w-14 h-14 sm:w-16 sm:h-16 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
                   <Calendar className="w-7 h-7 sm:w-8 sm:h-8 text-orange-600 dark:text-orange-400" />
@@ -517,12 +535,18 @@ export default function OnboardingPage() {
                   </button>
                 ))}
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* Step 5: Data Storage */}
           {step === 5 && (
-            <div className="animate-in fade-in duration-300">
+            <motion.div 
+              key="step-5"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            >
               <div className="text-center mb-5 sm:mb-6 px-4">
                 <div className="w-14 h-14 sm:w-16 sm:h-16 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
                   <Database className="w-7 h-7 sm:w-8 sm:h-8 text-indigo-600 dark:text-indigo-400" />
@@ -665,8 +689,9 @@ export default function OnboardingPage() {
                   </p>
                 </div>
               </div>
-            </div>
+            </motion.div>
           )}
+          </AnimatePresence>
 
           {/* Navigation Buttons - Only show when step > 0 */}
           {step > 0 && (
@@ -710,7 +735,6 @@ export default function OnboardingPage() {
               )}
             </div>
           )}
-          </AnimatePresence>
         </div>
 
         {/* Summary Preview (Step 5) */}
