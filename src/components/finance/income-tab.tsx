@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Plus, TrendingUp, Trash2, Edit } from 'lucide-react'
 import { addIncome, getAllIncome, deleteIncome, type Income } from '@/lib/db/queries'
 import { INCOME_CATEGORIES, formatCurrency, formatDate } from '@/lib/constants'
+import { DataEvents, DATA_EVENTS } from '@/lib/events'
 
 export function IncomeTab() {
   const [incomes, setIncomes] = useState<Income[]>([])
@@ -49,6 +50,7 @@ export function IncomeTab() {
     })
     setShowForm(false)
     loadIncomes()
+    DataEvents.emit(DATA_EVENTS.INCOME_CHANGED)
   }
 
   async function handleDelete(id: string | undefined) {
@@ -56,6 +58,7 @@ export function IncomeTab() {
     if (confirm('Are you sure you want to delete this income entry?')) {
       await deleteIncome(id)
       loadIncomes()
+      DataEvents.emit(DATA_EVENTS.INCOME_CHANGED)
     }
   }
 

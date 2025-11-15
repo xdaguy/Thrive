@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Plus, CheckSquare, Square, Trash2, Calendar } from 'lucide-react'
 import { addTask, getAllTasks, toggleTaskCompletion, deleteTask, type Task } from '@/lib/db/queries'
 import { formatDate } from '@/lib/constants'
+import { DataEvents, DATA_EVENTS } from '@/lib/events'
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([])
@@ -50,12 +51,14 @@ export default function TasksPage() {
     })
     setShowForm(false)
     loadTasks()
+    DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
   }
 
   async function handleToggle(id: string | undefined) {
     if (!id) return
     await toggleTaskCompletion(id)
     loadTasks()
+    DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
   }
 
   async function handleDelete(id: string | undefined) {
@@ -63,6 +66,7 @@ export default function TasksPage() {
     if (confirm('Delete this task?')) {
       await deleteTask(id)
       loadTasks()
+      DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
     }
   }
 

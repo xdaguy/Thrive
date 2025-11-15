@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Wallet, TrendingUp, TrendingDown, CheckSquare, Heart, Target } from 'lucide-react'
+import { Wallet, TrendingUp, TrendingDown, CheckSquare, Heart, Target, RefreshCw } from 'lucide-react'
 import { getTotalBalance, getMonthlyIncome, getMonthlyExpenses, getTasksCompletedToday, getTotalTasksToday } from '@/lib/db/queries'
 import { formatCurrency } from '@/lib/constants'
+import { DataEvents, DATA_EVENTS } from '@/lib/events'
 
 export default function DashboardPage() {
   const [stats, setStats] = useState({
@@ -13,37 +14,71 @@ export default function DashboardPage() {
     tasksCompleted: 0,
     totalTasks: 0
   })
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     loadStats()
+    
+    // Listen to data change events
+    DataEvents.on(DATA_EVENTS.INCOME_CHANGED, loadStats)
+    DataEvents.on(DATA_EVENTS.EXPENSE_CHANGED, loadStats)
+    DataEvents.on(DATA_EVENTS.TASK_CHANGED, loadStats)
+    
+    return () => {
+      DataEvents.off(DATA_EVENTS.INCOME_CHANGED, loadStats)
+      DataEvents.off(DATA_EVENTS.EXPENSE_CHANGED, loadStats)
+      DataEvents.off(DATA_EVENTS.TASK_CHANGED, loadStats)
+    }
   }, [])
 
   async function loadStats() {
-    const now = new Date()
-    const balance = await getTotalBalance()
-    const income = await getMonthlyIncome(now.getFullYear(), now.getMonth())
-    const expenses = await getMonthlyExpenses(now.getFullYear(), now.getMonth())
-    const completed = await getTasksCompletedToday()
-    const total = await getTotalTasksToday()
+    try {
+      const now = new Date()
+      const balance = await getTotalBalance()
+      const income = await getMonthlyIncome(now.getFullYear(), now.getMonth())
+      const expenses = await getMonthlyExpenses(now.getFullYear(), now.getMonth())
+      const completed = await getTasksCompletedToday()
+      const total = await getTotalTasksToday()
 
-    setStats({
-      balance,
-      monthlyIncome: income,
-      monthlyExpenses: expenses,
-      tasksCompleted: completed,
-      totalTasks: total
-    })
+      setStats({
+        balance,
+        monthlyIncome: income,
+        monthlyExpenses: expenses,
+        tasksCompleted: completed,
+        totalTasks: total
+      })
+      setLoading(false)
+    } catch (error) {
+      console.error('Failed to load stats:', error)
+      setLoading(false)
+    }
   }
+
+  async function handleRefresh() {
+    setLoading(true)
+    await loadStats()
+  }
+
   return (
     <div className="space-y-6">
       {/* Welcome Section */}
-      <div className="animate-in">
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
-          Welcome back! 👋
-        </h2>
-        <p className="text-gray-600 dark:text-gray-400">
-          Here's what's happening with your life today
-        </p>
+      <div className="animate-in flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            Welcome back! 👋
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            Here's what's happening with your life today
+          </p>
+        </div>
+        <button
+          onClick={handleRefresh}
+          disabled={loading}
+          className="btn-icon"
+          title="Refresh stats"
+        >
+          <RefreshCw className={`w-5 h-5 text-gray-600 dark:text-gray-400 ${loading ? 'animate-spin' : ''}`} />
+        </button>
       </div>
 
       {/* Quick Stats Grid */}

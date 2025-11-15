@@ -2,8 +2,23 @@
 
 import { Bell } from 'lucide-react'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
+import { usePathname } from 'next/navigation'
+
+const PAGE_TITLES: Record<string, string> = {
+  '/dashboard': 'Dashboard',
+  '/finance': 'Finance',
+  '/tasks': 'Tasks',
+  '/health': 'Health & Wellness',
+  '/routines': 'Daily Routines',
+  '/settings': 'Settings',
+  '/add': 'Quick Add',
+  '/more': 'More',
+}
 
 export function Header() {
+  const pathname = usePathname()
+  const pageTitle = PAGE_TITLES[pathname] || 'Thrive'
+
   return (
     <header className="sticky top-0 z-40 bg-white dark:bg-[#0A0A0A] border-b border-gray-200 dark:border-gray-800 safe-area-top">
       <div className="flex items-center justify-between h-16 px-4 md:px-6">
@@ -17,7 +32,7 @@ export function Header() {
 
         {/* Desktop Page Title */}
         <div className="hidden md:block">
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Dashboard</h1>
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{pageTitle}</h1>
         </div>
 
         {/* Actions */}

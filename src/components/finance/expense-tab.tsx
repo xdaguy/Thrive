@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Plus, TrendingDown, Trash2 } from 'lucide-react'
 import { addExpense, getAllExpenses, deleteExpense, type Expense } from '@/lib/db/queries'
 import { EXPENSE_CATEGORIES, PAYMENT_METHODS, formatCurrency, formatDate } from '@/lib/constants'
+import { DataEvents, DATA_EVENTS } from '@/lib/events'
 
 export function ExpenseTab() {
   const [expenses, setExpenses] = useState<Expense[]>([])
@@ -49,6 +50,7 @@ export function ExpenseTab() {
     })
     setShowForm(false)
     loadExpenses()
+    DataEvents.emit(DATA_EVENTS.EXPENSE_CHANGED)
   }
 
   async function handleDelete(id: string | undefined) {
@@ -56,6 +58,7 @@ export function ExpenseTab() {
     if (confirm('Are you sure you want to delete this expense?')) {
       await deleteExpense(id)
       loadExpenses()
+      DataEvents.emit(DATA_EVENTS.EXPENSE_CHANGED)
     }
   }
 
