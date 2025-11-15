@@ -8,18 +8,18 @@ export default function LandingPage() {
       <section className="relative overflow-hidden bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-[#0A0A0A] safe-area-top">
         <div className="container mx-auto px-4 py-16 md:py-24">
           <div className="text-center max-w-4xl mx-auto">
-            <div className="inline-block mb-4 px-4 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-sm font-medium">
-              100% Free • Open Source • Privacy First
+            <div className="inline-block mb-4 px-4 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-sm font-medium animate-in">
+              100% Free Forever • Open Source • Privacy First
             </div>
             
-            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
-              Your Life, Organized <br className="hidden md:block" />
-              <span className="text-blue-600 dark:text-blue-500">in One Place</span>
+            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight animate-in">
+              Take Control of <br className="hidden md:block" />
+              <span className="text-blue-600 dark:text-blue-500">Your Entire Life</span>
             </h1>
             
-            <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
-              Track finances, tasks, health, and routines. Your data stays yours, forever. 
-              Beautiful, simple, and works offline.
+            <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto animate-in">
+              The all-in-one app for managing finances, tasks, health, and daily routines. 
+              Beautiful, powerful, and completely private. Works offline. No account needed.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -41,7 +41,7 @@ export default function LandingPage() {
             </div>
             
             <p className="text-sm text-gray-500 dark:text-gray-600 mt-4">
-              No credit card required • Takes 30 seconds
+              100% Free • No Account Needed • Ready in Seconds
             </p>
           </div>
         </div>
@@ -50,9 +50,12 @@ export default function LandingPage() {
       {/* Features Grid */}
       <section className="py-16 md:py-24 bg-white dark:bg-[#0A0A0A]">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 dark:text-white mb-12">
-            Everything You Need
+          <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 dark:text-white mb-4">
+            Everything You Need to Thrive
           </h2>
+          <p className="text-center text-gray-600 dark:text-gray-400 mb-12 max-w-2xl mx-auto">
+            Four powerful modules working together seamlessly. Track, organize, and improve every aspect of your life.
+          </p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Finance Card */}
@@ -64,7 +67,7 @@ export default function LandingPage() {
                 Finance
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
-                Track income, expenses, and debts. Visual spending insights and budget tracking.
+                Complete money management. Track income, expenses, and debts with smart categorization and insights.
               </p>
             </div>
 
@@ -77,7 +80,7 @@ export default function LandingPage() {
                 Tasks
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
-                Daily tasks with smart reminders. Never miss what matters most.
+                Smart task management with priorities, categories, and filters. Get more done, stress less.
               </p>
             </div>
 
@@ -90,7 +93,7 @@ export default function LandingPage() {
                 Health
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
-                Weight, exercise, and meal logging. Track your wellness journey.
+                Complete wellness tracking. Monitor weight, log workouts, and track meals all in one place.
               </p>
             </div>
 
@@ -103,8 +106,105 @@ export default function LandingPage() {
                 Routines
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
-                Build lasting habits. Streak tracking and daily motivation.
+                Build powerful daily routines. Create habits that stick with streak tracking and progress visualization.
               </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Benefits Section */}
+      <section className="py-16 md:py-24 bg-gradient-to-b from-white to-gray-50 dark:from-[#0A0A0A] dark:to-[#1A1A1A]">
+        <div className="container mx-auto px-4">
+          <div className="max-w-5xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-6">
+                <div className="flex gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                    <Smartphone className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                      Works Anywhere, Anytime
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Mobile-first design that works perfectly on phone, tablet, and desktop. Install as a PWA for native app experience.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
+                    <Shield className="w-5 h-5 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                      Zero Learning Curve
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Intuitive interface that feels natural from day one. Start tracking your life in seconds, not hours.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
+                    <RotateCw className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                      Your Data, Your Way
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Export your data anytime in JSON format. Switch apps? Take everything with you. No lock-in, ever.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div className="flex gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center flex-shrink-0">
+                    <Heart className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                      Lightning Fast
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Everything stored locally means instant loading and zero lag. Even works offline. No internet? No problem.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-pink-100 dark:bg-pink-900/30 flex items-center justify-center flex-shrink-0">
+                    <CheckSquare className="w-5 h-5 text-pink-600 dark:text-pink-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                      Beautifully Simple
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Clean, modern design with dark mode support. Focus on what matters without clutter or distractions.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center flex-shrink-0">
+                    <Wallet className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                      Completely Free
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      No premium plans, no paywalls, no ads. Every feature unlocked forever. Because productivity shouldn't have a price tag.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -119,11 +219,12 @@ export default function LandingPage() {
             </div>
             
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6">
-              Your Data, Your Control
+              Privacy by Design
             </h2>
             
             <p className="text-lg text-gray-600 dark:text-gray-400 mb-12">
-              We believe your personal data should stay personal. That's why Thrive is built differently.
+              Your personal data stays personal. No servers, no tracking, no data mining. 
+              Just pure, private productivity.
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -135,7 +236,7 @@ export default function LandingPage() {
                   Local First
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Data stored on your device. Works offline, lightning fast.
+                  Everything runs on your device. Instant performance, complete privacy, works offline.
                 </p>
               </div>
               
@@ -147,7 +248,7 @@ export default function LandingPage() {
                   Your Cloud
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Sync to YOUR Google Drive. No servers, no middleman.
+                  Optional sync to YOUR cloud. Export anytime. You own your data, literally.
                 </p>
               </div>
               
@@ -159,7 +260,7 @@ export default function LandingPage() {
                   Open Source
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Transparent code. Auditable. Community-driven.
+                  Fully transparent. Auditable by anyone. Free forever, no hidden fees.
                 </p>
               </div>
             </div>
@@ -171,10 +272,11 @@ export default function LandingPage() {
       <section className="py-16 md:py-24 bg-blue-600 dark:bg-blue-700">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-            Ready to Thrive?
+            Start Living Better Today
           </h2>
           <p className="text-lg text-blue-100 mb-8 max-w-2xl mx-auto">
-            Join thousands taking control of their life. Start organizing everything in one beautiful app.
+            Join others who've taken control. No sign-ups, no hassle, no limits. 
+            Just open the app and start thriving.
           </p>
           <Link 
             href="/start"
@@ -183,7 +285,7 @@ export default function LandingPage() {
             Get Started Free
           </Link>
           <p className="text-sm text-blue-100 mt-4">
-            No sign-up required • Start using immediately
+            Works on all devices • Install as PWA for best experience
           </p>
         </div>
       </section>
@@ -194,7 +296,7 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="text-center md:text-left">
               <p className="text-gray-600 dark:text-gray-400 text-sm">
-                © 2024 Thrive. Open source and free forever.
+                © 2025 Thrive. Open source and free forever.
               </p>
             </div>
             <div className="flex gap-6">

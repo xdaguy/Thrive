@@ -1,6 +1,6 @@
 # Thrive
 
-> Your all-in-one personal management system for finance, tasks, health, and daily routines
+> Take control of your entire life. The all-in-one app for managing finances, tasks, health, and daily routines. Beautiful, powerful, and completely private.
 
 [![Open Source](https://img.shields.io/badge/Open%20Source-Yes-green.svg)](https://github.com)
 [![Privacy First](https://img.shields.io/badge/Privacy-First-blue.svg)](https://github.com)
