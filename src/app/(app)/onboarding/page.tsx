@@ -7,7 +7,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { db } from '@/lib/db/schema'
 import { restoreFromBackup, parseBackupFile } from '@/lib/sync'
 import { fadeIn, slideRight, slideLeft, scaleIn } from '@/lib/animations'
-import { authorizeWithPopup, saveTokens, startAutoSync, syncNow } from '@/lib/google'
+import { authorizeWithGoogle } from '@/lib/google/oauth-new'
+import { startAutoSync, syncNow } from '@/lib/google'
 
 const CURRENCIES = [
   { code: 'USD', symbol: '$', name: 'US Dollar' },
@@ -139,12 +140,7 @@ export default function OnboardingPage() {
 
   async function handleConnectGoogleDrive() {
     try {
-      const tokens = await authorizeWithPopup()
-      
-      // IMPORTANT: Save tokens to localStorage
-      saveTokens(tokens)
-      
-      // Ensure settings exist first
+      // Save settings first before OAuth redirect
       const existingSettings = await db.settings.get('user_settings')
       
       if (existingSettings) {
@@ -169,18 +165,14 @@ export default function OnboardingPage() {
         })
       }
       
-      // Start auto-sync with immediate first sync (will download backup if exists)
-      startAutoSync(true)
+      // Store return path in sessionStorage
+      sessionStorage.setItem('oauth_return_path', '/dashboard')
       
-      alert('✅ Successfully connected to Google Drive!\n\nSyncing your data...')
-      
-      // Small delay to let initial sync start, then redirect
-      setTimeout(() => {
-        router.push('/dashboard')
-      }, 500)
+      // Redirect to Google OAuth
+      await authorizeWithGoogle()
     } catch (error) {
       console.error('Google Drive connection failed:', error)
-      alert('❌ Failed to connect to Google Drive.\n\n' + (error instanceof Error ? error.message : 'Unknown error'))
+      alert('❌ Failed to connect to Google Drive.')
     }
   }
 

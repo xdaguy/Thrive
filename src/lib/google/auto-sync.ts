@@ -5,9 +5,9 @@
  */
 
 import { createBackup } from '../sync/backup-manager'
-import { uploadBackup, downloadBackup } from './drive'
+import { uploadBackup, downloadBackup } from './drive-new'
 import { importBackup } from '../sync/import-manager'
-import { isAuthorized } from './oauth'
+import { isAuthorized } from './oauth-new'
 import { DataEvents, DATA_EVENTS } from '../events'
 
 // Sync state
@@ -24,7 +24,7 @@ const MIN_SYNC_INTERVAL_MS = 60000 // Minimum 1 minute between syncs
  * Start auto-sync
  * @param triggerImmediateSync - If true, performs immediate sync instead of debounced (useful on first connection)
  */
-export function startAutoSync(triggerImmediateSync = false): void {
+export async function startAutoSync(triggerImmediateSync = false): Promise<void> {
   console.log('🚀 startAutoSync() called, immediate:', triggerImmediateSync)
   
   if (syncEnabled) {
@@ -32,7 +32,7 @@ export function startAutoSync(triggerImmediateSync = false): void {
     return
   }
 
-  if (!isAuthorized()) {
+  if (!(await isAuthorized())) {
     console.warn('⚠️ Cannot start auto-sync: Not authorized')
     return
   }
@@ -139,7 +139,7 @@ async function performSync(): Promise<void> {
   console.log('🟢 performSync() started')
   
   // Check if still authorized
-  if (!isAuthorized()) {
+  if (!(await isAuthorized())) {
     console.log('⚠️ Not authorized, stopping sync')
     stopAutoSync()
     return
@@ -244,7 +244,7 @@ export async function syncNow(): Promise<void> {
     throw new Error('Sync already in progress')
   }
 
-  if (!isAuthorized()) {
+  if (!(await isAuthorized())) {
     throw new Error('Not authorized. Please connect Google Drive first.')
   }
 

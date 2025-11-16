@@ -30,7 +30,7 @@ const nextConfig = {
           },
           {
             key: 'X-Frame-Options',
-            value: 'SAMEORIGIN'
+            value: 'DENY' // Changed from SAMEORIGIN for better security
           },
           {
             key: 'X-Content-Type-Options',
@@ -39,6 +39,36 @@ const nextConfig = {
           {
             key: 'Referrer-Policy',
             value: 'origin-when-cross-origin'
+          },
+          // NEW: Content Security Policy - Prevents XSS attacks
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // Next.js needs these
+              "style-src 'self' 'unsafe-inline'", // Tailwind needs inline styles
+              "img-src 'self' data: https:",
+              "font-src 'self' data:",
+              "connect-src 'self' https://www.googleapis.com https://accounts.google.com https://oauth2.googleapis.com",
+              "frame-ancestors 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+            ].join('; ')
+          },
+          // NEW: XSS Protection
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block'
+          },
+          // NEW: Permissions Policy - Restrict sensitive features
+          {
+            key: 'Permissions-Policy',
+            value: 'geolocation=(), microphone=(), camera=()'
+          },
+          // NEW: Strict Transport Security (HTTPS only)
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=31536000; includeSubDomains'
           }
         ]
       }

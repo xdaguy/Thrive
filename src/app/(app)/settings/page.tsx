@@ -9,10 +9,11 @@ import { DataEvents, DATA_EVENTS } from '@/lib/events'
 import { fadeIn, staggerContainer, staggerItem } from '@/lib/animations'
 import { downloadBackup, importBackup, parseBackupFile } from '@/lib/sync'
 import {
-  authorizeWithPopup,
+  authorizeWithGoogle,
   isAuthorized,
-  clearTokens,
-  saveTokens,
+  signOut,
+} from '@/lib/google/oauth-new'
+import {
   startAutoSync,
   stopAutoSync,
   syncNow,
@@ -57,6 +58,27 @@ export default function SettingsPage() {
       DataEvents.off(DATA_EVENTS.SYNC_COMPLETED, handleSyncCompleted)
       DataEvents.off(DATA_EVENTS.SYNC_ERROR, handleSyncError)
     }
+  }, [])
+
+  // Handle OAuth callback from Google
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    
+    const handleCallback = async () => {
+      if (params.get('connected') === 'true') {
+        setGoogleConnected(true)
+        await startAutoSync(true)
+        alert('✅ Successfully connected to Google Drive!')
+        // Clean URL
+        window.history.replaceState({}, '', '/settings')
+      } else if (params.get('error')) {
+        const error = params.get('error')
+        alert(`❌ Connection failed: ${error}`)
+        window.history.replaceState({}, '', '/settings')
+      }
+    }
+    
+    handleCallback()
   }, [])
 
   async function loadStats() {
@@ -164,8 +186,8 @@ export default function SettingsPage() {
   }
 
   // Google Drive sync functions
-  function checkGoogleConnection() {
-    const connected = isAuthorized()
+  async function checkGoogleConnection() {
+    const connected = await isAuthorized()
     setGoogleConnected(connected)
     
     if (connected) {
@@ -176,7 +198,7 @@ export default function SettingsPage() {
       }
       
       // Start auto-sync if connected
-      startAutoSync()
+      await startAutoSync()
     }
     
     setSyncing(isSyncing())
@@ -184,20 +206,11 @@ export default function SettingsPage() {
 
   async function handleConnectGoogleDrive() {
     try {
-      const tokens = await authorizeWithPopup()
-      
-      // IMPORTANT: Save tokens to localStorage
-      saveTokens(tokens)
-      
-      setGoogleConnected(true)
-      
-      // Start auto-sync with immediate first sync
-      startAutoSync(true)
-      
-      alert('✅ Successfully connected to Google Drive!\n\nInitial sync in progress...')
+      // This will redirect to Google OAuth
+      await authorizeWithGoogle()
     } catch (error) {
       console.error('Google Drive connection failed:', error)
-      alert('❌ Failed to connect to Google Drive.\n\n' + (error instanceof Error ? error.message : 'Unknown error'))
+      alert('❌ Failed to connect to Google Drive.')
     }
   }
 
@@ -216,7 +229,7 @@ export default function SettingsPage() {
 
     try {
       stopAutoSync()
-      clearTokens()
+      await signOut()
       setGoogleConnected(false)
       setLastSync(null)
       
