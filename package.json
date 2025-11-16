@@ -1,6 +1,6 @@
 {
   "name": "thrive",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Your all-in-one personal management system for finance, tasks, health, and daily routines",
   "scripts": {
