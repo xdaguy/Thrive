@@ -2,7 +2,7 @@
   "name": "Thrive - Personal Management System",
   "short_name": "Thrive",
   "description": "Track finances, tasks, health, and daily routines. Your data stays yours, forever.",
-  "start_url": "/",
+  "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#FFFFFF",
   "theme_color": "#FFFFFF",
