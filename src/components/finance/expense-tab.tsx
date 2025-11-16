@@ -333,8 +333,18 @@ export function ExpenseTab({ openForm }: ExpenseTabProps = {}) {
       </div>
 
       {/* Add Form */}
-      {showForm && (
-        <form onSubmit={handleSubmit} className="card animate-in space-y-4">
+      <AnimatePresence mode="wait">
+        {showForm && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            transition={{ 
+              duration: 0.25,
+              ease: [0.25, 0.1, 0.25, 1]
+            }}
+          >
+            <form onSubmit={handleSubmit} className="card space-y-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
             {editingId ? 'Edit Expense' : 'Add Expense'}
           </h3>
@@ -437,8 +447,10 @@ export function ExpenseTab({ openForm }: ExpenseTabProps = {}) {
               Cancel
             </button>
           </div>
-        </form>
-      )}
+            </form>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Expense List */}
       <div className="space-y-3">
