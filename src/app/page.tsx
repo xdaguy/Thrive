@@ -1,11 +1,19 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Wallet, CheckSquare, Heart, RotateCw, Shield, Cloud, Smartphone, Github } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { fadeIn, slideUp, staggerContainer, staggerItem, cardHover } from '@/lib/animations'
 
 export default function LandingPage() {
+  const [hasAnimated, setHasAnimated] = useState(false)
+
+  useEffect(() => {
+    // Mark as animated after mount to prevent re-animation
+    setHasAnimated(true)
+  }, [])
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -13,16 +21,18 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 py-16 md:py-24">
           <div className="text-center max-w-4xl mx-auto">
             <motion.div 
-              {...fadeIn}
-              transition={{ delay: 0.1 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={hasAnimated ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
               className="inline-block mb-4 px-4 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-sm font-medium"
             >
               100% Free Forever • Open Source • Privacy First
             </motion.div>
             
             <motion.h1 
-              {...fadeIn}
-              transition={{ delay: 0.2 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={hasAnimated ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
               className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight"
             >
               Take Control of <br className="hidden md:block" />
@@ -30,8 +40,9 @@ export default function LandingPage() {
             </motion.h1>
             
             <motion.p 
-              {...fadeIn}
-              transition={{ delay: 0.3 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={hasAnimated ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
               className="text-lg md:text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto"
             >
               The all-in-one app for managing finances, tasks, health, and daily routines. 
@@ -39,8 +50,9 @@ export default function LandingPage() {
             </motion.p>
             
             <motion.div 
-              {...fadeIn}
-              transition={{ delay: 0.4 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={hasAnimated ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
               className="flex flex-col sm:flex-row gap-4 justify-center items-center"
             >
               <Link 
@@ -63,8 +75,9 @@ export default function LandingPage() {
             </motion.div>
             
             <motion.p 
-              {...fadeIn}
-              transition={{ delay: 0.5 }}
+              initial={{ opacity: 0 }}
+              animate={hasAnimated ? { opacity: 1 } : { opacity: 0 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
               className="text-sm text-gray-500 dark:text-gray-600 mt-4"
             >
               100% Free • No Account Needed • Ready in Seconds
@@ -76,19 +89,12 @@ export default function LandingPage() {
       {/* Features Grid */}
       <section className="py-16 md:py-24 bg-white dark:bg-[#0A0A0A]">
         <div className="container mx-auto px-4">
-          <motion.h2 
-            {...fadeIn}
-            className="text-3xl md:text-4xl font-bold text-center text-gray-900 dark:text-white mb-4"
-          >
+          <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 dark:text-white mb-4">
             Everything You Need to Thrive
-          </motion.h2>
-          <motion.p 
-            {...fadeIn}
-            transition={{ delay: 0.1 }}
-            className="text-center text-gray-600 dark:text-gray-400 mb-12 max-w-2xl mx-auto"
-          >
+          </h2>
+          <p className="text-center text-gray-600 dark:text-gray-400 mb-12 max-w-2xl mx-auto">
             Four powerful modules working together seamlessly. Track, organize, and improve every aspect of your life.
-          </motion.p>
+          </p>
           
           <motion.div 
             variants={staggerContainer}
@@ -273,9 +279,15 @@ export default function LandingPage() {
       <section className="py-16 md:py-24 bg-gray-50 dark:bg-[#1A1A1A]">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
-            <div className="w-16 h-16 rounded-2xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mx-auto mb-6">
+            <motion.div 
+              initial={{ scale: 0.8, opacity: 0 }}
+              whileInView={{ scale: 1, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="w-16 h-16 rounded-2xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mx-auto mb-6"
+            >
               <Shield className="w-8 h-8 text-blue-600 dark:text-blue-400" />
-            </div>
+            </motion.div>
             
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6">
               Privacy by Design
