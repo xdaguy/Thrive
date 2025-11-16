@@ -16,7 +16,16 @@ async function getValidAccessToken(): Promise<string | null> {
   const accessToken = cookieStore.get('access_token')?.value
   const expiresAt = cookieStore.get('expires_at')?.value
   
-  if (!accessToken) return null
+  console.log('🔍 Checking cookies:', {
+    hasAccessToken: !!accessToken,
+    hasExpiresAt: !!expiresAt,
+    isExpired: expiresAt ? Date.now() >= parseInt(expiresAt) : 'unknown'
+  })
+  
+  if (!accessToken) {
+    console.log('❌ No access token in cookies')
+    return null
+  }
   
   // Check if token is expired
   if (expiresAt && Date.now() >= parseInt(expiresAt)) {
@@ -81,14 +90,18 @@ async function findOrCreateAppFolder(accessToken: string): Promise<string> {
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('📤 Upload route called')
     const accessToken = await getValidAccessToken()
     
     if (!accessToken) {
+      console.error('❌ No access token found in cookies')
       return NextResponse.json(
         { error: 'Not authorized' },
         { status: 401 }
       )
     }
+    
+    console.log('✅ Access token found')
 
     const { data } = await request.json()
     
@@ -159,9 +172,10 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json({ success: true, fileId: result.id })
   } catch (error) {
-    console.error('Upload error:', error)
+    console.error('❌ Upload error:', error)
+    console.error('Error details:', error instanceof Error ? error.message : String(error))
     return NextResponse.json(
-      { error: 'Failed to upload backup' },
+      { error: 'Failed to upload backup', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     )
   }
