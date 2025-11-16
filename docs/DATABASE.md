@@ -17,8 +17,8 @@
 ## 📋 Schema Version History
 
 ### Version 1 (Current)
-**Release Date:** 2024-01-01  
-**App Version:** 0.1.0
+**Release Date:** Initial Release (November 2025)  
+**App Version:** 1.0.0
 
 **Tables:**
 - `income` - Income tracking
@@ -327,7 +327,7 @@ export async function migrateData(data: any, fromVersion: number, toVersion: num
   return currentData
 }
 
-// Example migration
+// Example migration (for future Version 2)
 const migrations = {
   v1_to_v2: async (data: any) => {
     // Add new field to all expenses
@@ -342,12 +342,15 @@ const migrations = {
 }
 ```
 
+> **⚠️ NOTE:** The examples below (Version 2, 3, 4) are FUTURE examples.  
+> **CURRENT VERSION is 1.0.0 (Schema Version 1)** - No migration needed yet!
+
 ### Adding New Fields (Safe)
 
 ✅ **Always safe** - Old versions ignore unknown fields
 
 ```typescript
-// Version 2 - Add optional field
+// FUTURE EXAMPLE: Version 2 - Add optional field
 interface Expense {
   // ... existing fields
   taxRate?: number  // NEW: Optional field
@@ -359,7 +362,7 @@ interface Expense {
 ⚠️ **Requires version bump + migration**
 
 ```typescript
-// Version 3 - Remove field (provide migration)
+// FUTURE EXAMPLE: Version 3 - Remove field (provide migration)
 const migrations = {
   v2_to_v3: async (data: any) => {
     if (data.expenses) {
@@ -375,7 +378,7 @@ const migrations = {
 ⚠️ **Requires version bump + migration**
 
 ```typescript
-// Version 4 - Change date from string to number
+// FUTURE EXAMPLE: Version 4 - Change date from string to number
 const migrations = {
   v3_to_v4: async (data: any) => {
     if (data.expenses) {
@@ -393,7 +396,10 @@ const migrations = {
 
 ## 🚀 Adding New Tables
 
-### Step 1: Update Schema
+> **⚠️ NOTE:** This is a FUTURE example showing how to add tables in Version 2.  
+> **CURRENT VERSION has all tables it needs!** Use this guide when adding new features.
+
+### Step 1: Update Schema (FUTURE EXAMPLE)
 ```typescript
 // src/lib/db/schema.ts
 
@@ -584,7 +590,8 @@ if ('storage' in navigator && 'estimate' in navigator.storage) {
 
 - **Dexie.js Docs:** https://dexie.org
 - **IndexedDB MDN:** https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API
-- **Schema Versioning:** See `docs/SCHEMA_VERSIONING.md`
+- **Schema Versioning:** [SCHEMA_VERSIONING.md](SCHEMA_VERSIONING.md) - Version compatibility
+- **Contributing Guide:** [CONTRIBUTING.md](CONTRIBUTING.md) - How to add tables/fields
 - **Backup System:** See `src/lib/sync/backup-manager.ts`
 
 ---

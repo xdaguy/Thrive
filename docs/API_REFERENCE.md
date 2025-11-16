@@ -603,11 +603,16 @@ const response = await withRetry(() =>
 
 ## 📚 Additional Resources
 
-- **Security Analysis:** `docs/DEEP_SECURITY_ANALYSIS.md`
-- **Database Schema:** `docs/DATABASE.md`
-- **Testing Guide:** `docs/TESTING_GUIDE.md`
+### Related Documentation
+- **Database Schema:** [DATABASE.md](DATABASE.md) - Complete schema & migrations
+- **Testing Guide:** [TESTING_GUIDE.md](TESTING_GUIDE.md) - How to test APIs
+- **Google Cloud Setup:** [GOOGLE_CLOUD_SETUP.md](GOOGLE_CLOUD_SETUP.md) - Configure OAuth & Drive API
+- **Contributing:** [CONTRIBUTING.md](CONTRIBUTING.md) - How to add new API routes
+
+### External Resources
 - **Google OAuth Docs:** https://developers.google.com/identity/protocols/oauth2
 - **Drive API Docs:** https://developers.google.com/drive/api
+- **Next.js API Routes:** https://nextjs.org/docs/app/building-your-application/routing/route-handlers
 
 ---
 

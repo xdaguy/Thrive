@@ -13,15 +13,10 @@
 
 ### For Developers
 - 🏗️ **[Getting Started](GETTING_STARTED.md)** - Development environment setup
-- 🗄️ **[Database Documentation](DATABASE.md)** - Schema, versioning, migrations ⭐ NEW
-- 🤝 **[Contributing Guide](CONTRIBUTING.md)** - How to contribute ⭐ NEW
-- 📡 **[API Reference](API_REFERENCE.md)** - Backend API routes ⭐ NEW
-- 🔒 **[Security Analysis](DEEP_SECURITY_ANALYSIS.md)** - In-depth security audit
-- 📖 **[Implementation Summary](COMPLETE_IMPLEMENTATION_SUMMARY.md)** - Technical implementation details
-
-### Troubleshooting & Reference
-- 📋 **[Schema Versioning](SCHEMA_VERSIONING.md)** - Version compatibility & migrations ⭐ MOVED
-- 🔧 **[Sync Debug Guide](SYNC_DEBUG_GUIDE.md)** - Troubleshoot sync issues ⭐ MOVED
+- 🗄️ **[Database Documentation](DATABASE.md)** - Schema, versioning, migrations
+- 🤝 **[Contributing Guide](CONTRIBUTING.md)** - How to contribute
+- 📡 **[API Reference](API_REFERENCE.md)** - Backend API routes
+- 📋 **[Schema Versioning](SCHEMA_VERSIONING.md)** - Version compatibility & migrations
 
 ---
 
@@ -111,50 +106,6 @@
 
 ---
 
-### 5. Security Analysis
-**File:** `DEEP_SECURITY_ANALYSIS.md`
-
-**What's Inside:**
-- Current security implementation
-- Vulnerability analysis
-- OAuth security audit
-- XSS protection review
-- Token management analysis
-- Recommendations
-- Best practices
-
-**Who Should Read:**
-- Security auditors
-- Senior developers
-- Technical reviewers
-- CISOs
-
-**Depth:** Advanced / Technical
-
----
-
-### 6. Implementation Summary
-**File:** `COMPLETE_IMPLEMENTATION_SUMMARY.md`
-
-**What's Inside:**
-- All features implemented
-- Security score breakdown
-- Files created/modified
-- Performance improvements
-- Before/after comparison
-- Deployment checklist
-- Optional configurations
-
-**Who Should Read:**
-- Technical leads
-- Code reviewers
-- Project managers
-- Contributors
-
-**Purpose:** High-level technical overview
-
----
-
 ## 🚀 Getting Started Paths
 
 ### Path 1: Just Want to Test the App
@@ -178,8 +129,8 @@
 ### Path 4: Contribute to Development
 1. Read [Getting Started](GETTING_STARTED.md)
 2. Set up local environment (10 minutes)
-3. Read [Security Analysis](DEEP_SECURITY_ANALYSIS.md)
-4. Read [Implementation Summary](COMPLETE_IMPLEMENTATION_SUMMARY.md)
+3. Read [Contributing Guide](CONTRIBUTING.md)
+4. Review [Database Documentation](DATABASE.md) and [API Reference](API_REFERENCE.md)
 5. Start coding!
 
 ---
@@ -195,13 +146,10 @@
 | Database Documentation | 10 | 30 min | Medium |
 | Contributing Guide | 8 | 20 min | Easy |
 | API Reference | 10 | 25 min | Medium |
-| Security Analysis | 15 | 45 min | Advanced |
-| Implementation Summary | 8 | 20 min | Medium |
 | Schema Versioning | 3 | 10 min | Medium |
-| Sync Debug Guide | 2 | 5 min | Easy |
 
-**Total Documentation:** ~91 pages  
-**Total Reading Time:** ~3 hours 50 minutes
+**Total Documentation:** ~66 pages  
+**Total Reading Time:** ~2 hours 40 minutes
 
 ---
 

@@ -13,8 +13,8 @@ Thrive uses a robust schema versioning system to ensure seamless data migration 
 
 ## Current Schema Version: **1**
 
-**App Version:** 0.1.0  
-**Release Date:** 2024-01-01
+**App Version:** 1.0.0  
+**Release Date:** Initial Release (November 2025)
 
 ### Included Data:
 - Finance: `income`, `expenses`, `debts`
@@ -56,9 +56,9 @@ Exported file includes:
 ```json
 {
   "schemaVersion": 1,
-  "appVersion": "0.1.0",
+  "appVersion": "1.0.0",
   "minCompatibleVersion": 1,
-  "exportDate": "2024-01-15T10:30:00.000Z",
+  "exportDate": "2024-11-15T10:30:00.000Z",
   "deviceId": "device_abc123",
   "deviceName": "Chrome on Windows",
   "features": ["finance", "tasks", "health", "routines"],
@@ -99,13 +99,17 @@ When importing data from an older version:
 
 ## Adding a New Schema Version
 
+> **⚠️ NOTE:** The examples below show how to add Version 2 in the FUTURE.  
+> **CURRENT VERSION is 1.0.0** - These are just examples for when you add new features!
+
 ### Step 1: Update Version Constants
 
 ```typescript
 // src/lib/sync/schema-version.ts
-export const CURRENT_SCHEMA_VERSION = 2  // Increment
+// EXAMPLE: When adding Version 2 in the future
+export const CURRENT_SCHEMA_VERSION = 2  // Increment from 1 to 2
 export const MIN_COMPATIBLE_VERSION = 1  // Oldest version that can read new format
-export const APP_VERSION = '0.2.0'       // Update app version
+export const APP_VERSION = '2.0.0'       // Update app version
 ```
 
 ### Step 2: Add to History
@@ -115,9 +119,9 @@ export const SCHEMA_HISTORY: Record<number, SchemaVersionInfo> = {
   1: { ... },
   2: {
     schemaVersion: 2,
-    appVersion: '0.2.0',
+    appVersion: '2.0.0',
     minCompatibleVersion: 1,
-    releaseDate: '2024-03-01',
+    releaseDate: '2025-12-01',
     changes: [
       'Added: goals table',
       'Added: subscriptions table',
@@ -221,14 +225,14 @@ When syncing data from multiple devices:
 ### Example Merge
 
 ```typescript
-// Device A (v0.2.0, Schema 2)
-{ id: "task1", title: "Buy milk", updatedAt: "2024-01-15T10:00:00Z" }
+// Device A (v2.0.0, Schema 2)
+{ id: "task1", title: "Buy milk", updatedAt: "2025-11-15T10:00:00Z" }
 
-// Device B (v0.1.0, Schema 1)
-{ id: "task1", title: "Buy eggs", updatedAt: "2024-01-15T09:00:00Z" }
+// Device B (v1.0.0, Schema 1)
+{ id: "task1", title: "Buy eggs", updatedAt: "2025-11-15T09:00:00Z" }
 
 // Result: Device A wins (newer timestamp)
-{ id: "task1", title: "Buy milk", updatedAt: "2024-01-15T10:00:00Z" }
+{ id: "task1", title: "Buy milk", updatedAt: "2025-11-15T10:00:00Z" }
 ```
 
 ---

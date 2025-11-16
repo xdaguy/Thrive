@@ -173,15 +173,10 @@ Thrive implements **enterprise-grade security** with a **9.5/10 security score**
 
 ### For Developers
 - 🏗️ **[Getting Started](docs/GETTING_STARTED.md)** - Development setup guide
-- 🗄️ **[Database Documentation](docs/DATABASE.md)** - Schema, versioning, migrations ⭐
-- 🤝 **[Contributing Guide](docs/CONTRIBUTING.md)** - How to contribute ⭐
-- 📡 **[API Reference](docs/API_REFERENCE.md)** - Backend API routes ⭐
-- 🔒 **[Security Analysis](docs/DEEP_SECURITY_ANALYSIS.md)** - Security audit & best practices
-- 📖 **[Implementation Summary](docs/COMPLETE_IMPLEMENTATION_SUMMARY.md)** - Technical details
-
-### Troubleshooting
-- 📋 **[Schema Versioning](docs/SCHEMA_VERSIONING.md)** - Version compatibility ⭐
-- 🔧 **[Sync Debug Guide](docs/SYNC_DEBUG_GUIDE.md)** - Fix sync issues ⭐
+- 🗄️ **[Database Documentation](docs/DATABASE.md)** - Schema, versioning, migrations
+- 🤝 **[Contributing Guide](docs/CONTRIBUTING.md)** - How to contribute
+- 📡 **[API Reference](docs/API_REFERENCE.md)** - Backend API routes
+- 📋 **[Schema Versioning](docs/SCHEMA_VERSIONING.md)** - Version compatibility
 
 ### Quick Links
 - 🐛 **[Report Issues](https://github.com/xdaguy/thrive/issues)** - Bug reports & feature requests
