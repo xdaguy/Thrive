@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { User, DollarSign, Scale, Calendar, ArrowRight, Sparkles, Database, Cloud, HardDrive, UserPlus, Upload, FileUp } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { db } from '@/lib/db/schema'
+import { restoreFromBackup, parseBackupFile } from '@/lib/sync'
 import { fadeIn, slideRight, slideLeft, scaleIn } from '@/lib/animations'
 
 const CURRENCIES = [
@@ -83,71 +84,49 @@ export default function OnboardingPage() {
       if (!file) return
 
       try {
-        const text = await file.text()
-        const data = JSON.parse(text)
+        // Parse backup file
+        const data = await parseBackupFile(file)
 
-        // Validate data structure
-        if (!data.version || !data.exportDate) {
-          alert('❌ Invalid backup file format')
-          return
-        }
-
+        // Show confirmation with details
         const confirmed = confirm(
           '✅ Restore from Backup\n\n' +
           `This will restore ALL your data including:\n\n` +
           `• Settings and preferences\n` +
           `• ${data.income?.length || 0} income entries\n` +
           `• ${data.expenses?.length || 0} expense entries\n` +
-          `• ${data.debts?.length || 0} debts\n` +
+          `• ${data.debts?.length || 0} debt entries\n` +
           `• ${data.tasks?.length || 0} tasks\n` +
           `• ${data.weight?.length || 0} weight entries\n` +
           `• ${data.exercise?.length || 0} exercises\n` +
           `• ${data.meals?.length || 0} meals\n` +
           `• ${data.routines?.length || 0} routines\n\n` +
-          `Backup Date: ${new Date(data.exportDate).toLocaleDateString()}\n\n` +
+          `Schema Version: ${data.schemaVersion || 1}\n` +
+          `Backup Date: ${data.exportDate ? new Date(data.exportDate).toLocaleDateString() : 'Unknown'}\n\n` +
           'Continue with restore?'
         )
 
         if (!confirmed) return
 
-        // Clear existing data first
-        await db.income.clear()
-        await db.expenses.clear()
-        await db.debts.clear()
-        await db.tasks.clear()
-        await db.weight.clear()
-        await db.exercise.clear()
-        await db.meals.clear()
-        await db.routines.clear()
-        await db.routineCompletions.clear()
+        // Restore with migration support
+        const result = await restoreFromBackup(data)
 
-        // Restore data
-        if (data.income?.length) await db.income.bulkAdd(data.income)
-        if (data.expenses?.length) await db.expenses.bulkAdd(data.expenses)
-        if (data.debts?.length) await db.debts.bulkAdd(data.debts)
-        if (data.tasks?.length) await db.tasks.bulkAdd(data.tasks)
-        if (data.weight?.length) await db.weight.bulkAdd(data.weight)
-        if (data.exercise?.length) await db.exercise.bulkAdd(data.exercise)
-        if (data.meals?.length) await db.meals.bulkAdd(data.meals)
-        if (data.routines?.length) await db.routines.bulkAdd(data.routines)
-        if (data.routineCompletions?.length) await db.routineCompletions.bulkAdd(data.routineCompletions)
+        if (result.success) {
+          // Ensure onboarding is marked complete
+          await db.settings.update('user_settings', {
+            onboardingComplete: true,
+            updatedAt: new Date()
+          })
 
-        // Restore settings (most important for existing users!)
-        if (data.settings?.length) {
-          const userSettings = data.settings.find((s: { id: string }) => s.id === 'user_settings')
-          if (userSettings) {
-            await db.settings.put({
-              ...userSettings,
-              onboardingComplete: true, // Mark onboarding as complete
-              updatedAt: new Date()
-            })
+          let message = '✅ Backup restored successfully! Welcome back!'
+          if (result.warnings.length > 0) {
+            message += '\n\nNotes:\n' + result.warnings.join('\n')
           }
+          
+          alert(message)
+          router.push('/dashboard')
+        } else {
+          alert(`❌ ${result.message}\n\n${result.warnings.join('\n')}`)
         }
-
-        alert('✅ Backup restored successfully! Welcome back!')
-        
-        // Redirect to dashboard
-        router.push('/dashboard')
       } catch (error) {
         console.error('Failed to restore backup:', error)
         alert('❌ Failed to restore backup. Please check the file and try again.')

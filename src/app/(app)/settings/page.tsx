@@ -7,6 +7,7 @@ import { db } from '@/lib/db/schema'
 import { useTheme } from 'next-themes'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
 import { fadeIn, staggerContainer, staggerItem } from '@/lib/animations'
+import { downloadBackup, importBackup, parseBackupFile } from '@/lib/sync'
 
 export default function SettingsPage() {
   const [stats, setStats] = useState({
@@ -66,32 +67,7 @@ export default function SettingsPage() {
 
   async function handleExportData() {
     try {
-      const allData = {
-        income: await db.income.toArray(),
-        expenses: await db.expenses.toArray(),
-        debts: await db.debts.toArray(),
-        tasks: await db.tasks.toArray(),
-        weight: await db.weight.toArray(),
-        exercise: await db.exercise.toArray(),
-        meals: await db.meals.toArray(),
-        routines: await db.routines.toArray(),
-        routineCompletions: await db.routineCompletions.toArray(),
-        settings: await db.settings.toArray(),
-        exportDate: new Date().toISOString(),
-        version: '0.1.0'
-      }
-
-      const dataStr = JSON.stringify(allData, null, 2)
-      const dataBlob = new Blob([dataStr], { type: 'application/json' })
-      const url = URL.createObjectURL(dataBlob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `thrive-backup-${new Date().toISOString().split('T')[0]}.json`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(url)
-
+      await downloadBackup()
       alert('✅ Data exported successfully!')
     } catch (error) {
       console.error('Export failed:', error)
@@ -110,18 +86,13 @@ export default function SettingsPage() {
       if (!file) return
 
       try {
-        const text = await file.text()
-        const data = JSON.parse(text)
+        // Parse backup file
+        const data = await parseBackupFile(file)
 
-        // Validate data structure
-        if (!data.income || !data.expenses || !data.tasks) {
-          alert('❌ Invalid backup file format')
-          return
-        }
-
+        // Show confirmation
         const confirmed = confirm(
           '⚠️ Import Data\n\n' +
-          'This will ADD the following to your existing data:\n\n' +
+          'This will MERGE the following with your existing data:\n\n' +
           `• ${data.income?.length || 0} income entries\n` +
           `• ${data.expenses?.length || 0} expense entries\n` +
           `• ${data.debts?.length || 0} debt entries\n` +
@@ -130,55 +101,33 @@ export default function SettingsPage() {
           `• ${data.exercise?.length || 0} exercise entries\n` +
           `• ${data.meals?.length || 0} meal entries\n` +
           `• ${data.routines?.length || 0} routines\n\n` +
-          'This will NOT delete existing data.\n\n' +
+          `Schema Version: ${data.schemaVersion || 1}\n` +
+          `Export Date: ${data.exportDate ? new Date(data.exportDate).toLocaleDateString() : 'Unknown'}\n\n` +
+          'Newer versions will be kept, duplicates will be skipped.\n\n' +
           'Continue with import?'
         )
 
         if (!confirmed) return
 
-        // Import data
-        let importedCount = 0
+        // Import with migration support
+        const result = await importBackup(data, {
+          merge: true,
+          preserveUnknown: true,
+          skipDuplicates: true,
+          validateSchema: true
+        })
 
-        if (data.income?.length) {
-          await db.income.bulkAdd(data.income)
-          importedCount += data.income.length
+        if (result.success) {
+          let message = `✅ ${result.message}`
+          if (result.warnings.length > 0) {
+            message += '\n\nWarnings:\n' + result.warnings.join('\n')
+          }
+          alert(message)
+          loadStats()
+          loadPreferences()
+        } else {
+          alert(`❌ ${result.message}\n\n${result.warnings.join('\n')}`)
         }
-        if (data.expenses?.length) {
-          await db.expenses.bulkAdd(data.expenses)
-          importedCount += data.expenses.length
-        }
-        if (data.debts?.length) {
-          await db.debts.bulkAdd(data.debts)
-          importedCount += data.debts.length
-        }
-        if (data.tasks?.length) {
-          await db.tasks.bulkAdd(data.tasks)
-          importedCount += data.tasks.length
-        }
-        if (data.weight?.length) {
-          await db.weight.bulkAdd(data.weight)
-          importedCount += data.weight.length
-        }
-        if (data.exercise?.length) {
-          await db.exercise.bulkAdd(data.exercise)
-          importedCount += data.exercise.length
-        }
-        if (data.meals?.length) {
-          await db.meals.bulkAdd(data.meals)
-          importedCount += data.meals.length
-        }
-        if (data.routines?.length) {
-          await db.routines.bulkAdd(data.routines)
-          importedCount += data.routines.length
-        }
-        if (data.routineCompletions?.length) {
-          await db.routineCompletions.bulkAdd(data.routineCompletions)
-          importedCount += data.routineCompletions.length
-        }
-
-        alert(`✅ Successfully imported ${importedCount} entries!`)
-        loadStats()
-        loadPreferences()
       } catch (error) {
         console.error('Import failed:', error)
         alert('❌ Failed to import data. Please check the file format.')
