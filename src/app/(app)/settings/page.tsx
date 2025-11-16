@@ -266,61 +266,10 @@ export default function SettingsPage() {
         </p>
       </motion.div>
 
-      {/* Data Statistics */}
-      <motion.div 
-        {...fadeIn}
-        transition={{ delay: 0.1 }}
-        className="card"
-      >
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-          <Database className="w-5 h-5" />
-          Your Data
-        </h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.income}</p>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Income</p>
-          </div>
-          <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.expenses}</p>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Expenses</p>
-          </div>
-          <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.debts}</p>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Debts</p>
-          </div>
-          <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.tasks}</p>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Tasks</p>
-          </div>
-          <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.weight}</p>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Weight Logs</p>
-          </div>
-          <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.exercise}</p>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Exercises</p>
-          </div>
-          <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.meals}</p>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Meals</p>
-          </div>
-          <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.routines}</p>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Routines</p>
-          </div>
-        </div>
-        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            <strong className="text-gray-900 dark:text-white">Total: {totalEntries} entries</strong> stored locally in your browser
-          </p>
-        </div>
-      </motion.div>
-
       {/* Preferences */}
       <motion.div 
         {...fadeIn}
-        transition={{ delay: 0.2 }}
+        transition={{ delay: 0.1 }}
         className="card"
       >
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
@@ -408,22 +357,104 @@ export default function SettingsPage() {
         </div>
       </motion.div>
 
-      {/* About Thrive */}
+      {/* Appearance */}
+      <motion.div 
+        {...fadeIn}
+        transition={{ delay: 0.2 }}
+        className="card"
+      >
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          Appearance
+        </h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          Choose your preferred theme or use system settings
+        </p>
+        {mounted && (
+          <div className="grid grid-cols-3 gap-3">
+            <button
+              onClick={() => setTheme('light')}
+              className={`p-4 border-2 rounded-xl text-center transition-all ${
+                theme === 'light'
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+              }`}
+            >
+              <div className="text-2xl mb-2">☀️</div>
+              <p className="text-xs font-medium text-gray-900 dark:text-white">Light</p>
+            </button>
+            <button
+              onClick={() => setTheme('dark')}
+              className={`p-4 border-2 rounded-xl text-center transition-all ${
+                theme === 'dark'
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+              }`}
+            >
+              <div className="text-2xl mb-2">🌙</div>
+              <p className="text-xs font-medium text-gray-900 dark:text-white">Dark</p>
+            </button>
+            <button
+              onClick={() => setTheme('system')}
+              className={`p-4 border-2 rounded-xl text-center transition-all ${
+                theme === 'system'
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+              }`}
+            >
+              <div className="text-2xl mb-2">⚙️</div>
+              <p className="text-xs font-medium text-gray-900 dark:text-white">System</p>
+            </button>
+          </div>
+        )}
+      </motion.div>
+
+      {/* Your Data */}
       <motion.div 
         {...fadeIn}
         transition={{ delay: 0.25 }}
         className="card"
       >
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-          <Info className="w-5 h-5" />
-          About Thrive
+          <Database className="w-5 h-5" />
+          Your Data
         </h3>
-        <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-          <p><strong>Version:</strong> 0.1.0 (MVP)</p>
-          <p><strong>Storage:</strong> Local (IndexedDB)</p>
-          <p><strong>Data Location:</strong> Your browser</p>
-          <p className="pt-2">
-            Thrive is an open-source personal management app that keeps your data local and private.
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.income}</p>
+            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Income</p>
+          </div>
+          <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.expenses}</p>
+            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Expenses</p>
+          </div>
+          <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.debts}</p>
+            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Debts</p>
+          </div>
+          <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.tasks}</p>
+            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Tasks</p>
+          </div>
+          <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.weight}</p>
+            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Weight Logs</p>
+          </div>
+          <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.exercise}</p>
+            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Exercises</p>
+          </div>
+          <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.meals}</p>
+            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Meals</p>
+          </div>
+          <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.routines}</p>
+            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Routines</p>
+          </div>
+        </div>
+        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            <strong className="text-gray-900 dark:text-white">Total: {totalEntries} entries</strong> stored locally in your browser
           </p>
         </div>
       </motion.div>
@@ -486,7 +517,7 @@ export default function SettingsPage() {
       {/* Cloud Sync */}
       <motion.div 
         {...fadeIn}
-        transition={{ delay: 0.33 }}
+        transition={{ delay: 0.35 }}
         className="card"
       >
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
@@ -504,76 +535,45 @@ export default function SettingsPage() {
         </button>
       </motion.div>
 
-      {/* Theme */}
-      <motion.div 
-        {...fadeIn}
-        transition={{ delay: 0.35 }}
-        className="card"
-      >
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Appearance
-        </h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-          Choose your preferred theme or use system settings
-        </p>
-        {mounted && (
-          <div className="grid grid-cols-3 gap-3">
-            <button
-              onClick={() => setTheme('light')}
-              className={`p-4 border-2 rounded-xl text-center transition-all ${
-                theme === 'light'
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-              }`}
-            >
-              <div className="text-2xl mb-2">☀️</div>
-              <p className="text-xs font-medium text-gray-900 dark:text-white">Light</p>
-            </button>
-            <button
-              onClick={() => setTheme('dark')}
-              className={`p-4 border-2 rounded-xl text-center transition-all ${
-                theme === 'dark'
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-              }`}
-            >
-              <div className="text-2xl mb-2">🌙</div>
-              <p className="text-xs font-medium text-gray-900 dark:text-white">Dark</p>
-            </button>
-            <button
-              onClick={() => setTheme('system')}
-              className={`p-4 border-2 rounded-xl text-center transition-all ${
-                theme === 'system'
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-              }`}
-            >
-              <div className="text-2xl mb-2">⚙️</div>
-              <p className="text-xs font-medium text-gray-900 dark:text-white">System</p>
-            </button>
-          </div>
-        )}
-      </motion.div>
-
-      {/* Links */}
+      {/* About Thrive */}
       <motion.div 
         {...fadeIn}
         transition={{ delay: 0.4 }}
+        className="card"
+      >
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <Info className="w-5 h-5" />
+          About Thrive
+        </h3>
+        <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+          <p><strong>Version:</strong> 0.1.0 (MVP)</p>
+          <p><strong>Storage:</strong> Local (IndexedDB)</p>
+          <p><strong>Data Location:</strong> Your browser</p>
+          <p className="pt-2">
+            Thrive is an open-source personal management app that keeps your data local and private.
+          </p>
+        </div>
+      </motion.div>
+
+      {/* Resources */}
+      <motion.div 
+        {...fadeIn}
+        transition={{ delay: 0.45 }}
         className="card"
       >
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           Resources
         </h3>
         <div className="space-y-2 text-sm">
-          <a href="https://github.com" target="_blank" rel="noopener noreferrer" 
+          <a href="https://github.com/xdaguy/thrive#readme" target="_blank" rel="noopener noreferrer" 
              className="block p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors">
             📖 Documentation
           </a>
-          <a href="https://github.com" target="_blank" rel="noopener noreferrer"
+          <a href="https://github.com/xdaguy/thrive" target="_blank" rel="noopener noreferrer"
              className="block p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors">
             💻 GitHub Repository
           </a>
-          <a href="https://github.com" target="_blank" rel="noopener noreferrer"
+          <a href="https://github.com/xdaguy/thrive/issues/new" target="_blank" rel="noopener noreferrer"
              className="block p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors">
             🐛 Report a Bug
           </a>
