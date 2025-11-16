@@ -1,0 +1,12 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /finance
+Disallow: /health
+Disallow: /tasks
+Disallow: /routines
+Disallow: /settings
+Disallow: /onboarding
+
+Sitemap: https://thrive-23ifz.ondigitalocean.app/sitemap.xml

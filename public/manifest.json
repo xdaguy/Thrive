@@ -3,17 +3,47 @@
   "short_name": "Thrive",
   "description": "Track finances, tasks, health, and daily routines. Your data stays yours, forever.",
   "start_url": "/dashboard",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#FFFFFF",
-  "theme_color": "#FFFFFF",
+  "theme_color": "#3B82F6",
   "orientation": "portrait",
   "icons": [
     {
       "src": "/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
     }
   ],
-  "categories": ["productivity", "finance", "health", "lifestyle"]
+  "categories": ["productivity", "finance", "health", "lifestyle"],
+  "shortcuts": [
+    {
+      "name": "Add Income",
+      "short_name": "Income",
+      "description": "Quick add income entry",
+      "url": "/finance?tab=income&add=true",
+      "icons": [{ "src": "/icon.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Add Expense",
+      "short_name": "Expense", 
+      "description": "Quick add expense entry",
+      "url": "/finance?tab=expenses&add=true",
+      "icons": [{ "src": "/icon.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Add Task",
+      "short_name": "Task",
+      "description": "Quick add task",
+      "url": "/tasks?add=true",
+      "icons": [{ "src": "/icon.svg", "sizes": "192x192" }]
+    }
+  ]
 }
