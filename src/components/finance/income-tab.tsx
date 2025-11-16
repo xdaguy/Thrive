@@ -6,6 +6,7 @@ import { addIncome, getAllIncome, deleteIncome, updateIncome, type Income } from
 import { INCOME_CATEGORIES, formatCurrency, formatDate } from '@/lib/constants'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
 import { db } from '@/lib/db/schema'
+import { Skeleton, SkeletonTable } from '@/components/ui/skeleton'
 
 interface IncomeTabProps {
   openForm?: boolean
@@ -20,6 +21,7 @@ export function IncomeTab({ openForm }: IncomeTabProps = {}) {
   const [customEndDate, setCustomEndDate] = useState('')
   const [currency, setCurrency] = useState('USD')
   const [dateFormat, setDateFormat] = useState('MM/DD/YYYY')
+  const [loading, setLoading] = useState(true)
   const [formData, setFormData] = useState({
     amount: '',
     category: INCOME_CATEGORIES[0],
@@ -63,8 +65,18 @@ export function IncomeTab({ openForm }: IncomeTabProps = {}) {
   }
 
   async function loadIncomes() {
+    setLoading(true)
+    const startTime = Date.now()
+    
     const data = await getAllIncome()
+    
+    // Ensure skeleton shows for at least 300ms
+    const elapsedTime = Date.now() - startTime
+    const remainingTime = Math.max(0, 300 - elapsedTime)
+    await new Promise(resolve => setTimeout(resolve, remainingTime))
+    
     setIncomes(data)
+    setLoading(false)
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -411,8 +423,10 @@ export function IncomeTab({ openForm }: IncomeTabProps = {}) {
       )}
 
       {/* Income List */}
-      <div className="space-y-3">
-        {filteredIncomes.length === 0 ? (
+      <div className="space-y-3 sm:space-y-4">
+        {loading ? (
+          <SkeletonTable rows={3} />
+        ) : filteredIncomes.length === 0 ? (
           <div className="text-center py-12">
             <TrendingUp className="w-12 h-12 text-gray-300 dark:text-gray-700 mx-auto mb-3" />
             <p className="text-gray-500 dark:text-gray-400">No income entries yet</p>

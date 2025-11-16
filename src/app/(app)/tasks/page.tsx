@@ -9,6 +9,7 @@ import { formatDate } from '@/lib/constants'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
 import { db } from '@/lib/db/schema'
 import { fadeIn, listItem, staggerContainer, staggerItem } from '@/lib/animations'
+import { Skeleton, SkeletonTable } from '@/components/ui/skeleton'
 
 export default function TasksPage() {
   const searchParams = useSearchParams()
@@ -25,6 +26,7 @@ export default function TasksPage() {
     category: '',
     tags: ''
   })
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     loadTasks()
@@ -58,8 +60,18 @@ export default function TasksPage() {
   }
 
   async function loadTasks() {
+    setLoading(true)
+    const startTime = Date.now()
+    
     const data = await getAllTasks()
+    
+    // Ensure skeleton shows for at least 300ms
+    const elapsedTime = Date.now() - startTime
+    const remainingTime = Math.max(0, 300 - elapsedTime)
+    await new Promise(resolve => setTimeout(resolve, remainingTime))
+    
     setTasks(data)
+    setLoading(false)
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -361,7 +373,9 @@ export default function TasksPage() {
 
       {/* Task List */}
       <div className="space-y-2">
-        {filteredTasks.length === 0 ? (
+        {loading ? (
+          <SkeletonTable rows={4} />
+        ) : filteredTasks.length === 0 ? (
           <div className="text-center py-12 card">
             <CheckSquare className="w-12 h-12 text-gray-300 dark:text-gray-700 mx-auto mb-3" />
             <p className="text-gray-500 dark:text-gray-400">

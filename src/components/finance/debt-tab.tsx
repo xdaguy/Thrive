@@ -5,6 +5,7 @@ import { Plus, CreditCard, Trash2, AlertCircle, CheckCircle, Edit } from 'lucide
 import { formatCurrency, formatDate } from '@/lib/constants'
 import { db, generateId, type Debt } from '@/lib/db/schema'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
+import { Skeleton, SkeletonTable } from '@/components/ui/skeleton'
 
 interface DebtTabProps {
   openForm?: boolean
@@ -16,6 +17,7 @@ export function DebtTab({ openForm }: DebtTabProps = {}) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [currency, setCurrency] = useState('USD')
   const [dateFormat, setDateFormat] = useState('MM/DD/YYYY')
+  const [loading, setLoading] = useState(true)
   const [formData, setFormData] = useState({
     type: 'i_owe' as 'owed_to_me' | 'i_owe',
     person: '',
@@ -60,8 +62,18 @@ export function DebtTab({ openForm }: DebtTabProps = {}) {
   }
 
   async function loadDebts() {
+    setLoading(true)
+    const startTime = Date.now()
+    
     const data = await db.debts.orderBy('createdAt').reverse().toArray()
+    
+    // Ensure skeleton shows for at least 300ms
+    const elapsedTime = Date.now() - startTime
+    const remainingTime = Math.max(0, 300 - elapsedTime)
+    await new Promise(resolve => setTimeout(resolve, remainingTime))
+    
     setDebts(data)
+    setLoading(false)
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -339,7 +351,9 @@ export function DebtTab({ openForm }: DebtTabProps = {}) {
 
       {/* Debt List */}
       <div className="space-y-3">
-        {debts.length === 0 ? (
+        {loading ? (
+          <SkeletonTable rows={3} />
+        ) : debts.length === 0 ? (
           <div className="text-center py-12">
             <CreditCard className="w-12 h-12 text-gray-300 dark:text-gray-700 mx-auto mb-3" />
             <p className="text-gray-500 dark:text-gray-400">No debts tracked yet</p>

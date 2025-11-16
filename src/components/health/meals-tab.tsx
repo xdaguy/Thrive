@@ -6,6 +6,7 @@ import { addMeal, getAllMeals, deleteMeal, updateMeal, type Meal } from '@/lib/d
 import { MEAL_TYPES, formatDate } from '@/lib/constants'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
 import { db } from '@/lib/db/schema'
+import { Skeleton, SkeletonTable } from '@/components/ui/skeleton'
 
 interface MealsTabProps {
   openForm?: boolean
@@ -16,6 +17,7 @@ export function MealsTab({ openForm }: MealsTabProps = {}) {
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [dateFormat, setDateFormat] = useState('MM/DD/YYYY')
+  const [loading, setLoading] = useState(true)
   const [formData, setFormData] = useState({
     mealType: 'breakfast' as 'breakfast' | 'lunch' | 'dinner' | 'snack',
     description: '',
@@ -54,8 +56,18 @@ export function MealsTab({ openForm }: MealsTabProps = {}) {
   }
 
   async function loadMeals() {
+    setLoading(true)
+    const startTime = Date.now()
+    
     const data = await getAllMeals()
+    
+    // Ensure skeleton shows for at least 300ms
+    const elapsedTime = Date.now() - startTime
+    const remainingTime = Math.max(0, 300 - elapsedTime)
+    await new Promise(resolve => setTimeout(resolve, remainingTime))
+    
     setMeals(data)
+    setLoading(false)
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -218,7 +230,9 @@ export function MealsTab({ openForm }: MealsTabProps = {}) {
       )}
 
       <div className="space-y-3">
-        {meals.length === 0 ? (
+        {loading ? (
+          <SkeletonTable rows={3} />
+        ) : meals.length === 0 ? (
           <div className="text-center py-12">
             <Utensils className="w-12 h-12 text-gray-300 dark:text-gray-700 mx-auto mb-3" />
             <p className="text-gray-500 dark:text-gray-400">No meals logged yet</p>

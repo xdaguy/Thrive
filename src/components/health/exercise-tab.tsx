@@ -6,6 +6,7 @@ import { addExercise, getAllExercise, deleteExercise, updateExercise, type Exerc
 import { EXERCISE_TYPES, formatDate } from '@/lib/constants'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
 import { db } from '@/lib/db/schema'
+import { Skeleton, SkeletonTable } from '@/components/ui/skeleton'
 
 interface ExerciseTabProps {
   openForm?: boolean
@@ -16,6 +17,7 @@ export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [dateFormat, setDateFormat] = useState('MM/DD/YYYY')
+  const [loading, setLoading] = useState(true)
   const [formData, setFormData] = useState({
     type: 'cardio' as 'cardio' | 'gym' | 'sports' | 'other',
     name: '',
@@ -57,8 +59,18 @@ export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
   }
 
   async function loadExercises() {
+    setLoading(true)
+    const startTime = Date.now()
+    
     const data = await getAllExercise()
+    
+    // Ensure skeleton shows for at least 300ms
+    const elapsedTime = Date.now() - startTime
+    const remainingTime = Math.max(0, 300 - elapsedTime)
+    await new Promise(resolve => setTimeout(resolve, remainingTime))
+    
     setExercises(data)
+    setLoading(false)
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -286,7 +298,9 @@ export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
       )}
 
       <div className="space-y-3">
-        {exercises.length === 0 ? (
+        {loading ? (
+          <SkeletonTable rows={3} />
+        ) : exercises.length === 0 ? (
           <div className="text-center py-12">
             <Dumbbell className="w-12 h-12 text-gray-300 dark:text-gray-700 mx-auto mb-3" />
             <p className="text-gray-500 dark:text-gray-400">No exercises logged yet</p>
