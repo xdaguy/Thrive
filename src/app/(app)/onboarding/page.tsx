@@ -147,16 +147,39 @@ export default function OnboardingPage() {
       // Start auto-sync
       startAutoSync()
       
-      // Download from Drive if backup exists
-      await syncNow()
+      // Try to download from Drive if backup exists (don't fail if it doesn't)
+      try {
+        await syncNow()
+      } catch (syncError) {
+        console.log('No backup found on Drive or sync failed (this is OK for new users):', syncError)
+      }
       
-      alert('✅ Successfully connected to Google Drive!\n\nYour data has been synced.')
+      alert('✅ Successfully connected to Google Drive!\n\nAuto-sync is now enabled.')
       
-      // Mark onboarding complete
-      await db.settings.update('user_settings', {
-        onboardingComplete: true,
-        updatedAt: new Date()
-      })
+      // Ensure settings exist, then mark onboarding complete
+      const existingSettings = await db.settings.get('user_settings')
+      
+      if (existingSettings) {
+        // Update existing settings
+        await db.settings.update('user_settings', {
+          onboardingComplete: true,
+          updatedAt: new Date()
+        })
+      } else {
+        // Create new settings with defaults
+        await db.settings.put({
+          id: 'user_settings',
+          name: formData.name || 'User',
+          currency: formData.currency || 'USD',
+          weightUnit: formData.weightUnit || 'kg',
+          dateFormat: formData.dateFormat || 'MM/DD/YYYY',
+          theme: 'system',
+          onboardingComplete: true,
+          syncEnabled: true,
+          encryptionEnabled: false,
+          updatedAt: new Date()
+        })
+      }
       
       router.push('/dashboard')
     } catch (error) {
