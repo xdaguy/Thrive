@@ -10,6 +10,7 @@ import { DataEvents, DATA_EVENTS } from '@/lib/events'
 import type { Task, Routine } from '@/lib/db/schema'
 import { db } from '@/lib/db/schema'
 import { fadeIn, staggerContainer, staggerItem } from '@/lib/animations'
+import { Skeleton, SkeletonCard } from '@/components/ui/skeleton'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -62,6 +63,8 @@ export default function DashboardPage() {
 
   async function loadStats() {
     try {
+      const startTime = Date.now()
+      
       const now = new Date()
       
       const balance = await getTotalBalance()
@@ -83,6 +86,13 @@ export default function DashboardPage() {
         dueDate.setHours(0, 0, 0, 0)
         return dueDate.getTime() === today.getTime()
       }).slice(0, 5) // Show max 5 tasks
+
+      // Ensure skeleton shows for at least 300ms for better UX
+      const elapsedTime = Date.now() - startTime
+      const minDisplayTime = 300
+      const remainingTime = Math.max(0, minDisplayTime - elapsedTime)
+      
+      await new Promise(resolve => setTimeout(resolve, remainingTime))
 
       // Set stats and UI state
       setStats({
@@ -138,14 +148,22 @@ export default function DashboardPage() {
       </motion.div>
 
       {/* Quick Stats Grid */}
-      <motion.div 
-        variants={staggerContainer}
-        initial="initial"
-        animate="animate"
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
-      >
-        {/* Total Balance */}
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+      ) : (
         <motion.div 
+          variants={staggerContainer}
+          initial="initial"
+          animate="animate"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
+        >
+          {/* Total Balance */}
+          <motion.div 
           variants={staggerItem}
           whileHover={{ scale: 1.02, y: -4 }}
           transition={{ type: "spring", stiffness: 300 }}
@@ -212,6 +230,7 @@ export default function DashboardPage() {
           <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats.tasksCompleted}/{stats.totalTasks}</p>
         </motion.div>
       </motion.div>
+      )}
 
       {/* Quick Actions */}
       <div className="card p-4 sm:p-5">
@@ -272,7 +291,18 @@ export default function DashboardPage() {
               View all
             </button>
           </div>
-          {tasks.length === 0 ? (
+          {loading ? (
+            <div className="space-y-2">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+                  <Skeleton className="w-5 h-5 rounded flex-shrink-0" />
+                  <div className="flex-1 space-y-1.5">
+                    <Skeleton className="h-4 w-3/4" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : tasks.length === 0 ? (
             <div className="text-center py-8 sm:py-12">
               <CheckSquare className="w-10 h-10 sm:w-12 sm:h-12 text-gray-300 dark:text-gray-700 mx-auto mb-2 sm:mb-3" />
               <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">No tasks due today</p>
