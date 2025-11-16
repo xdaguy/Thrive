@@ -16,6 +16,7 @@ import { generateId, db } from '@/lib/db/schema'
 import type { Routine, RoutineItem, RoutineCompletion } from '@/lib/db/schema'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
 import { fadeIn, staggerContainer, staggerItem, scaleIn } from '@/lib/animations'
+import { Skeleton, SkeletonTable } from '@/components/ui/skeleton'
 
 export default function RoutinesPage() {
   const [routines, setRoutines] = useState<Routine[]>([])
@@ -23,6 +24,7 @@ export default function RoutinesPage() {
   const [streaks, setStreaks] = useState<Record<string, number>>({})
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
   const [formData, setFormData] = useState({
     name: '',
     timeOfDay: 'morning' as 'morning' | 'afternoon' | 'evening' | 'night',
@@ -34,6 +36,9 @@ export default function RoutinesPage() {
   }, [])
 
   async function loadRoutines() {
+    setLoading(true)
+    const startTime = Date.now()
+    
     const data = await getAllRoutines()
     setRoutines(data)
     
@@ -54,6 +59,13 @@ export default function RoutinesPage() {
     
     setCompletions(completionsMap)
     setStreaks(streaksMap)
+    
+    // Ensure skeleton shows for at least 300ms
+    const elapsedTime = Date.now() - startTime
+    const remainingTime = Math.max(0, 300 - elapsedTime)
+    await new Promise(resolve => setTimeout(resolve, remainingTime))
+    
+    setLoading(false)
   }
 
   function addNewItem() {
@@ -367,7 +379,9 @@ export default function RoutinesPage() {
       )}
 
       {/* Routines List */}
-      {routines.length === 0 ? (
+      {loading ? (
+        <SkeletonTable rows={3} />
+      ) : routines.length === 0 ? (
         <div className="card text-center py-12">
           <RotateCw className="w-12 h-12 text-gray-300 dark:text-gray-700 mx-auto mb-3" />
           <p className="text-gray-500 dark:text-gray-400">No routines yet</p>

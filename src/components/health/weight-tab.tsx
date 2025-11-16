@@ -6,6 +6,7 @@ import { addWeight, getAllWeight, deleteWeight, updateWeight, type Weight } from
 import { formatDate } from '@/lib/constants'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
 import { db } from '@/lib/db/schema'
+import { Skeleton, SkeletonTable } from '@/components/ui/skeleton'
 
 interface WeightTabProps {
   openForm?: boolean
@@ -17,6 +18,7 @@ export function WeightTab({ openForm }: WeightTabProps = {}) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg')
   const [dateFormat, setDateFormat] = useState('MM/DD/YYYY')
+  const [loading, setLoading] = useState(true)
   const [formData, setFormData] = useState({
     weight: '',
     date: new Date().toISOString().split('T')[0],
@@ -57,8 +59,18 @@ export function WeightTab({ openForm }: WeightTabProps = {}) {
   }
 
   async function loadWeights() {
+    setLoading(true)
+    const startTime = Date.now()
+    
     const data = await getAllWeight()
+    
+    // Ensure skeleton shows for at least 300ms
+    const elapsedTime = Date.now() - startTime
+    const remainingTime = Math.max(0, 300 - elapsedTime)
+    await new Promise(resolve => setTimeout(resolve, remainingTime))
+    
     setWeights(data)
+    setLoading(false)
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -236,7 +248,9 @@ export function WeightTab({ openForm }: WeightTabProps = {}) {
       )}
 
       <div className="space-y-3">
-        {weights.length === 0 ? (
+        {loading ? (
+          <SkeletonTable rows={3} />
+        ) : weights.length === 0 ? (
           <div className="text-center py-12">
             <Scale className="w-12 h-12 text-gray-300 dark:text-gray-700 mx-auto mb-3" />
             <p className="text-gray-500 dark:text-gray-400">No weight entries yet</p>
