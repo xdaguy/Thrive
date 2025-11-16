@@ -1,29 +1,71 @@
-# Thrive
+# 🌟 Thrive - All-in-One Life Management
 
-> Take control of your entire life. The all-in-one app for managing finances, tasks, health, and daily routines. Beautiful, powerful, and completely private.
+> **Privacy-first, local-first PWA for managing finances, tasks, health, and daily routines.**
 
 🌐 **Live App:** [https://thrive-23ifz.ondigitalocean.app/](https://thrive-23ifz.ondigitalocean.app/)
 
 [![Open Source](https://img.shields.io/badge/Open%20Source-Yes-green.svg)](https://github.com/xdaguy/thrive)
 [![Privacy First](https://img.shields.io/badge/Privacy-First-blue.svg)](https://github.com/xdaguy/thrive)
 [![PWA Ready](https://img.shields.io/badge/PWA-Ready-purple.svg)](https://github.com/xdaguy/thrive)
+[![Security 9.5/10](https://img.shields.io/badge/Security-9.5%2F10-brightgreen.svg)](https://github.com/xdaguy/thrive)
 [![Live Demo](https://img.shields.io/badge/Live-Demo-blue.svg)](https://thrive-23ifz.ondigitalocean.app/)
 [![Deployed on DigitalOcean](https://img.shields.io/badge/Deployed%20on-DigitalOcean-0080FF.svg)](https://www.digitalocean.com/)
 
 ## 📖 Table of Contents
 
-- [Live Demo](#-live-demo)
-- [Quick Start](#-quick-start)
-- [Vision](#-vision)
-- [Core Philosophy](#-core-philosophy)
-- [Features Overview](#-features-overview)
-- [Technical Architecture](#-technical-architecture)
-- [Technology Stack](#-technology-stack)
-- [Project Structure](#-project-structure)
-- [Data Storage Strategy](#-data-storage-strategy)
-- [Deployment](#-deployment)
-- [Design System](#-design-system)
-- [Security & Privacy](#-security--privacy)
+- [🚀 For Testers & Reviewers](#-for-testers--reviewers)
+- [🌐 Live Demo](#-live-demo)
+- [⚡ Quick Start (Development)](#-quick-start-development)
+- [🔐 Security Features](#-security-features)
+- [📚 Documentation](#-documentation)
+- [💡 Features Overview](#-features-overview)
+- [🛠️ Technology Stack](#-technology-stack)
+- [🏗️ Project Structure](#️-project-structure)
+- [📦 Deployment](#-deployment)
+- [🔒 Security & Privacy](#-security--privacy)
+
+---
+
+## 🚀 For Testers & Reviewers
+
+**Testing the app? Start here!**
+
+### Quick Test (2 minutes)
+1. **Visit Live App:** [https://thrive-23ifz.ondigitalocean.app/](https://thrive-23ifz.ondigitalocean.app/)
+2. **Click "Start Free"** - No signup required!
+3. **Try the features:**
+   - Add an expense in Finance tab
+   - Create a task in Tasks tab
+   - Check the Dashboard for stats
+4. **Test offline:** Disconnect internet, app still works!
+5. **Test PWA:** Install on mobile/desktop
+
+### Full Testing Setup
+Want to test Google Drive sync or run locally? See our detailed guides:
+
+- 📘 **[Google Cloud Setup Guide](docs/GOOGLE_CLOUD_SETUP.md)** - Configure OAuth & Drive API
+- 🚀 **[Production Deployment Guide](docs/PRODUCTION_DEPLOYMENT.md)** - Deploy your own instance
+- 🧪 **[Testing Guide](docs/TESTING_GUIDE.md)** - Comprehensive testing checklist
+
+### Security Testing
+- ✅ **Security Score: 9.5/10** (see [Security Analysis](docs/DEEP_SECURITY_ANALYSIS.md))
+- ✅ **BFF OAuth Pattern** - Client secrets never exposed
+- ✅ **HTTP-only Cookies** - XSS-safe token storage
+- ✅ **CSP Headers** - 12 security headers implemented
+- ✅ **Rate Limiting** - API abuse protection
+- ✅ **Token Rotation** - With reuse detection
+
+### What to Test
+- [ ] Basic functionality (CRUD operations)
+- [ ] Offline mode (works without internet)
+- [ ] PWA installation (mobile & desktop)
+- [ ] Dark mode switching
+- [ ] Data export (JSON format)
+- [ ] Google Drive sync (if configured)
+- [ ] Browser compatibility (Chrome, Firefox, Safari, Edge)
+- [ ] Mobile responsiveness
+- [ ] Security headers (check DevTools → Network)
+- [ ] Cookie security (httpOnly flag present)
 
 ---
 
@@ -52,31 +94,103 @@
 
 ---
 
-## 🚀 Quick Start
+## ⚡ Quick Start (Development)
 
-### For Users:
-**Just use the live app:** [https://thrive-23ifz.ondigitalocean.app/](https://thrive-23ifz.ondigitalocean.app/)
+### Prerequisites
+- Node.js 18+ and npm 9+
+- Git
+- Modern browser (Chrome, Firefox, Safari, Edge)
 
-No installation, no setup, no account needed!
-
-### For Developers:
+### Setup
 ```bash
-# Clone repository
+# 1. Clone repository
 git clone https://github.com/xdaguy/thrive.git
 cd thrive
 
-# Install dependencies
+# 2. Install dependencies
 npm install
 
-# Run development server
+# 3. Run development server
 npm run dev
 
-# Open http://localhost:3000
+# 4. Open browser
+# Visit: http://localhost:3000
 ```
+
+### Optional: Configure Google Drive Sync
+See [Google Cloud Setup Guide](docs/GOOGLE_CLOUD_SETUP.md) for detailed instructions.
 
 ---
 
-## 🎯 Vision
+## 🔐 Security Features
+
+Thrive implements **enterprise-grade security** with a **9.5/10 security score**.
+
+### Backend For Frontend (BFF) Pattern
+- ✅ OAuth handled server-side
+- ✅ Client secrets never exposed to frontend
+- ✅ Secure token exchange
+
+### HTTP-only Cookies
+- ✅ Tokens stored in httpOnly cookies
+- ✅ Not accessible via JavaScript
+- ✅ XSS-safe storage
+
+### Content Security Policy (CSP)
+- ✅ 12 security headers implemented
+- ✅ Blocks unauthorized scripts
+- ✅ Prevents XSS attacks
+- ✅ Frame injection protection
+
+### Advanced Token Security
+- ✅ **Token rotation** - Automatic refresh token rotation
+- ✅ **Family tracking** - Detects token reuse
+- ✅ **Reuse detection** - Invalidates stolen tokens
+- ✅ **Generation counting** - Tracks rotation history
+
+### Rate Limiting
+- ✅ Token refresh: 30 requests per 15 minutes
+- ✅ Drive upload: 60 requests per hour
+- ✅ DDoS protection
+- ✅ Proper `Retry-After` headers
+
+### Data Protection
+- ✅ **Local-first** - Data stored on your device
+- ✅ **Optional encryption** - AES-256-GCM ready
+- ✅ **HTTPS enforced** - In production
+- ✅ **No tracking** - Privacy-first design
+
+**Full Security Analysis:** [View Report](docs/DEEP_SECURITY_ANALYSIS.md)
+
+---
+
+## 📚 Documentation
+
+### For Testers & Reviewers
+- 🧪 **[Testing Guide](docs/TESTING_GUIDE.md)** - Comprehensive testing checklist
+- 📘 **[Google Cloud Setup](docs/GOOGLE_CLOUD_SETUP.md)** - Configure OAuth & Drive API
+- 🚀 **[Production Deployment](docs/PRODUCTION_DEPLOYMENT.md)** - Deploy your own instance
+
+### For Developers
+- 🏗️ **[Getting Started](docs/GETTING_STARTED.md)** - Development setup guide
+- 🗄️ **[Database Documentation](docs/DATABASE.md)** - Schema, versioning, migrations ⭐
+- 🤝 **[Contributing Guide](docs/CONTRIBUTING.md)** - How to contribute ⭐
+- 📡 **[API Reference](docs/API_REFERENCE.md)** - Backend API routes ⭐
+- 🔒 **[Security Analysis](docs/DEEP_SECURITY_ANALYSIS.md)** - Security audit & best practices
+- 📖 **[Implementation Summary](docs/COMPLETE_IMPLEMENTATION_SUMMARY.md)** - Technical details
+
+### Troubleshooting
+- 📋 **[Schema Versioning](docs/SCHEMA_VERSIONING.md)** - Version compatibility ⭐
+- 🔧 **[Sync Debug Guide](docs/SYNC_DEBUG_GUIDE.md)** - Fix sync issues ⭐
+
+### Quick Links
+- 🐛 **[Report Issues](https://github.com/xdaguy/thrive/issues)** - Bug reports & feature requests
+- 💬 **[Discussions](https://github.com/xdaguy/thrive/discussions)** - Q&A and community
+- 📦 **[Releases](https://github.com/xdaguy/thrive/releases)** - Version history
+
+---
+
+## 💡 Features Overview
 
 Thrive consolidates financial tracking, task management, health monitoring, and routine building into one privacy-first application. Instead of juggling 4-5 separate apps with different logins and data silos, Thrive provides a unified platform where your data stays under your control.
 
