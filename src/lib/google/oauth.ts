@@ -9,6 +9,7 @@ const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
 const SCOPES = ['https://www.googleapis.com/auth/drive.file']
 
 const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!
+const CLIENT_SECRET = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET!
 const REDIRECT_URI = process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI!
 
 export interface GoogleTokens {
@@ -103,6 +104,7 @@ async function exchangeCodeForTokens(code: string): Promise<GoogleTokens> {
     body: new URLSearchParams({
       code,
       client_id: CLIENT_ID,
+      client_secret: CLIENT_SECRET,
       redirect_uri: REDIRECT_URI,
       grant_type: 'authorization_code',
     }),
@@ -137,6 +139,7 @@ export async function refreshAccessToken(refreshToken: string): Promise<GoogleTo
     body: new URLSearchParams({
       refresh_token: refreshToken,
       client_id: CLIENT_ID,
+      client_secret: CLIENT_SECRET,
       grant_type: 'refresh_token',
     }),
   })
