@@ -34,10 +34,9 @@ export async function authorizeWithGoogle(): Promise<void> {
  */
 export async function isAuthorized(): Promise<boolean> {
   try {
-    // Add cache buster to ensure fresh data
-    const cacheBuster = `?t=${Date.now()}`
-    const response = await fetch(`/api/auth/status${cacheBuster}`, {
-      cache: 'no-store' // Prevent caching
+    // Prevent cache to ensure fresh status
+    const response = await fetch(`/api/auth/status?t=${Date.now()}`, {
+      cache: 'no-store'
     })
     
     if (!response.ok) {

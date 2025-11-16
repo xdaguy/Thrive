@@ -215,12 +215,6 @@ export default function SettingsPage() {
   // Google Drive sync functions
   async function checkGoogleConnection() {
     const connected = await isAuthorized()
-    console.log('🔍 checkGoogleConnection - isAuthorized():', connected)
-    
-    // Also check database for debugging
-    const settings = await db.settings.get('user_settings')
-    console.log('🔍 Database syncEnabled:', settings?.syncEnabled)
-    
     setGoogleConnected(connected)
     
     if (connected) {
@@ -273,12 +267,8 @@ export default function SettingsPage() {
     if (!confirmed) return
 
     try {
-      console.log('🔴 Starting disconnect...')
-      
-      // Update database settings FIRST
+      // Update database settings
       const settings = await db.settings.get('user_settings')
-      console.log('🔍 Current database syncEnabled:', settings?.syncEnabled)
-      
       if (settings) {
         await db.settings.put({
           ...settings,
@@ -286,7 +276,6 @@ export default function SettingsPage() {
           syncProvider: undefined,
           lastSyncAt: undefined
         })
-        console.log('✅ Database updated: syncEnabled=false')
         DataEvents.emit(DATA_EVENTS.SETTINGS_CHANGED)
         
         // Small delay to ensure database write completes
@@ -295,26 +284,20 @@ export default function SettingsPage() {
       
       // Stop auto-sync
       stopAutoSync()
-      console.log('✅ Auto-sync stopped')
       
-      // Clear auth cookies (this will reload the page!)
-      console.log('🔄 Calling signOut() - page will reload...')
-      
+      // Clear auth cookies and reload page
       try {
         await signOut()
-        // NOTE: If signOut() works, page reloads and code below never runs
       } catch (signOutError) {
-        console.error('⚠️ signOut() failed, manually reloading:', signOutError)
-        // Fallback: manually clear state and reload
+        console.error('Sign out failed, manually reloading:', signOutError)
+        // Fallback: clear state and reload
         setGoogleConnected(false)
         setGoogleEmail('')
         setLastSync(null)
         window.location.reload()
       }
-      
-      // NOTE: Code here never executes if reload succeeds
     } catch (error) {
-      console.error('❌ Disconnect failed:', error)
+      console.error('Disconnect failed:', error)
       alert('❌ Failed to disconnect. Please try again.')
     }
   }
