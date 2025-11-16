@@ -1,8 +1,8 @@
 // Thrive Service Worker
-// Version 0.2.0 - Offline-First for Local-First App
+// Version 0.2.1 - Offline-First with Query Parameter Support
 
-const CACHE_NAME = 'thrive-v2';
-const RUNTIME_CACHE = 'thrive-runtime-v2';
+const CACHE_NAME = 'thrive-v2.1';
+const RUNTIME_CACHE = 'thrive-runtime-v2.1';
 
 // App routes that should work offline (local-first)
 const APP_ROUTES = [
@@ -62,8 +62,10 @@ self.addEventListener('fetch', (event) => {
   }
 
   const url = new URL(event.request.url);
-  const isAppRoute = APP_ROUTES.some(route => url.pathname.startsWith(route));
-  const isLandingPage = url.pathname === '/';
+  // Strip query parameters for route matching
+  const pathname = url.pathname;
+  const isAppRoute = APP_ROUTES.some(route => pathname.startsWith(route));
+  const isLandingPage = pathname === '/';
 
   // For navigation requests
   if (event.request.mode === 'navigate') {
@@ -71,13 +73,19 @@ self.addEventListener('fetch', (event) => {
       (async () => {
         // For app routes: Cache-first (offline-first)
         if (isAppRoute) {
-          const cachedResponse = await caches.match(event.request);
+          // Create cache key without query parameters for better matching
+          const cacheUrl = new URL(event.request.url);
+          cacheUrl.search = ''; // Remove query parameters
+          const cacheRequest = new Request(cacheUrl);
+          
+          const cachedResponse = await caches.match(cacheRequest);
           if (cachedResponse) {
-            // Update cache in background
+            // Update cache in background (with query params for proper route)
             fetch(event.request).then((response) => {
               if (response.ok) {
                 caches.open(RUNTIME_CACHE).then((cache) => {
-                  cache.put(event.request, response.clone());
+                  // Cache without query params for consistent matching
+                  cache.put(cacheRequest, response.clone());
                 });
               }
             }).catch(() => {
@@ -92,7 +100,8 @@ self.addEventListener('fetch', (event) => {
             if (response.ok) {
               const responseClone = response.clone();
               caches.open(RUNTIME_CACHE).then((cache) => {
-                cache.put(event.request, responseClone);
+                // Cache without query params for consistent matching
+                cache.put(cacheRequest, responseClone);
               });
             }
             return response;
