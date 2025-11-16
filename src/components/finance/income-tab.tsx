@@ -7,6 +7,7 @@ import { INCOME_CATEGORIES, formatCurrency, formatDate } from '@/lib/constants'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
 import { db } from '@/lib/db/schema'
 import { Skeleton, SkeletonTable } from '@/components/ui/skeleton'
+import { motion, AnimatePresence } from 'framer-motion'
 
 interface IncomeTabProps {
   openForm?: boolean
@@ -202,79 +203,94 @@ export function IncomeTab({ openForm }: IncomeTabProps = {}) {
     <div className="space-y-4 sm:space-y-6">
       {/* Date Filter */}
       <div className="card">
-        <div className="flex items-center gap-3">
-          <Calendar className="w-5 h-5 text-gray-400" />
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setDateFilter('all')}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                dateFilter === 'all'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-              }`}
-            >
-              All Time
-            </button>
-            <button
-              onClick={() => setDateFilter('today')}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                dateFilter === 'today'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-              }`}
-            >
-              Today
-            </button>
-            <button
-              onClick={() => setDateFilter('month')}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                dateFilter === 'month'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-              }`}
-            >
-              This Month
-            </button>
-            <button
-              onClick={() => setDateFilter('year')}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                dateFilter === 'year'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-              }`}
-            >
-              This Year
-            </button>
-            <button
-              onClick={() => setDateFilter('custom')}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                dateFilter === 'custom'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-              }`}
-            >
-              Custom Range
-            </button>
-          </div>
-          {dateFilter === 'custom' && (
-            <div className="flex items-center gap-2 ml-auto">
-              <input
-                type="date"
-                value={customStartDate}
-                onChange={(e) => setCustomStartDate(e.target.value)}
-                className="input text-sm py-1"
-                placeholder="Start date"
-              />
-              <span className="text-gray-500">to</span>
-              <input
-                type="date"
-                value={customEndDate}
-                onChange={(e) => setCustomEndDate(e.target.value)}
-                className="input text-sm py-1"
-                placeholder="End date"
-              />
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <Calendar className="w-5 h-5 text-gray-400 flex-shrink-0" />
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setDateFilter('all')}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  dateFilter === 'all'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                }`}
+              >
+                All Time
+              </button>
+              <button
+                onClick={() => setDateFilter('today')}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  dateFilter === 'today'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                }`}
+              >
+                Today
+              </button>
+              <button
+                onClick={() => setDateFilter('month')}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  dateFilter === 'month'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                }`}
+              >
+                This Month
+              </button>
+              <button
+                onClick={() => setDateFilter('year')}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  dateFilter === 'year'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                }`}
+              >
+                This Year
+              </button>
+              <button
+                onClick={() => setDateFilter('custom')}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  dateFilter === 'custom'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                }`}
+              >
+                Custom Range
+              </button>
             </div>
-          )}
+          </div>
+          
+          <AnimatePresence mode="wait">
+            {dateFilter === 'custom' && (
+              <motion.div
+                initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                transition={{ 
+                  duration: 0.25,
+                  ease: [0.25, 0.1, 0.25, 1]
+                }}
+              >
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pl-0 sm:pl-8 pt-1">
+                  <input
+                    type="date"
+                    value={customStartDate}
+                    onChange={(e) => setCustomStartDate(e.target.value)}
+                    className="input text-sm py-2 flex-1"
+                    placeholder="Start date"
+                  />
+                  <span className="text-gray-500 text-sm text-center sm:text-left">to</span>
+                  <input
+                    type="date"
+                    value={customEndDate}
+                    onChange={(e) => setCustomEndDate(e.target.value)}
+                    className="input text-sm py-2 flex-1"
+                    placeholder="End date"
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
