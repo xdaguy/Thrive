@@ -7,6 +7,7 @@ import { cookies } from 'next/headers'
  */
 
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
+const GOOGLE_USERINFO_URL = 'https://www.googleapis.com/oauth2/v2/userinfo'
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID! // Server-side only (SECRET SAFE)
 const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET! // Server-side only (SECRET SAFE)
 const REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI!
@@ -56,6 +57,25 @@ export async function GET(request: NextRequest) {
 
     const tokens = await response.json()
     console.log('✅ Tokens received successfully')
+
+    // Fetch user profile information
+    let userEmail = ''
+    try {
+      const userInfoResponse = await fetch(GOOGLE_USERINFO_URL, {
+        headers: {
+          Authorization: `Bearer ${tokens.access_token}`,
+        },
+      })
+      
+      if (userInfoResponse.ok) {
+        const userInfo = await userInfoResponse.json()
+        userEmail = userInfo.email || ''
+        console.log('✅ User profile fetched:', userEmail)
+      }
+    } catch (error) {
+      console.warn('Failed to fetch user profile:', error)
+      // Non-critical error, continue with auth
+    }
 
     // Calculate expiry timestamp
     const expiresAt = Date.now() + tokens.expires_in * 1000
@@ -108,6 +128,18 @@ export async function GET(request: NextRequest) {
     })
     
     console.log('🆕 Token family initialized:', tokenFamily.familyId)
+
+    // Store user email (not httpOnly - needs to be readable by frontend)
+    if (userEmail) {
+      cookieStore.set('google_user_email', userEmail, {
+        httpOnly: false, // Frontend needs to read this
+        secure: isProduction,
+        sameSite: 'strict',
+        maxAge: 60 * 60 * 24 * 365, // 1 year
+        path: '/',
+      })
+      console.log('✅ User email stored')
+    }
 
     // Redirect back to settings with success
     return NextResponse.redirect(

@@ -14,6 +14,8 @@ export async function POST() {
     cookieStore.delete('access_token')
     cookieStore.delete('refresh_token')
     cookieStore.delete('expires_at')
+    cookieStore.delete('token_family')
+    cookieStore.delete('google_user_email')
     
     console.log('✅ User signed out, cookies cleared')
     
