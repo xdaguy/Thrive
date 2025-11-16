@@ -709,9 +709,9 @@ export default function SettingsPage() {
           About Thrive
         </h3>
         <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-          <p><strong>Version:</strong> 0.1.0 (MVP)</p>
-          <p><strong>Storage:</strong> Local (IndexedDB)</p>
-          <p><strong>Data Location:</strong> Your browser</p>
+          <p><strong>Version:</strong> 1.0.0</p>
+          <p><strong>Storage:</strong> IndexedDB (Local) {googleConnected && '+ Google Drive (Cloud)'}</p>
+          <p><strong>Data Location:</strong> Your browser {googleConnected && '+ Your Google Drive'}</p>
           <p className="pt-2">
             Thrive is an open-source personal management app that keeps your data local and private.
           </p>
