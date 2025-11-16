@@ -22,9 +22,10 @@ const MIN_SYNC_INTERVAL_MS = 60000 // Minimum 1 minute between syncs
 
 /**
  * Start auto-sync
+ * @param triggerImmediateSync - If true, performs immediate sync instead of debounced (useful on first connection)
  */
-export function startAutoSync(): void {
-  console.log('🚀 startAutoSync() called')
+export function startAutoSync(triggerImmediateSync = false): void {
+  console.log('🚀 startAutoSync() called, immediate:', triggerImmediateSync)
   
   if (syncEnabled) {
     console.log('⚠️ Auto-sync already running')
@@ -58,9 +59,14 @@ export function startAutoSync(): void {
   })
   console.log('✓ Event listeners registered for', dataEvents.length, 'events')
 
-  // Initial sync on start
-  console.log('📅 Scheduling initial sync...')
-  scheduleSyncDebounced()
+  // Initial sync - immediate if just connected, debounced if page reload
+  if (triggerImmediateSync) {
+    console.log('📅 Triggering immediate initial sync...')
+    performSync().catch(err => console.error('Initial sync failed:', err))
+  } else {
+    console.log('📅 Scheduling initial sync...')
+    scheduleSyncDebounced()
+  }
 }
 
 /**

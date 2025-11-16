@@ -191,10 +191,10 @@ export default function SettingsPage() {
       
       setGoogleConnected(true)
       
-      // Start auto-sync
-      startAutoSync()
+      // Start auto-sync with immediate first sync
+      startAutoSync(true)
       
-      alert('✅ Successfully connected to Google Drive!\n\nAuto-sync is now enabled.')
+      alert('✅ Successfully connected to Google Drive!\n\nInitial sync in progress...')
     } catch (error) {
       console.error('Google Drive connection failed:', error)
       alert('❌ Failed to connect to Google Drive.\n\n' + (error instanceof Error ? error.message : 'Unknown error'))

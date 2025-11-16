@@ -144,19 +144,7 @@ export default function OnboardingPage() {
       // IMPORTANT: Save tokens to localStorage
       saveTokens(tokens)
       
-      // Start auto-sync
-      startAutoSync()
-      
-      // Try to download from Drive if backup exists (don't fail if it doesn't)
-      try {
-        await syncNow()
-      } catch (syncError) {
-        console.log('No backup found on Drive or sync failed (this is OK for new users):', syncError)
-      }
-      
-      alert('✅ Successfully connected to Google Drive!\n\nAuto-sync is now enabled.')
-      
-      // Ensure settings exist, then mark onboarding complete
+      // Ensure settings exist first
       const existingSettings = await db.settings.get('user_settings')
       
       if (existingSettings) {
@@ -181,7 +169,15 @@ export default function OnboardingPage() {
         })
       }
       
-      router.push('/dashboard')
+      // Start auto-sync with immediate first sync (will download backup if exists)
+      startAutoSync(true)
+      
+      alert('✅ Successfully connected to Google Drive!\n\nSyncing your data...')
+      
+      // Small delay to let initial sync start, then redirect
+      setTimeout(() => {
+        router.push('/dashboard')
+      }, 500)
     } catch (error) {
       console.error('Google Drive connection failed:', error)
       alert('❌ Failed to connect to Google Drive.\n\n' + (error instanceof Error ? error.message : 'Unknown error'))
