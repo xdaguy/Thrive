@@ -67,8 +67,8 @@ export default function SettingsPage() {
     
     const handleCallback = async () => {
       if (params.get('connected') === 'true') {
-        setGoogleConnected(true)
-        await startAutoSync(true)
+        // Re-check connection status to get fresh data
+        await checkGoogleConnection()
         alert('✅ Successfully connected to Google Drive!')
         // Clean URL
         window.history.replaceState({}, '', '/settings')
