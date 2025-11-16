@@ -6,7 +6,8 @@ import { useSearchParams } from 'next/navigation'
 /**
  * OAuth Callback Handler
  * 
- * This page receives the authorization code from Google and sends it to the parent window.
+ * This page receives the authorization code from Google.
+ * Uses localStorage to communicate with parent window (works with COOP headers).
  */
 export default function GoogleCallbackPage() {
   const searchParams = useSearchParams()
@@ -19,49 +20,48 @@ export default function GoogleCallbackPage() {
     console.log('🔵 Callback page loaded')
     console.log('Code:', code ? 'Present' : 'Missing')
     console.log('Error:', error || 'None')
-    console.log('window.opener:', window.opener ? 'Present' : 'Missing')
 
-    if (window.opener) {
-      if (code) {
-        console.log('📤 Sending GOOGLE_AUTH_SUCCESS to parent')
-        // Send code to parent window
-        window.opener.postMessage(
-          {
-            type: 'GOOGLE_AUTH_SUCCESS',
-            code,
-          },
-          window.location.origin
-        )
-        
-        setStatus('sent')
-        
-        // Close window after a short delay
-        setTimeout(() => {
-          console.log('🔵 Closing callback window')
-          window.close()
-        }, 500)
-        
-      } else if (error) {
-        console.log('📤 Sending GOOGLE_AUTH_ERROR to parent')
-        // Send error to parent window
-        window.opener.postMessage(
-          {
-            type: 'GOOGLE_AUTH_ERROR',
-            error: searchParams.get('error_description') || error,
-          },
-          window.location.origin
-        )
-        
-        setStatus('error')
-        
-        // Close window after a short delay
-        setTimeout(() => {
-          console.log('🔵 Closing callback window')
-          window.close()
-        }, 500)
+    if (code) {
+      console.log('📤 Writing GOOGLE_AUTH_SUCCESS to localStorage')
+      
+      // Use localStorage instead of postMessage (works with COOP)
+      const authData = {
+        type: 'GOOGLE_AUTH_SUCCESS',
+        code,
+        timestamp: Date.now()
       }
+      
+      localStorage.setItem('google_oauth_result', JSON.stringify(authData))
+      
+      setStatus('sent')
+      
+      // Close window after a short delay
+      setTimeout(() => {
+        console.log('🔵 Closing callback window')
+        window.close()
+      }, 500)
+      
+    } else if (error) {
+      console.log('📤 Writing GOOGLE_AUTH_ERROR to localStorage')
+      
+      // Use localStorage for error too
+      const authData = {
+        type: 'GOOGLE_AUTH_ERROR',
+        error: searchParams.get('error_description') || error,
+        timestamp: Date.now()
+      }
+      
+      localStorage.setItem('google_oauth_result', JSON.stringify(authData))
+      
+      setStatus('error')
+      
+      // Close window after a short delay
+      setTimeout(() => {
+        console.log('🔵 Closing callback window')
+        window.close()
+      }, 500)
     } else {
-      console.error('❌ No window.opener found!')
+      console.error('❌ No code or error in callback')
       setStatus('error')
     }
   }, [searchParams])
@@ -82,7 +82,7 @@ export default function GoogleCallbackPage() {
           <>
             <div className="text-green-600 dark:text-green-400 text-5xl mb-4">✓</div>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
-              Authorization successful! This window will close automatically...
+              Authorization successful! Connecting to Google Drive...
             </p>
             <button
               onClick={() => window.close()}

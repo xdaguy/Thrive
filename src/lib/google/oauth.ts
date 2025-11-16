@@ -58,61 +58,58 @@ export async function authorizeWithPopup(): Promise<GoogleTokens> {
       return
     }
 
-    // Listen for callback
-    const messageHandler = async (event: MessageEvent) => {
-      console.log('🔵 Message received in parent window:', event.data)
-      console.log('Event origin:', event.origin)
-      console.log('Window origin:', window.location.origin)
+    // Listen for localStorage changes (works with COOP)
+    const storageHandler = async (event: StorageEvent) => {
+      console.log('\ud83d\udd35 Storage event received:', event.key)
       
-      // Check origin
-      if (event.origin !== window.location.origin) {
-        console.log('⚠️ Origin mismatch, ignoring message')
-        return
-      }
-
-      if (event.data.type === 'GOOGLE_AUTH_SUCCESS') {
-        console.log('✅ Received GOOGLE_AUTH_SUCCESS')
+      // Only process our specific key
+      if (event.key !== 'google_oauth_result') return
+      
+      if (!event.newValue) return
+      
+      try {
+        const authData = JSON.parse(event.newValue)
+        console.log('\ud83d\udd35 Auth data from localStorage:', authData.type)
+        
+        // Clean up
         clearInterval(checkClosed)
-        window.removeEventListener('message', messageHandler)
+        window.removeEventListener('storage', storageHandler)
+        localStorage.removeItem('google_oauth_result')
         
         try {
           popup.close()
         } catch (e) {
-          console.log('⚠️ Could not close popup:', e)
+          console.log('\u26a0\ufe0f Could not close popup:', e)
         }
 
-        try {
-          console.log('🔄 Exchanging code for tokens...')
-          const tokens = await exchangeCodeForTokens(event.data.code)
-          console.log('✅ Tokens received')
-          resolve(tokens)
-        } catch (error) {
-          console.error('❌ Token exchange failed:', error)
-          reject(error)
+        if (authData.type === 'GOOGLE_AUTH_SUCCESS') {
+          console.log('\u2705 Received GOOGLE_AUTH_SUCCESS')
+          try {
+            console.log('\ud83d\udd04 Exchanging code for tokens...')
+            const tokens = await exchangeCodeForTokens(authData.code)
+            console.log('\u2705 Tokens received')
+            resolve(tokens)
+          } catch (error) {
+            console.error('\u274c Token exchange failed:', error)
+            reject(error)
+          }
+        } else if (authData.type === 'GOOGLE_AUTH_ERROR') {
+          console.log('\u274c Received GOOGLE_AUTH_ERROR:', authData.error)
+          reject(new Error(authData.error || 'Authorization failed'))
         }
-      } else if (event.data.type === 'GOOGLE_AUTH_ERROR') {
-        console.log('❌ Received GOOGLE_AUTH_ERROR:', event.data.error)
-        clearInterval(checkClosed)
-        window.removeEventListener('message', messageHandler)
-        
-        try {
-          popup.close()
-        } catch (e) {
-          console.log('⚠️ Could not close popup:', e)
-        }
-        
-        reject(new Error(event.data.error || 'Authorization failed'))
+      } catch (error) {
+        console.error('\u274c Failed to parse auth data:', error)
       }
     }
 
-    console.log('🔵 Setting up message listener on parent window')
-    window.addEventListener('message', messageHandler)
+    console.log('\ud83d\udd35 Setting up storage listener on parent window')
+    window.addEventListener('storage', storageHandler)
 
     // Check if popup was closed
     const checkClosed = setInterval(() => {
       if (popup.closed) {
         clearInterval(checkClosed)
-        window.removeEventListener('message', messageHandler)
+        window.removeEventListener('storage', storageHandler)
         reject(new Error('Authorization cancelled'))
       }
     }, 1000)
