@@ -24,18 +24,20 @@ const MIN_SYNC_INTERVAL_MS = 60000 // Minimum 1 minute between syncs
  * Start auto-sync
  */
 export function startAutoSync(): void {
+  console.log('🚀 startAutoSync() called')
+  
   if (syncEnabled) {
-    console.log('Auto-sync already running')
+    console.log('⚠️ Auto-sync already running')
     return
   }
 
   if (!isAuthorized()) {
-    console.warn('Cannot start auto-sync: Not authorized')
+    console.warn('⚠️ Cannot start auto-sync: Not authorized')
     return
   }
 
   syncEnabled = true
-  console.log('✅ Auto-sync started')
+  console.log('✅ Auto-sync enabled')
 
   // Listen for data changes
   const dataEvents = [
@@ -54,8 +56,10 @@ export function startAutoSync(): void {
   dataEvents.forEach(event => {
     DataEvents.on(event, handleDataChange)
   })
+  console.log('✓ Event listeners registered for', dataEvents.length, 'events')
 
   // Initial sync on start
+  console.log('📅 Scheduling initial sync...')
   scheduleSyncDebounced()
 }
 
@@ -126,19 +130,23 @@ function scheduleSyncDebounced(): void {
  * Perform actual sync
  */
 async function performSync(): Promise<void> {
+  console.log('🟢 performSync() started')
+  
   // Check if still authorized
   if (!isAuthorized()) {
     console.log('⚠️ Not authorized, stopping sync')
     stopAutoSync()
     return
   }
+  console.log('✓ Authorization check passed')
 
   // Check if enough time has passed since last sync
   const timeSinceLastSync = Date.now() - lastSyncTime
-  if (timeSinceLastSync < MIN_SYNC_INTERVAL_MS) {
-    console.log(`⏳ Skipping sync (${Math.round(timeSinceLastSync / 1000)}s since last sync)`)
+  if (timeSinceLastSync < MIN_SYNC_INTERVAL_MS && lastSyncTime > 0) {
+    console.log(`⏳ Skipping sync (${Math.round(timeSinceLastSync / 1000)}s since last sync, minimum ${MIN_SYNC_INTERVAL_MS / 1000}s)`)
     return
   }
+  console.log('✓ Interval check passed')
 
   if (syncing) {
     console.log('⏳ Sync already in progress')
@@ -146,16 +154,20 @@ async function performSync(): Promise<void> {
   }
 
   syncing = true
-  console.log('🔄 Starting sync...')
+  console.log('🔄 Starting sync... (syncing flag set to true)')
 
   try {
     // Create local backup
+    console.log('📦 Creating local backup...')
     const localBackup = await createBackup()
+    console.log('✓ Local backup created:', localBackup.stats)
 
     // Download from Drive
+    console.log('📥 Downloading from Drive...')
     const driveBackup = await downloadBackup()
 
     if (driveBackup) {
+      console.log('✓ Drive backup found, merging...')
       // Merge with Drive backup
       console.log('🔀 Merging with Drive backup...')
       
@@ -167,37 +179,52 @@ async function performSync(): Promise<void> {
       })
 
       if (!result.success) {
-        console.error('Merge failed:', result.message)
+        console.error('❌ Merge failed:', result.message)
+        throw new Error('Merge failed: ' + result.message)
       }
+      console.log('✓ Merge successful')
 
       // Create new backup after merge
+      console.log('📦 Creating merged backup...')
       const mergedBackup = await createBackup()
+      console.log('✓ Merged backup created')
+      
+      console.log('📤 Uploading merged backup to Drive...')
       await uploadBackup(mergedBackup)
+      console.log('✓ Upload complete')
     } else {
       // No backup on Drive, just upload
-      console.log('📤 No Drive backup found, uploading...')
+      console.log('📤 No Drive backup found, uploading local backup...')
       await uploadBackup(localBackup)
+      console.log('✓ Upload complete')
     }
 
     lastSyncTime = Date.now()
-    console.log('✅ Sync completed successfully')
+    console.log('✅ Sync completed successfully at', new Date(lastSyncTime).toLocaleTimeString())
 
     // Save last sync time to settings
     if (typeof window !== 'undefined') {
       localStorage.setItem('last_sync_time', lastSyncTime.toString())
+      console.log('✓ Last sync time saved to localStorage:', lastSyncTime)
       
       // Emit sync complete event
       DataEvents.emit(DATA_EVENTS.SYNC_COMPLETED)
+      console.log('✓ SYNC_COMPLETED event emitted')
     }
   } catch (error) {
-    console.error('❌ Sync failed:', error)
+    console.error('❌ Sync failed with error:', error)
+    console.error('Error details:', error instanceof Error ? error.message : error)
     
     // Emit sync error event
     if (typeof window !== 'undefined') {
       DataEvents.emit(DATA_EVENTS.SYNC_ERROR)
     }
+    
+    // Re-throw error so caller knows it failed
+    throw error
   } finally {
     syncing = false
+    console.log('🟢 performSync() ended (syncing flag set to false)')
   }
 }
 
@@ -205,6 +232,8 @@ async function performSync(): Promise<void> {
  * Trigger manual sync immediately
  */
 export async function syncNow(): Promise<void> {
+  console.log('🔵 syncNow() called')
+  
   if (syncing) {
     throw new Error('Sync already in progress')
   }
@@ -213,7 +242,18 @@ export async function syncNow(): Promise<void> {
     throw new Error('Not authorized. Please connect Google Drive first.')
   }
 
+  console.log('🔵 Authorization check passed, calling performSync()')
+  
+  // Reset minimum interval check for manual sync
+  const timeSinceLastSync = Date.now() - lastSyncTime
+  if (timeSinceLastSync < MIN_SYNC_INTERVAL_MS) {
+    console.log(`⚠️ Ignoring minimum interval for manual sync (${Math.round(timeSinceLastSync / 1000)}s since last sync)`)
+    lastSyncTime = 0 // Reset to allow immediate sync
+  }
+  
   await performSync()
+  
+  console.log('🔵 syncNow() completed')
 }
 
 /**
