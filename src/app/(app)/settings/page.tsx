@@ -1,13 +1,23 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Database, Cloud, Download, Upload, Trash2, Info, DollarSign, Weight as WeightIcon, Calendar, User } from 'lucide-react'
+import { Database, Cloud, Download, Upload, Trash2, Info, DollarSign, Weight as WeightIcon, Calendar, User, RefreshCw, LogOut, Check } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { db } from '@/lib/db/schema'
 import { useTheme } from 'next-themes'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
 import { fadeIn, staggerContainer, staggerItem } from '@/lib/animations'
 import { downloadBackup, importBackup, parseBackupFile } from '@/lib/sync'
+import {
+  authorizeWithPopup,
+  isAuthorized,
+  clearTokens,
+  startAutoSync,
+  stopAutoSync,
+  syncNow,
+  isSyncing,
+  getLastSyncTime,
+} from '@/lib/google'
 
 export default function SettingsPage() {
   const [stats, setStats] = useState({
@@ -26,11 +36,26 @@ export default function SettingsPage() {
   const [dateFormat, setDateFormat] = useState('MM/DD/YYYY')
   const [mounted, setMounted] = useState(false)
   const { theme, setTheme } = useTheme()
+  
+  // Google Drive sync state
+  const [googleConnected, setGoogleConnected] = useState(false)
+  const [syncing, setSyncing] = useState(false)
+  const [lastSync, setLastSync] = useState<Date | null>(null)
 
   useEffect(() => {
     setMounted(true)
     loadStats()
     loadPreferences()
+    checkGoogleConnection()
+    
+    // Listen for sync events
+    DataEvents.on(DATA_EVENTS.SYNC_COMPLETED, handleSyncCompleted)
+    DataEvents.on(DATA_EVENTS.SYNC_ERROR, handleSyncError)
+    
+    return () => {
+      DataEvents.off(DATA_EVENTS.SYNC_COMPLETED, handleSyncCompleted)
+      DataEvents.off(DATA_EVENTS.SYNC_ERROR, handleSyncError)
+    }
   }, [])
 
   async function loadStats() {
@@ -135,6 +160,102 @@ export default function SettingsPage() {
     }
 
     input.click()
+  }
+
+  // Google Drive sync functions
+  function checkGoogleConnection() {
+    const connected = isAuthorized()
+    setGoogleConnected(connected)
+    
+    if (connected) {
+      // Load last sync time
+      const lastSyncTime = getLastSyncTime()
+      if (lastSyncTime) {
+        setLastSync(new Date(lastSyncTime))
+      }
+      
+      // Start auto-sync if connected
+      startAutoSync()
+    }
+    
+    setSyncing(isSyncing())
+  }
+
+  async function handleConnectGoogleDrive() {
+    try {
+      const tokens = await authorizeWithPopup()
+      setGoogleConnected(true)
+      
+      // Start auto-sync
+      startAutoSync()
+      
+      alert('✅ Successfully connected to Google Drive!\n\nAuto-sync is now enabled.')
+    } catch (error) {
+      console.error('Google Drive connection failed:', error)
+      alert('❌ Failed to connect to Google Drive.\n\n' + (error instanceof Error ? error.message : 'Unknown error'))
+    }
+  }
+
+  async function handleDisconnectGoogleDrive() {
+    const confirmed = confirm(
+      '⚠️ Disconnect Google Drive\n\n' +
+      'This will:\n' +
+      '• Stop auto-sync\n' +
+      '• Remove connection to Google Drive\n' +
+      '• Keep your local data\n\n' +
+      'You can reconnect anytime.\n\n' +
+      'Continue?'
+    )
+
+    if (!confirmed) return
+
+    try {
+      stopAutoSync()
+      clearTokens()
+      setGoogleConnected(false)
+      setLastSync(null)
+      
+      alert('✅ Disconnected from Google Drive')
+    } catch (error) {
+      console.error('Disconnect failed:', error)
+      alert('❌ Failed to disconnect')
+    }
+  }
+
+  async function handleSyncNow() {
+    if (syncing) {
+      alert('⏳ Sync already in progress...')
+      return
+    }
+
+    try {
+      setSyncing(true)
+      await syncNow()
+      
+      const lastSyncTime = getLastSyncTime()
+      if (lastSyncTime) {
+        setLastSync(new Date(lastSyncTime))
+      }
+      
+      alert('✅ Sync completed successfully!')
+    } catch (error) {
+      console.error('Sync failed:', error)
+      alert('❌ Sync failed\n\n' + (error instanceof Error ? error.message : 'Unknown error'))
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  function handleSyncCompleted() {
+    const lastSyncTime = getLastSyncTime()
+    if (lastSyncTime) {
+      setLastSync(new Date(lastSyncTime))
+    }
+    setSyncing(false)
+  }
+
+  function handleSyncError() {
+    setSyncing(false)
   }
 
   async function handleClearAllData() {
@@ -472,17 +593,91 @@ export default function SettingsPage() {
       >
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
           <Cloud className="w-5 h-5" />
-          Cloud Sync
+          Google Drive Sync
         </h3>
+        
         <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 mb-4">
           <p className="text-sm text-blue-900 dark:text-blue-300">
-            <strong>Privacy First:</strong> When enabled, your data will be encrypted and synced to YOUR Google Drive.
+            <strong>✅ Auto-Sync Enabled:</strong> Your data automatically syncs to YOUR Google Drive.
             We never store your data on our servers.
           </p>
         </div>
-        <button className="w-full btn-primary">
-          Connect Google Drive (Coming Soon)
-        </button>
+
+        {googleConnected ? (
+          <div className="space-y-4">
+            {/* Connection Status */}
+            <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+              <div className="flex items-center gap-2">
+                <Check className="w-5 h-5 text-green-600 dark:text-green-400" />
+                <span className="text-sm font-medium text-green-900 dark:text-green-300">
+                  Connected to Google Drive
+                </span>
+              </div>
+            </div>
+
+            {/* Last Sync Info */}
+            {lastSync && (
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                <strong>Last synced:</strong>{' '}
+                {lastSync.toLocaleString()}
+              </div>
+            )}
+
+            {/* Sync Status */}
+            {syncing && (
+              <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400">
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                <span>Syncing...</span>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={handleSyncNow}
+                disabled={syncing}
+                className="btn-secondary flex items-center justify-center gap-2"
+              >
+                <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+                Sync Now
+              </button>
+              
+              <button
+                onClick={handleDisconnectGoogleDrive}
+                className="btn-secondary flex items-center justify-center gap-2 text-red-600 dark:text-red-400"
+              >
+                <LogOut className="w-4 h-4" />
+                Disconnect
+              </button>
+            </div>
+
+            {/* Info Note */}
+            <div className="text-xs text-gray-500 dark:text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+              💡 <strong>Auto-sync is ON:</strong> Your data automatically syncs 30 seconds after any change,
+              with a minimum of 1 minute between syncs.
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <button
+              onClick={handleConnectGoogleDrive}
+              className="w-full btn-primary flex items-center justify-center gap-2"
+            >
+              <Cloud className="w-5 h-5" />
+              Connect Google Drive
+            </button>
+            
+            <div className="text-xs text-gray-500 dark:text-gray-500">
+              <strong>Why connect?</strong>
+              <ul className="mt-2 space-y-1 list-disc list-inside">
+                <li>Auto-sync your data across devices</li>
+                <li>Cloud backup for data safety</li>
+                <li>Access your data anywhere</li>
+                <li>Fully secure - data saved to YOUR Drive</li>
+              </ul>
+            </div>
+          </div>
+        )}
       </motion.div>
 
       {/* About Thrive */}

@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { db } from '@/lib/db/schema'
 import { restoreFromBackup, parseBackupFile } from '@/lib/sync'
 import { fadeIn, slideRight, slideLeft, scaleIn } from '@/lib/animations'
+import { authorizeWithPopup, startAutoSync, syncNow } from '@/lib/google'
 
 const CURRENCIES = [
   { code: 'USD', symbol: '$', name: 'US Dollar' },
@@ -134,6 +135,31 @@ export default function OnboardingPage() {
     }
 
     input.click()
+  }
+
+  async function handleConnectGoogleDrive() {
+    try {
+      await authorizeWithPopup()
+      
+      // Start auto-sync
+      startAutoSync()
+      
+      // Download from Drive if backup exists
+      await syncNow()
+      
+      alert('✅ Successfully connected to Google Drive!\n\nYour data has been synced.')
+      
+      // Mark onboarding complete
+      await db.settings.update('user_settings', {
+        onboardingComplete: true,
+        updatedAt: new Date()
+      })
+      
+      router.push('/dashboard')
+    } catch (error) {
+      console.error('Google Drive connection failed:', error)
+      alert('❌ Failed to connect to Google Drive.\n\n' + (error instanceof Error ? error.message : 'Unknown error'))
+    }
   }
 
   return (
@@ -284,27 +310,22 @@ export default function OnboardingPage() {
                       </div>
                     </button>
 
-                    {/* Cloud Options (Coming Soon) */}
+                    {/* Google Drive Sync */}
                     <button
                       type="button"
-                      disabled
-                      className="w-full p-3.5 sm:p-4 border-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 rounded-xl opacity-60 cursor-not-allowed"
+                      onClick={handleConnectGoogleDrive}
+                      className="w-full p-3.5 sm:p-4 border-2 border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 rounded-xl hover:border-green-500 dark:hover:border-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 active:scale-[0.98] transition-all touch-manipulation"
                     >
                       <div className="flex items-center gap-3 sm:gap-4">
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <Cloud className="w-5 h-5 sm:w-6 sm:h-6 text-gray-500 dark:text-gray-400" />
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <Cloud className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
                         </div>
                         <div className="flex-1 text-left">
-                          <div className="flex items-center gap-2 mb-0.5 sm:mb-1 flex-wrap">
-                            <div className="text-sm sm:text-base font-semibold text-gray-700 dark:text-gray-300">
-                              Sync from Cloud
-                            </div>
-                            <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full">
-                              Coming Soon
-                            </span>
+                          <div className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-0.5 sm:mb-1">
+                            Sync from Google Drive
                           </div>
-                          <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-500">
-                            Google Drive, Dropbox, OneDrive
+                          <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                            Auto-sync your data across devices
                           </div>
                         </div>
                       </div>

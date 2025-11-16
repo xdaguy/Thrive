@@ -43,4 +43,6 @@ export const DATA_EVENTS = {
   ROUTINE_CHANGED: 'routine:changed',
   ROUTINE_COMPLETION_CHANGED: 'routine_completion:changed',
   SETTINGS_CHANGED: 'settings:changed',
+  SYNC_COMPLETED: 'sync:completed',
+  SYNC_ERROR: 'sync:error',
 } as const
