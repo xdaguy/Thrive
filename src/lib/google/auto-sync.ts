@@ -126,6 +126,13 @@ function scheduleSyncDebounced(): void {
  * Perform actual sync
  */
 async function performSync(): Promise<void> {
+  // Check if still authorized
+  if (!isAuthorized()) {
+    console.log('⚠️ Not authorized, stopping sync')
+    stopAutoSync()
+    return
+  }
+
   // Check if enough time has passed since last sync
   const timeSinceLastSync = Date.now() - lastSyncTime
   if (timeSinceLastSync < MIN_SYNC_INTERVAL_MS) {

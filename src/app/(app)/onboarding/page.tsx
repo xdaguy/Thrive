@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { db } from '@/lib/db/schema'
 import { restoreFromBackup, parseBackupFile } from '@/lib/sync'
 import { fadeIn, slideRight, slideLeft, scaleIn } from '@/lib/animations'
-import { authorizeWithPopup, startAutoSync, syncNow } from '@/lib/google'
+import { authorizeWithPopup, saveTokens, startAutoSync, syncNow } from '@/lib/google'
 
 const CURRENCIES = [
   { code: 'USD', symbol: '$', name: 'US Dollar' },
@@ -139,7 +139,10 @@ export default function OnboardingPage() {
 
   async function handleConnectGoogleDrive() {
     try {
-      await authorizeWithPopup()
+      const tokens = await authorizeWithPopup()
+      
+      // IMPORTANT: Save tokens to localStorage
+      saveTokens(tokens)
       
       // Start auto-sync
       startAutoSync()
@@ -598,33 +601,26 @@ export default function OnboardingPage() {
                   </div>
                 </button>
 
-                {/* Google Drive (Coming Soon) */}
-                <div className="relative">
-                  <button
-                    type="button"
-                    disabled
-                    className="w-full p-3.5 sm:p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 opacity-60 cursor-not-allowed text-left"
-                  >
-                    <div className="flex items-center gap-3 sm:gap-4">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Cloud className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400" />
+                {/* Google Drive Sync */}
+                <button
+                  type="button"
+                  onClick={handleConnectGoogleDrive}
+                  className="w-full p-3.5 sm:p-4 border-2 border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 rounded-xl hover:border-green-500 dark:hover:border-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 active:scale-[0.98] transition-all text-left touch-manipulation"
+                >
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Cloud className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-0.5 sm:mb-1">
+                        Connect Google Drive
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5 sm:mb-1 flex-wrap">
-                          <div className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">
-                            Google Drive
-                          </div>
-                          <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-full font-medium">
-                            Coming Soon
-                          </span>
-                        </div>
-                        <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                          Sync across devices with Google Drive
-                        </div>
+                      <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                        Enable auto-sync across devices
                       </div>
                     </div>
-                  </button>
-                </div>
+                  </div>
+                </button>
 
                 {/* Dropbox (Coming Soon) */}
                 <div className="relative">

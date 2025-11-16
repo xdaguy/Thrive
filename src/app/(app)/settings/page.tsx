@@ -12,6 +12,7 @@ import {
   authorizeWithPopup,
   isAuthorized,
   clearTokens,
+  saveTokens,
   startAutoSync,
   stopAutoSync,
   syncNow,
@@ -184,6 +185,10 @@ export default function SettingsPage() {
   async function handleConnectGoogleDrive() {
     try {
       const tokens = await authorizeWithPopup()
+      
+      // IMPORTANT: Save tokens to localStorage
+      saveTokens(tokens)
+      
       setGoogleConnected(true)
       
       // Start auto-sync
