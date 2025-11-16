@@ -88,46 +88,40 @@ export function MoreMenu({ isOpen, onClose }: MoreMenuProps) {
 
           {/* Menu Items */}
           <div className="p-4 space-y-2">
-            {menuItems.map((item, index) => {
+            {menuItems.map((item) => {
               const Icon = item.icon
               const isActive = pathname === item.href
               return (
-                <motion.div
+                <Link
                   key={item.href}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
+                  href={item.href}
+                  onClick={handleItemClick}
                 >
-                  <Link
-                    href={item.href}
-                    onClick={handleItemClick}
+                  <motion.div
+                    whileHover={{ scale: 1.02, x: 4 }}
+                    whileTap={{ scale: 0.98 }}
+                    className={`w-full flex items-center gap-4 p-4 rounded-xl transition-all touch-manipulation ${
+                      isActive 
+                        ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-800' 
+                        : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                    }`}
                   >
-                    <motion.div
-                      whileHover={{ scale: 1.02, x: 4 }}
-                      whileTap={{ scale: 0.98 }}
-                      className={`w-full flex items-center gap-4 p-4 rounded-xl transition-all touch-manipulation ${
-                        isActive 
-                          ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-800' 
-                          : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
-                      }`}
-                    >
-                  <div className={`w-12 h-12 rounded-xl ${item.bgColor} flex items-center justify-center flex-shrink-0`}>
-                    <Icon className={`w-6 h-6 ${item.color}`} />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <p className="font-semibold text-gray-900 dark:text-white">{item.label}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{item.description}</p>
-                  </div>
-                      {isActive && (
-                        <motion.div 
-                          layoutId="activeMenuIndicator"
-                          className="w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-500"
-                          transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                        />
-                      )}
-                    </motion.div>
-                  </Link>
-                </motion.div>
+                    <div className={`w-12 h-12 rounded-xl ${item.bgColor} flex items-center justify-center flex-shrink-0`}>
+                      <Icon className={`w-6 h-6 ${item.color}`} />
+                    </div>
+                    <div className="flex-1 text-left">
+                      <p className="font-semibold text-gray-900 dark:text-white">{item.label}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{item.description}</p>
+                    </div>
+                    {isActive && (
+                      <motion.div 
+                        layoutId="activeMenuIndicator"
+                        className="w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-500"
+                        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                      />
+                    )}
+                  </motion.div>
+                </Link>
               )
             })}
           </div>

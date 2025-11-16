@@ -124,9 +124,6 @@ export function QuickAddSheet({ isOpen, onClose }: QuickAddSheetProps) {
               return (
                 <motion.button
                   key={action.label}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
                   onClick={() => handleActionClick(action)}
                   whileHover={{ scale: 1.02, x: 4 }}
                   whileTap={{ scale: 0.98 }}
