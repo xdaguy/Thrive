@@ -101,8 +101,8 @@ export function QuickAddSheet({ isOpen, onClose }: QuickAddSheetProps) {
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed inset-x-0 bottom-0 z-50"
+            transition={{ type: 'tween', duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
+            className="fixed inset-x-0 bottom-0 z-50 overflow-hidden"
           >
         <div className="bg-white dark:bg-[#1A1A1A] rounded-t-3xl shadow-2xl max-h-[80vh] overflow-y-auto">
           {/* Header */}
