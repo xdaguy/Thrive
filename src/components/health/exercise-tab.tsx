@@ -103,7 +103,7 @@ export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
     })
     setShowForm(false)
     loadExercises()
-    DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
+    DataEvents.emit(DATA_EVENTS.EXERCISE_CHANGED)
   }
 
   async function handleEdit(exercise: Exercise) {
@@ -139,7 +139,7 @@ export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
     if (confirm('Delete this exercise?')) {
       await deleteExercise(id)
       loadExercises()
-      DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
+      DataEvents.emit(DATA_EVENTS.EXERCISE_CHANGED)
     }
   }
 

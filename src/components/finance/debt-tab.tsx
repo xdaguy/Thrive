@@ -126,7 +126,7 @@ export function DebtTab({ openForm }: DebtTabProps = {}) {
     })
     setShowForm(false)
     loadDebts()
-    DataEvents.emit(DATA_EVENTS.EXPENSE_CHANGED)
+    DataEvents.emit(DATA_EVENTS.DEBT_CHANGED)
   }
 
   async function handleEdit(debt: Debt) {
@@ -162,7 +162,7 @@ export function DebtTab({ openForm }: DebtTabProps = {}) {
     if (confirm('Delete this debt entry?')) {
       await db.debts.delete(id)
       loadDebts()
-      DataEvents.emit(DATA_EVENTS.EXPENSE_CHANGED)
+      DataEvents.emit(DATA_EVENTS.DEBT_CHANGED)
     }
   }
 
@@ -177,7 +177,7 @@ export function DebtTab({ openForm }: DebtTabProps = {}) {
       updatedAt: new Date()
     })
     loadDebts()
-    DataEvents.emit(DATA_EVENTS.EXPENSE_CHANGED)
+    DataEvents.emit(DATA_EVENTS.DEBT_CHANGED)
   }
 
   const owedToMe = debts.filter(d => d.type === 'owed_to_me' && d.status === 'active')

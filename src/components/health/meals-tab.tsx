@@ -83,7 +83,7 @@ export function MealsTab({ openForm }: MealsTabProps = {}) {
     })
     setShowForm(false)
     loadMeals()
-    DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
+    DataEvents.emit(DATA_EVENTS.MEAL_CHANGED)
   }
 
   async function handleEdit(meal: Meal) {
@@ -113,7 +113,7 @@ export function MealsTab({ openForm }: MealsTabProps = {}) {
     if (confirm('Delete this meal entry?')) {
       await deleteMeal(id)
       loadMeals()
-      DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
+      DataEvents.emit(DATA_EVENTS.MEAL_CHANGED)
     }
   }
 

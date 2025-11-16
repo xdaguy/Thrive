@@ -114,7 +114,7 @@ export default function RoutinesPage() {
     })
     setShowForm(false)
     loadRoutines()
-    DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
+    DataEvents.emit(DATA_EVENTS.ROUTINE_CHANGED)
   }
 
   async function handleEdit(routine: Routine) {
@@ -146,7 +146,7 @@ export default function RoutinesPage() {
     if (confirm('Delete this routine? All completion history will be lost.')) {
       await deleteRoutine(id)
       loadRoutines()
-      DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
+      DataEvents.emit(DATA_EVENTS.ROUTINE_CHANGED)
     }
   }
 
@@ -184,7 +184,7 @@ export default function RoutinesPage() {
     }
     
     loadRoutines()
-    DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
+    DataEvents.emit(DATA_EVENTS.ROUTINE_CHANGED)
   }
 
   const totalRoutines = routines.length

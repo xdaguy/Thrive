@@ -96,7 +96,7 @@ export function WeightTab({ openForm }: WeightTabProps = {}) {
     })
     setShowForm(false)
     loadWeights()
-    DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
+    DataEvents.emit(DATA_EVENTS.WEIGHT_CHANGED)
   }
 
   async function handleEdit(weight: Weight) {
@@ -124,7 +124,7 @@ export function WeightTab({ openForm }: WeightTabProps = {}) {
     if (confirm('Delete this weight entry?')) {
       await deleteWeight(id)
       loadWeights()
-      DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
+      DataEvents.emit(DATA_EVENTS.WEIGHT_CHANGED)
     }
   }
 
