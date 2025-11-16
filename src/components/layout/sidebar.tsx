@@ -6,7 +6,6 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { db } from '@/lib/db/schema'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
-import { isAuthorized } from '@/lib/google/oauth-new'
 
 export function Sidebar() {
   const pathname = usePathname()
@@ -25,13 +24,11 @@ export function Sidebar() {
   useEffect(() => {
     loadUserInfo()
 
-    // Listen for settings changes and sync events
+    // Listen for settings changes
     DataEvents.on(DATA_EVENTS.SETTINGS_CHANGED, loadUserInfo)
-    DataEvents.on(DATA_EVENTS.SYNC_COMPLETED, loadUserInfo)
 
     return () => {
       DataEvents.off(DATA_EVENTS.SETTINGS_CHANGED, loadUserInfo)
-      DataEvents.off(DATA_EVENTS.SYNC_COMPLETED, loadUserInfo)
     }
   }, [])
 
@@ -42,17 +39,19 @@ export function Sidebar() {
         setUserName(settings.name)
       }
       
-      // Check actual Google Drive connection status via cookies
-      const isGoogleConnected = await isAuthorized()
-      
-      if (isGoogleConnected) {
-        setStorageType('Google Drive + Local')
+      // Map storage provider to display text
+      if (settings?.syncEnabled && settings?.syncProvider) {
+        const providerNames = {
+          'google': 'Google Drive',
+          'dropbox': 'Dropbox',
+          'onedrive': 'OneDrive'
+        }
+        setStorageType(providerNames[settings.syncProvider] || 'Cloud Storage')
       } else {
         setStorageType('Local Storage')
       }
     } catch (error) {
       console.error('Failed to load user info:', error)
-      setStorageType('Local Storage')
     }
   }
 

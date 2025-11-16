@@ -67,8 +67,34 @@ export default function SettingsPage() {
     
     const handleCallback = async () => {
       if (params.get('connected') === 'true') {
-        // Re-check connection status to get fresh data
-        await checkGoogleConnection()
+        // Update database settings with sync enabled
+        const settings = await db.settings.get('user_settings')
+        if (settings) {
+          await db.settings.put({
+            ...settings,
+            syncEnabled: true,
+            syncProvider: 'google',
+            lastSyncAt: new Date()
+          })
+          DataEvents.emit(DATA_EVENTS.SETTINGS_CHANGED)
+        }
+        
+        // Set connected state
+        setGoogleConnected(true)
+        
+        // Load Google user email from cookie
+        const emailCookie = document.cookie
+          .split('; ')
+          .find(row => row.startsWith('google_user_email='))
+        
+        if (emailCookie) {
+          const email = emailCookie.split('=')[1]
+          setGoogleEmail(decodeURIComponent(email))
+        }
+        
+        // Start auto-sync
+        await startAutoSync(true)
+        
         alert('✅ Successfully connected to Google Drive!')
         // Clean URL
         window.history.replaceState({}, '', '/settings')
@@ -241,15 +267,30 @@ export default function SettingsPage() {
     if (!confirmed) return
 
     try {
-      stopAutoSync()
-      await signOut()
-      setGoogleConnected(false)
-      setLastSync(null)
+      // Update database settings FIRST
+      const settings = await db.settings.get('user_settings')
+      if (settings) {
+        await db.settings.put({
+          ...settings,
+          syncEnabled: false,
+          syncProvider: undefined,
+          lastSyncAt: undefined
+        })
+        DataEvents.emit(DATA_EVENTS.SETTINGS_CHANGED)
+      }
       
-      alert('✅ Disconnected from Google Drive')
+      // Stop auto-sync
+      stopAutoSync()
+      
+      // Clear auth cookies (this will reload the page!)
+      await signOut()
+      
+      // NOTE: Code after signOut() never executes because page reloads
+      // The reload will trigger checkGoogleConnection() which will
+      // see cleared cookies and update the UI properly
     } catch (error) {
       console.error('Disconnect failed:', error)
-      alert('❌ Failed to disconnect')
+      alert('❌ Failed to disconnect. Please try again.')
     }
   }
 
