@@ -60,25 +60,52 @@ export async function authorizeWithPopup(): Promise<GoogleTokens> {
 
     // Listen for callback
     const messageHandler = async (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return
+      console.log('🔵 Message received in parent window:', event.data)
+      console.log('Event origin:', event.origin)
+      console.log('Window origin:', window.location.origin)
+      
+      // Check origin
+      if (event.origin !== window.location.origin) {
+        console.log('⚠️ Origin mismatch, ignoring message')
+        return
+      }
 
       if (event.data.type === 'GOOGLE_AUTH_SUCCESS') {
+        console.log('✅ Received GOOGLE_AUTH_SUCCESS')
+        clearInterval(checkClosed)
         window.removeEventListener('message', messageHandler)
-        popup.close()
+        
+        try {
+          popup.close()
+        } catch (e) {
+          console.log('⚠️ Could not close popup:', e)
+        }
 
         try {
+          console.log('🔄 Exchanging code for tokens...')
           const tokens = await exchangeCodeForTokens(event.data.code)
+          console.log('✅ Tokens received')
           resolve(tokens)
         } catch (error) {
+          console.error('❌ Token exchange failed:', error)
           reject(error)
         }
       } else if (event.data.type === 'GOOGLE_AUTH_ERROR') {
+        console.log('❌ Received GOOGLE_AUTH_ERROR:', event.data.error)
+        clearInterval(checkClosed)
         window.removeEventListener('message', messageHandler)
-        popup.close()
+        
+        try {
+          popup.close()
+        } catch (e) {
+          console.log('⚠️ Could not close popup:', e)
+        }
+        
         reject(new Error(event.data.error || 'Authorization failed'))
       }
     }
 
+    console.log('🔵 Setting up message listener on parent window')
     window.addEventListener('message', messageHandler)
 
     // Check if popup was closed
