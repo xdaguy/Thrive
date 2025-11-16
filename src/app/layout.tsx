@@ -4,6 +4,7 @@ import './globals.css'
 import { ThemeProvider } from '@/components/providers/theme-provider'
 import { DBProvider } from '@/components/providers/db-provider'
 import { ServiceWorkerProvider } from '@/components/providers/sw-provider'
+import { ErrorBoundary } from '@/components/providers/error-boundary'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
@@ -59,17 +60,19 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icon.svg" />
       </head>
       <body className={`${inter.variable} font-sans antialiased`}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <DBProvider>
-            <ServiceWorkerProvider />
-            {children}
-          </DBProvider>
-        </ThemeProvider>
+        <ErrorBoundary>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <DBProvider>
+              <ServiceWorkerProvider />
+              {children}
+            </DBProvider>
+          </ThemeProvider>
+        </ErrorBoundary>
       </body>
     </html>
   )
