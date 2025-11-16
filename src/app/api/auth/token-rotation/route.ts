@@ -1,16 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limiter'
 
 /**
- * Refresh Access Token with Enhanced Security
+ * Enhanced Token Rotation with Reuse Detection
  * 
- * Features:
- * - Token rotation
- * - Token family tracking
- * - Reuse detection
- * - Automatic family invalidation on suspicious activity
- * - Rate limiting
+ * This endpoint handles refresh token rotation with security features:
+ * - Tracks token families
+ * - Detects token reuse (stolen tokens)
+ * - Invalidates entire family on suspicious activity
  */
 
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
@@ -21,35 +18,10 @@ interface TokenFamily {
   familyId: string
   generation: number
   createdAt: number
-  lastRotated: number
 }
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
-    // Rate limiting: 30 requests per 15 minutes per client
-    const identifier = getClientIdentifier(request)
-    const rateLimit = checkRateLimit({
-      identifier: `refresh:${identifier}`,
-      maxRequests: 30,
-      windowMs: 15 * 60 * 1000 // 15 minutes
-    })
-    
-    if (!rateLimit.allowed) {
-      console.warn('⚠️ Rate limit exceeded for:', identifier)
-      return NextResponse.json(
-        { 
-          error: 'Too many requests. Please try again later.',
-          retry_after: rateLimit.retryAfter
-        },
-        { 
-          status: 429,
-          headers: {
-            'Retry-After': rateLimit.retryAfter?.toString() || '900'
-          }
-        }
-      )
-    }
-    
     const cookieStore = cookies()
     const refreshToken = cookieStore.get('refresh_token')?.value
     const familyDataStr = cookieStore.get('token_family')?.value
@@ -63,32 +35,26 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse token family data
-    let familyData: TokenFamily
-    
+    let familyData: TokenFamily | null = null
     if (familyDataStr) {
       try {
-        const parsed = JSON.parse(familyDataStr) as TokenFamily
-        familyData = parsed
-        console.log('📋 Token family:', familyData.familyId, 'Generation:', familyData.generation)
+        familyData = JSON.parse(familyDataStr)
       } catch (e) {
-        console.warn('⚠️ Failed to parse token family data, creating new family')
-        familyData = {
-          familyId: crypto.randomUUID(),
-          generation: 0,
-          createdAt: Date.now(),
-          lastRotated: Date.now()
-        }
+        console.warn('⚠️ Failed to parse token family data')
       }
-    } else {
-      // Initialize family if not exists
+    }
+
+    // Initialize family if not exists
+    if (!familyData) {
       familyData = {
         familyId: crypto.randomUUID(),
         generation: 0,
-        createdAt: Date.now(),
-        lastRotated: Date.now()
+        createdAt: Date.now()
       }
       console.log('🆕 Initialized new token family:', familyData.familyId)
     }
+
+    console.log('🔄 Refreshing token (Family:', familyData.familyId, 'Generation:', familyData.generation, ')')
 
     // Request new access token
     const response = await fetch(GOOGLE_TOKEN_URL, {
@@ -108,23 +74,18 @@ export async function POST(request: NextRequest) {
       const errorData = await response.json()
       console.error('❌ Token refresh failed:', errorData)
       
-      // Check if token was revoked or invalid (possible reuse)
+      // Check if token was revoked or invalid
       if (errorData.error === 'invalid_grant') {
         console.error('🚨 SECURITY ALERT: Token may have been reused or revoked!')
-        console.error('🚨 Invalidating token family:', familyData.familyId)
         
-        // Clear all auth cookies (invalidate entire family)
+        // Clear all auth cookies (invalidate family)
         cookieStore.delete('access_token')
         cookieStore.delete('refresh_token')
         cookieStore.delete('expires_at')
         cookieStore.delete('token_family')
         
         return NextResponse.json(
-          { 
-            error: 'Token revoked or reused. Please re-authenticate.', 
-            reauth_required: true,
-            security_event: 'token_reuse_detected'
-          },
+          { error: 'Token revoked or reused. Please re-authenticate.', reauth_required: true },
           { status: 401 }
         )
       }
@@ -142,8 +103,7 @@ export async function POST(request: NextRequest) {
     // Increment generation (track rotation)
     const newFamilyData: TokenFamily = {
       ...familyData,
-      generation: familyData.generation + 1,
-      lastRotated: Date.now()
+      generation: familyData.generation + 1
     }
 
     // Update access token cookie
@@ -174,8 +134,6 @@ export async function POST(request: NextRequest) {
         maxAge: 60 * 60 * 24 * 365,
         path: '/',
       })
-    } else {
-      console.log('⚠️ No new refresh token provided (Google didn\'t rotate)')
     }
 
     // Update token family tracking
@@ -187,15 +145,14 @@ export async function POST(request: NextRequest) {
       path: '/',
     })
 
-    console.log('✅ Token rotation complete (Family:', newFamilyData.familyId, 'Gen:', newFamilyData.generation, ')')
+    console.log('✅ Token rotation complete (Family:', newFamilyData.familyId, 'Generation:', newFamilyData.generation, ')')
 
     return NextResponse.json({ 
       success: true,
-      generation: newFamilyData.generation,
-      family_id: newFamilyData.familyId
+      generation: newFamilyData.generation
     })
   } catch (error) {
-    console.error('Refresh token error:', error)
+    console.error('❌ Token rotation error:', error)
     return NextResponse.json(
       { error: 'Failed to refresh token' },
       { status: 401 }

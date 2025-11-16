@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
+import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limiter'
 
 /**
  * Upload Backup to Google Drive
  * Uses server-side tokens to upload backup data
+ * Rate limited to prevent abuse
  */
 
 const DRIVE_API_URL = 'https://www.googleapis.com/drive/v3'
@@ -90,6 +92,30 @@ async function findOrCreateAppFolder(accessToken: string): Promise<string> {
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting: 60 uploads per hour
+    const identifier = getClientIdentifier(request)
+    const rateLimit = checkRateLimit({
+      identifier: `upload:${identifier}`,
+      maxRequests: 60,
+      windowMs: 60 * 60 * 1000 // 1 hour
+    })
+    
+    if (!rateLimit.allowed) {
+      console.warn('⚠️ Upload rate limit exceeded for:', identifier)
+      return NextResponse.json(
+        { 
+          error: 'Too many uploads. Please try again later.',
+          retry_after: rateLimit.retryAfter
+        },
+        { 
+          status: 429,
+          headers: {
+            'Retry-After': rateLimit.retryAfter?.toString() || '3600'
+          }
+        }
+      )
+    }
+    
     console.log('📤 Upload route called')
     const accessToken = await getValidAccessToken()
     

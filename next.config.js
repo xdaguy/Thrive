@@ -68,7 +68,26 @@ const nextConfig = {
           // NEW: Strict Transport Security (HTTPS only)
           {
             key: 'Strict-Transport-Security',
-            value: 'max-age=31536000; includeSubDomains'
+            value: 'max-age=31536000; includeSubDomains; preload'
+          },
+          // NEW: Cross-Origin Policies
+          {
+            key: 'Cross-Origin-Resource-Policy',
+            value: 'same-origin'
+          },
+          {
+            key: 'Cross-Origin-Embedder-Policy',
+            value: 'require-corp'
+          },
+          // NEW: Download Options (IE security)
+          {
+            key: 'X-Download-Options',
+            value: 'noopen'
+          },
+          // NEW: Permitted Cross-Domain Policies
+          {
+            key: 'X-Permitted-Cross-Domain-Policies',
+            value: 'none'
           }
         ]
       }

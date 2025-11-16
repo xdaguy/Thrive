@@ -91,6 +91,24 @@ export async function GET(request: NextRequest) {
       console.log('✅ Refresh token stored')
     }
 
+    // Initialize token family for rotation tracking
+    const tokenFamily = {
+      familyId: crypto.randomUUID(),
+      generation: 0,
+      createdAt: Date.now(),
+      lastRotated: Date.now()
+    }
+    
+    cookieStore.set('token_family', JSON.stringify(tokenFamily), {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'strict',
+      maxAge: 60 * 60 * 24 * 365,
+      path: '/',
+    })
+    
+    console.log('🆕 Token family initialized:', tokenFamily.familyId)
+
     // Redirect back to settings with success
     return NextResponse.redirect(
       new URL('/settings?connected=true', APP_URL)
