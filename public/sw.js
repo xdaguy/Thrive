@@ -1,16 +1,33 @@
 // Thrive Service Worker
-// Version 0.1.0
+// Version 0.2.0 - Offline-First for Local-First App
 
-const CACHE_NAME = 'thrive-v1';
-const RUNTIME_CACHE = 'thrive-runtime';
+const CACHE_NAME = 'thrive-v2';
+const RUNTIME_CACHE = 'thrive-runtime-v2';
+
+// App routes that should work offline (local-first)
+const APP_ROUTES = [
+  '/dashboard',
+  '/finance',
+  '/tasks',
+  '/health',
+  '/routines',
+  '/settings',
+  '/more',
+  '/add',
+  '/start',
+  '/onboarding'
+];
 
 // Assets to cache on install
 const PRECACHE_URLS = [
   '/',
-  '/dashboard',
+  ...APP_ROUTES,
   '/manifest.json',
   '/icon.svg',
   '/favicon.svg',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/apple-touch-icon.png'
 ];
 
 // Install event - precache essential assets
@@ -37,46 +54,94 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch event - network first, fallback to cache
+// Fetch event - Cache-first for app routes (offline-first)
 self.addEventListener('fetch', (event) => {
   // Skip cross-origin requests
   if (!event.request.url.startsWith(self.location.origin)) {
     return;
   }
 
-  // For navigation requests, use network first
+  const url = new URL(event.request.url);
+  const isAppRoute = APP_ROUTES.some(route => url.pathname.startsWith(route));
+  const isLandingPage = url.pathname === '/';
+
+  // For navigation requests
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          // Cache successful responses
-          if (response.ok) {
-            const responseClone = response.clone();
-            caches.open(RUNTIME_CACHE).then((cache) => {
-              cache.put(event.request, responseClone);
+      (async () => {
+        // For app routes: Cache-first (offline-first)
+        if (isAppRoute) {
+          const cachedResponse = await caches.match(event.request);
+          if (cachedResponse) {
+            // Update cache in background
+            fetch(event.request).then((response) => {
+              if (response.ok) {
+                caches.open(RUNTIME_CACHE).then((cache) => {
+                  cache.put(event.request, response.clone());
+                });
+              }
+            }).catch(() => {
+              // Silently fail - we're offline but cache works
             });
+            return cachedResponse;
           }
-          return response;
-        })
-        .catch(() => {
-          // If offline, try cache
-          return caches.match(event.request).then((cached) => {
-            return cached || caches.match('/');
-          });
-        })
+          
+          // If not in cache, try network
+          try {
+            const response = await fetch(event.request);
+            if (response.ok) {
+              const responseClone = response.clone();
+              caches.open(RUNTIME_CACHE).then((cache) => {
+                cache.put(event.request, responseClone);
+              });
+            }
+            return response;
+          } catch (error) {
+            // Offline and not cached - return dashboard as fallback
+            const dashboardCache = await caches.match('/dashboard');
+            return dashboardCache || caches.match('/');
+          }
+        }
+        
+        // For landing page: Network-first (for SEO/fresh content)
+        if (isLandingPage) {
+          try {
+            const response = await fetch(event.request);
+            if (response.ok) {
+              const responseClone = response.clone();
+              caches.open(RUNTIME_CACHE).then((cache) => {
+                cache.put(event.request, responseClone);
+              });
+            }
+            return response;
+          } catch (error) {
+            const cachedResponse = await caches.match(event.request);
+            return cachedResponse || new Response('Offline', { status: 503 });
+          }
+        }
+
+        // Default: try cache first
+        const cachedResponse = await caches.match(event.request);
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+        return fetch(event.request);
+      })()
     );
     return;
   }
 
-  // For other requests, try cache first, then network
+  // For other requests (assets, API calls): Cache-first
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) {
-        return cached;
+    (async () => {
+      const cachedResponse = await caches.match(event.request);
+      if (cachedResponse) {
+        return cachedResponse;
       }
 
-      return fetch(event.request).then((response) => {
-        // Cache successful responses
+      try {
+        const response = await fetch(event.request);
+        // Cache successful GET requests
         if (response.ok && event.request.method === 'GET') {
           const responseClone = response.clone();
           caches.open(RUNTIME_CACHE).then((cache) => {
@@ -84,8 +149,14 @@ self.addEventListener('fetch', (event) => {
           });
         }
         return response;
-      });
-    })
+      } catch (error) {
+        // Return offline response for failed requests
+        return new Response('Offline', { 
+          status: 503,
+          statusText: 'Service Unavailable'
+        });
+      }
+    })()
   );
 });
 

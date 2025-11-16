@@ -6,6 +6,7 @@ import { DBProvider } from '@/components/providers/db-provider'
 import { ServiceWorkerProvider } from '@/components/providers/sw-provider'
 import { ErrorBoundary } from '@/components/providers/error-boundary'
 import { ToastProvider } from '@/components/ui/toast'
+import { OfflineIndicator } from '@/components/providers/offline-indicator'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
@@ -73,6 +74,7 @@ export default function RootLayout({
             <ToastProvider>
               <DBProvider>
                 <ServiceWorkerProvider />
+                <OfflineIndicator />
                 {children}
               </DBProvider>
             </ToastProvider>
