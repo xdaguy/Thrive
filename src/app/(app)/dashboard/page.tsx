@@ -131,6 +131,7 @@ export default function DashboardPage() {
           disabled={loading}
           className="btn-icon flex-shrink-0 touch-manipulation"
           title="Refresh stats"
+          aria-label="Refresh statistics"
         >
           <RefreshCw className={`w-5 h-5 text-gray-600 dark:text-gray-400 ${loading ? 'animate-spin' : ''}`} />
         </button>

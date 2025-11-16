@@ -13,7 +13,7 @@ type Tab = 'income' | 'expenses' | 'debts'
 export default function FinancePage() {
   const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState<Tab>('income')
-  const [shouldOpenForm, setShouldOpenForm] = useState(false)
+  const [openFormTrigger, setOpenFormTrigger] = useState(0)
 
   useEffect(() => {
     // Handle URL parameters for tab and form opening
@@ -24,10 +24,9 @@ export default function FinancePage() {
       setActiveTab(tab)
     }
     
+    // Trigger form opening by incrementing counter (avoids timing issues)
     if (add === 'true') {
-      setShouldOpenForm(true)
-      // Reset after triggering
-      setTimeout(() => setShouldOpenForm(false), 100)
+      setOpenFormTrigger(prev => prev + 1)
     }
   }, [searchParams])
 
@@ -90,9 +89,9 @@ export default function FinancePage() {
             {...tabContent}
             className="p-6"
           >
-            {activeTab === 'income' && <IncomeTab openForm={shouldOpenForm} />}
-            {activeTab === 'expenses' && <ExpenseTab openForm={shouldOpenForm} />}
-            {activeTab === 'debts' && <DebtTab openForm={shouldOpenForm} />}
+            {activeTab === 'income' && <IncomeTab key={`income-${openFormTrigger}`} openForm={openFormTrigger > 0} />}
+            {activeTab === 'expenses' && <ExpenseTab key={`expenses-${openFormTrigger}`} openForm={openFormTrigger > 0} />}
+            {activeTab === 'debts' && <DebtTab key={`debts-${openFormTrigger}`} openForm={openFormTrigger > 0} />}
           </motion.div>
         </AnimatePresence>
       </div>

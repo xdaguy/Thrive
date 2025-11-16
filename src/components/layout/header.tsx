@@ -37,9 +37,9 @@ export function Header() {
 
         {/* Actions */}
         <div className="flex items-center gap-2">
-          <button className="btn-icon relative">
+          <button className="btn-icon relative" aria-label="Notifications">
             <Bell className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" aria-hidden="true"></span>
           </button>
           <ThemeToggle />
         </div>

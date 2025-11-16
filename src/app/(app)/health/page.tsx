@@ -13,7 +13,7 @@ type Tab = 'weight' | 'exercise' | 'meals'
 export default function HealthPage() {
   const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState<Tab>('weight')
-  const [shouldOpenForm, setShouldOpenForm] = useState(false)
+  const [openFormTrigger, setOpenFormTrigger] = useState(0)
 
   useEffect(() => {
     // Handle URL parameters for tab and form opening
@@ -24,10 +24,9 @@ export default function HealthPage() {
       setActiveTab(tab)
     }
     
+    // Trigger form opening by incrementing counter (avoids timing issues)
     if (add === 'true') {
-      setShouldOpenForm(true)
-      // Reset after triggering
-      setTimeout(() => setShouldOpenForm(false), 100)
+      setOpenFormTrigger(prev => prev + 1)
     }
   }, [searchParams])
 
@@ -87,9 +86,9 @@ export default function HealthPage() {
             {...tabContent}
             className="p-6"
           >
-            {activeTab === 'weight' && <WeightTab openForm={shouldOpenForm} />}
-            {activeTab === 'exercise' && <ExerciseTab openForm={shouldOpenForm} />}
-            {activeTab === 'meals' && <MealsTab openForm={shouldOpenForm} />}
+            {activeTab === 'weight' && <WeightTab key={`weight-${openFormTrigger}`} openForm={openFormTrigger > 0} />}
+            {activeTab === 'exercise' && <ExerciseTab key={`exercise-${openFormTrigger}`} openForm={openFormTrigger > 0} />}
+            {activeTab === 'meals' && <MealsTab key={`meals-${openFormTrigger}`} openForm={openFormTrigger > 0} />}
           </motion.div>
         </AnimatePresence>
       </div>

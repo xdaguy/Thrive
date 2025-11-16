@@ -338,6 +338,7 @@ export default function RoutinesPage() {
                       type="button"
                       onClick={() => removeItem(index)}
                       className="btn-icon text-red-600 dark:text-red-400"
+                      aria-label={`Remove item: ${item.name || 'Untitled'}`}
                     >
                       <X className="w-5 h-5" />
                     </button>
