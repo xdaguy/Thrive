@@ -8,7 +8,10 @@ import { NextResponse } from 'next/server'
 const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID! // Server-side only (no NEXT_PUBLIC_)
 const REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI!
-const SCOPES = ['https://www.googleapis.com/auth/drive.file']
+const SCOPES = [
+  'https://www.googleapis.com/auth/drive.file',
+  'https://www.googleapis.com/auth/userinfo.email'
+]
 
 export async function GET() {
   try {
