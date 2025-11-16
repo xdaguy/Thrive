@@ -15,10 +15,11 @@ let syncEnabled = false
 let syncing = false
 let lastSyncTime: number = 0
 let syncTimer: NodeJS.Timeout | null = null
+let hasPendingChanges = false // Track if there are unsaved changes
 
-// Debounce settings
-const SYNC_DEBOUNCE_MS = 30000 // 30 seconds after last change
-const MIN_SYNC_INTERVAL_MS = 60000 // Minimum 1 minute between syncs
+// Sync settings - Aggressive for instant feel!
+const SYNC_DEBOUNCE_MS = 2000 // 2 seconds after last change (FAST!)
+const MIN_SYNC_INTERVAL_MS = 5000 // Minimum 5 seconds between syncs (allows quick updates)
 
 /**
  * Start auto-sync
@@ -59,6 +60,12 @@ export async function startAutoSync(triggerImmediateSync = false): Promise<void>
   })
   console.log('✓ Event listeners registered for', dataEvents.length, 'events')
 
+  // Add beforeunload handler to sync before page close
+  if (typeof window !== 'undefined') {
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    console.log('✓ beforeunload handler registered')
+  }
+
   // Initial sync - immediate if just connected, debounced if page reload
   if (triggerImmediateSync) {
     console.log('📅 Triggering immediate initial sync...')
@@ -98,11 +105,19 @@ export function stopAutoSync(): void {
     DataEvents.off(event, handleDataChange)
   })
 
+  // Remove beforeunload handler
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('beforeunload', handleBeforeUnload)
+    console.log('✓ beforeunload handler removed')
+  }
+
   // Clear pending sync
   if (syncTimer) {
     clearTimeout(syncTimer)
     syncTimer = null
   }
+  
+  hasPendingChanges = false
 }
 
 /**
@@ -113,8 +128,33 @@ function handleDataChange(): void {
     return
   }
 
+  hasPendingChanges = true
   console.log('📝 Data changed, scheduling sync...')
   scheduleSyncDebounced()
+}
+
+/**
+ * Handle page unload - warn user about unsaved changes
+ * 
+ * NOTE: Modern browsers prevent async operations in beforeunload for security.
+ * We can't force a sync here, but we CAN warn the user to give them a chance
+ * to stay on the page and let the normal 2-second sync complete.
+ */
+function handleBeforeUnload(event: BeforeUnloadEvent): void {
+  if (!hasPendingChanges || !syncEnabled) {
+    return // No pending changes, safe to close
+  }
+
+  console.warn('⚠️ Page closing with unsaved changes! Showing warning to user...')
+  
+  // Show browser's "Leave site?" dialog
+  // If user chooses to stay, the pending sync timer will complete normally
+  // If user chooses to leave, data is saved locally and will sync on next app open
+  event.preventDefault()
+  event.returnValue = '' // Required for Chrome/Edge
+  
+  // Note: We don't call performSync() here because browsers won't wait for it.
+  // The dialog gives users a chance to wait for the automatic sync (2 seconds).
 }
 
 /**
@@ -206,6 +246,7 @@ async function performSync(): Promise<void> {
     }
 
     lastSyncTime = Date.now()
+    hasPendingChanges = false // Clear pending changes flag
     console.log('✅ Sync completed successfully at', new Date(lastSyncTime).toLocaleTimeString())
 
     // Save last sync time to settings

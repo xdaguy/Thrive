@@ -671,8 +671,8 @@ export default function SettingsPage() {
 
             {/* Info Note */}
             <div className="text-xs text-gray-500 dark:text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
-              💡 <strong>Auto-sync is ON:</strong> Your data automatically syncs 30 seconds after any change,
-              with a minimum of 1 minute between syncs.
+              💡 <strong>Auto-sync is ON:</strong> Your data automatically syncs 2 seconds after any change.
+              Close protection: If you close the app with unsaved changes, you'll be prompted to save first.
             </div>
           </div>
         ) : (
