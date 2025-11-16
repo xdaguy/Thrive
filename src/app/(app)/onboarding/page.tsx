@@ -36,7 +36,7 @@ export default function OnboardingPage() {
     storagePreference: 'local' as 'local' | 'google' | 'dropbox' | 'onedrive'
   })
 
-  async function handleSubmit(e?: any) {
+  async function handleSubmit(e?: React.FormEvent<HTMLFormElement>) {
     if (e?.preventDefault) {
       e.preventDefault()
     }
@@ -77,8 +77,9 @@ export default function OnboardingPage() {
     input.type = 'file'
     input.accept = '.json'
     
-    input.onchange = async (e: any) => {
-      const file = e.target.files[0]
+    input.onchange = async (e: Event) => {
+      const target = e.target as HTMLInputElement
+      const file = target.files?.[0]
       if (!file) return
 
       try {
@@ -133,7 +134,7 @@ export default function OnboardingPage() {
 
         // Restore settings (most important for existing users!)
         if (data.settings?.length) {
-          const userSettings = data.settings.find((s: any) => s.id === 'user_settings')
+          const userSettings = data.settings.find((s: { id: string }) => s.id === 'user_settings')
           if (userSettings) {
             await db.settings.put({
               ...userSettings,

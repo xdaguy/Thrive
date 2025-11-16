@@ -153,6 +153,7 @@ export class ThriveDB extends Dexie {
   constructor() {
     super('ThriveDB')
     
+    // Version 1: Initial schema
     this.version(1).stores({
       income: '++id, date, category, createdAt',
       expenses: '++id, date, category, createdAt',
@@ -164,6 +165,21 @@ export class ThriveDB extends Dexie {
       meals: '++id, date, mealType, createdAt',
       routines: '++id, name, timeOfDay, createdAt',
       routineCompletions: '++id, routineId, date, createdAt',
+      settings: 'id'
+    })
+    
+    // Version 2: Add compound indexes for better query performance
+    this.version(2).stores({
+      income: '++id, date, category, createdAt, [date+category]',
+      expenses: '++id, date, category, createdAt, [date+category]',
+      debts: '++id, type, status, dueDate, createdAt',
+      tasks: '++id, completed, priority, dueDate, createdAt, [completed+dueDate]',
+      reminders: '++id, taskId, datetime, createdAt',
+      weight: '++id, date, createdAt',
+      exercise: '++id, date, type, createdAt',
+      meals: '++id, date, mealType, createdAt',
+      routines: '++id, name, timeOfDay, createdAt',
+      routineCompletions: '++id, routineId, date, createdAt, [routineId+date]',
       settings: 'id'
     })
   }
@@ -190,9 +206,9 @@ export async function initializeSettings() {
         updatedAt: new Date()
       })
     }
-  } catch (error: any) {
+  } catch (error) {
     // Ignore constraint errors (settings already exist)
-    if (error.name !== 'ConstraintError') {
+    if (error instanceof Error && error.name !== 'ConstraintError') {
       console.error('Failed to initialize settings:', error)
       throw error
     }

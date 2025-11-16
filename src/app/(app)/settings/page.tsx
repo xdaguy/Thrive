@@ -55,7 +55,7 @@ export default function SettingsPage() {
     }
   }
 
-  async function savePreference(key: string, value: any) {
+  async function savePreference(key: string, value: string | boolean) {
     await db.settings.update('user_settings', {
       [key]: value,
       updatedAt: new Date()
@@ -104,8 +104,9 @@ export default function SettingsPage() {
     input.type = 'file'
     input.accept = '.json'
     
-    input.onchange = async (e: any) => {
-      const file = e.target.files[0]
+    input.onchange = async (e: Event) => {
+      const target = e.target as HTMLInputElement
+      const file = target.files?.[0]
       if (!file) return
 
       try {

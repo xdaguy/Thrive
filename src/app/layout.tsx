@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/components/providers/theme-provider'
 import { DBProvider } from '@/components/providers/db-provider'
 import { ServiceWorkerProvider } from '@/components/providers/sw-provider'
 import { ErrorBoundary } from '@/components/providers/error-boundary'
+import { ToastProvider } from '@/components/ui/toast'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
@@ -67,10 +68,12 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <DBProvider>
-              <ServiceWorkerProvider />
-              {children}
-            </DBProvider>
+            <ToastProvider>
+              <DBProvider>
+                <ServiceWorkerProvider />
+                {children}
+              </DBProvider>
+            </ToastProvider>
           </ThemeProvider>
         </ErrorBoundary>
       </body>

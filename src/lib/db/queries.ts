@@ -1,4 +1,5 @@
 import { db, generateId, type Income, type Expense, type Task, type Weight, type Exercise, type Meal } from './schema'
+import { DataEvents, DATA_EVENTS } from '../events'
 
 // Re-export types for convenience
 export type { Income, Expense, Task, Weight, Exercise, Meal } from './schema'
@@ -15,6 +16,7 @@ export async function addIncome(income: Omit<Income, 'id' | 'createdAt' | 'updat
     updatedAt: now
   })
   
+  DataEvents.emit(DATA_EVENTS.INCOME_CHANGED)
   return id
 }
 
@@ -31,10 +33,12 @@ export async function updateIncome(id: string, updates: Partial<Income>) {
     ...updates,
     updatedAt: new Date()
   })
+  DataEvents.emit(DATA_EVENTS.INCOME_CHANGED)
 }
 
 export async function deleteIncome(id: string) {
   await db.income.delete(id)
+  DataEvents.emit(DATA_EVENTS.INCOME_CHANGED)
 }
 
 // Expense Operations
@@ -49,6 +53,7 @@ export async function addExpense(expense: Omit<Expense, 'id' | 'createdAt' | 'up
     updatedAt: now
   })
   
+  DataEvents.emit(DATA_EVENTS.EXPENSE_CHANGED)
   return id
 }
 
@@ -61,10 +66,12 @@ export async function updateExpense(id: string, updates: Partial<Expense>) {
     ...updates,
     updatedAt: new Date()
   })
+  DataEvents.emit(DATA_EVENTS.EXPENSE_CHANGED)
 }
 
 export async function deleteExpense(id: string) {
   await db.expenses.delete(id)
+  DataEvents.emit(DATA_EVENTS.EXPENSE_CHANGED)
 }
 
 // Task Operations
@@ -79,6 +86,7 @@ export async function addTask(task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>
     updatedAt: now
   })
   
+  DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
   return id
 }
 
@@ -95,6 +103,7 @@ export async function updateTask(id: string, updates: Partial<Task>) {
     ...updates,
     updatedAt: new Date()
   })
+  DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
 }
 
 export async function toggleTaskCompletion(id: string) {
@@ -106,10 +115,12 @@ export async function toggleTaskCompletion(id: string) {
     completedAt: !task.completed ? new Date() : undefined,
     updatedAt: new Date()
   })
+  DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
 }
 
 export async function deleteTask(id: string) {
   await db.tasks.delete(id)
+  DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
 }
 
 // Weight Operations
@@ -122,6 +133,7 @@ export async function addWeight(weight: Omit<Weight, 'id' | 'createdAt'>) {
     createdAt: new Date()
   })
   
+  DataEvents.emit(DATA_EVENTS.WEIGHT_CHANGED)
   return id
 }
 
@@ -131,10 +143,12 @@ export async function getAllWeight() {
 
 export async function updateWeight(id: string, updates: Partial<Weight>) {
   await db.weight.update(id, updates)
+  DataEvents.emit(DATA_EVENTS.WEIGHT_CHANGED)
 }
 
 export async function deleteWeight(id: string) {
   await db.weight.delete(id)
+  DataEvents.emit(DATA_EVENTS.WEIGHT_CHANGED)
 }
 
 // Exercise Operations
@@ -147,6 +161,7 @@ export async function addExercise(exercise: Omit<Exercise, 'id' | 'createdAt'>) 
     createdAt: new Date()
   })
   
+  DataEvents.emit(DATA_EVENTS.EXERCISE_CHANGED)
   return id
 }
 
@@ -156,10 +171,12 @@ export async function getAllExercise() {
 
 export async function updateExercise(id: string, updates: Partial<Exercise>) {
   await db.exercise.update(id, updates)
+  DataEvents.emit(DATA_EVENTS.EXERCISE_CHANGED)
 }
 
 export async function deleteExercise(id: string) {
   await db.exercise.delete(id)
+  DataEvents.emit(DATA_EVENTS.EXERCISE_CHANGED)
 }
 
 // Meal Operations
@@ -172,6 +189,7 @@ export async function addMeal(meal: Omit<Meal, 'id' | 'createdAt'>) {
     createdAt: new Date()
   })
   
+  DataEvents.emit(DATA_EVENTS.MEAL_CHANGED)
   return id
 }
 
@@ -181,33 +199,41 @@ export async function getAllMeals() {
 
 export async function updateMeal(id: string, updates: Partial<Meal>) {
   await db.meals.update(id, updates)
+  DataEvents.emit(DATA_EVENTS.MEAL_CHANGED)
 }
 
 export async function deleteMeal(id: string) {
   await db.meals.delete(id)
+  DataEvents.emit(DATA_EVENTS.MEAL_CHANGED)
 }
 
 // Statistics
 export async function getMonthlyIncome(year: number, month: number) {
-  const allIncome = await db.income.toArray()
+  // Create date range for the month
+  const startDate = new Date(year, month, 1)
+  const endDate = new Date(year, month + 1, 0, 23, 59, 59)
   
-  return allIncome
-    .filter(item => {
-      const itemDate = new Date(item.date)
-      return itemDate.getFullYear() === year && itemDate.getMonth() === month
-    })
-    .reduce((sum, item) => sum + item.amount, 0)
+  // Use indexed query on date field for better performance
+  const monthlyIncome = await db.income
+    .where('date')
+    .between(startDate, endDate, true, true)
+    .toArray()
+  
+  return monthlyIncome.reduce((sum, item) => sum + item.amount, 0)
 }
 
 export async function getMonthlyExpenses(year: number, month: number) {
-  const allExpenses = await db.expenses.toArray()
+  // Create date range for the month
+  const startDate = new Date(year, month, 1)
+  const endDate = new Date(year, month + 1, 0, 23, 59, 59)
   
-  return allExpenses
-    .filter(item => {
-      const itemDate = new Date(item.date)
-      return itemDate.getFullYear() === year && itemDate.getMonth() === month
-    })
-    .reduce((sum, item) => sum + item.amount, 0)
+  // Use indexed query on date field for better performance
+  const monthlyExpenses = await db.expenses
+    .where('date')
+    .between(startDate, endDate, true, true)
+    .toArray()
+  
+  return monthlyExpenses.reduce((sum, item) => sum + item.amount, 0)
 }
 
 export async function getTotalBalance() {
@@ -221,29 +247,39 @@ export async function getTotalBalance() {
 }
 
 export async function getTasksCompletedToday() {
-  const allTasks = await db.tasks.toArray()
   const today = new Date()
   today.setHours(0, 0, 0, 0)
+  const tomorrow = new Date(today)
+  tomorrow.setDate(tomorrow.getDate() + 1)
   
-  return allTasks.filter(task => {
-    if (!task.completedAt || !task.completed) return false
-    const completedDate = new Date(task.completedAt)
-    completedDate.setHours(0, 0, 0, 0)
-    return completedDate.getTime() === today.getTime()
-  }).length
+  // Use compound index on completed field for faster filtering
+  const completedTasks = await db.tasks
+    .where('completed')
+    .equals(1)
+    .filter(task => {
+      if (!task.completedAt) return false
+      const completedDate = new Date(task.completedAt)
+      completedDate.setHours(0, 0, 0, 0)
+      return completedDate.getTime() === today.getTime()
+    })
+    .count()
+  
+  return completedTasks
 }
 
 export async function getTotalTasksToday() {
-  const allTasks = await db.tasks.toArray()
   const today = new Date()
   today.setHours(0, 0, 0, 0)
+  const tomorrow = new Date(today)
+  tomorrow.setDate(tomorrow.getDate() + 1)
   
-  return allTasks.filter(task => {
-    if (!task.dueDate) return false
-    const dueDate = new Date(task.dueDate)
-    dueDate.setHours(0, 0, 0, 0)
-    return dueDate.getTime() === today.getTime()
-  }).length
+  // Use dueDate index for faster filtering
+  const todaysTasks = await db.tasks
+    .where('dueDate')
+    .between(today, tomorrow, true, false)
+    .count()
+  
+  return todaysTasks
 }
 
 // Routine Operations
@@ -258,6 +294,7 @@ export async function addRoutine(routine: Omit<import('./schema').Routine, 'id' 
     updatedAt: now
   })
   
+  DataEvents.emit(DATA_EVENTS.ROUTINE_CHANGED)
   return id
 }
 
@@ -274,6 +311,7 @@ export async function updateRoutine(id: string, updates: Partial<import('./schem
     ...updates,
     updatedAt: new Date()
   })
+  DataEvents.emit(DATA_EVENTS.ROUTINE_CHANGED)
 }
 
 export async function deleteRoutine(id: string) {
@@ -283,6 +321,8 @@ export async function deleteRoutine(id: string) {
   for (const completion of completions) {
     if (completion.id) await db.routineCompletions.delete(completion.id)
   }
+  DataEvents.emit(DATA_EVENTS.ROUTINE_CHANGED)
+  DataEvents.emit(DATA_EVENTS.ROUTINE_COMPLETION_CHANGED)
 }
 
 export async function addRoutineCompletion(completion: Omit<import('./schema').RoutineCompletion, 'id' | 'createdAt'>) {
@@ -294,6 +334,7 @@ export async function addRoutineCompletion(completion: Omit<import('./schema').R
     createdAt: new Date()
   })
   
+  DataEvents.emit(DATA_EVENTS.ROUTINE_COMPLETION_CHANGED)
   return id
 }
 
