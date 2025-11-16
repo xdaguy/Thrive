@@ -43,8 +43,7 @@ next-env.d.ts
 *.swo
 *~
 
-# PWA (auto-generated)
-public/sw.js
+# PWA (auto-generated - but our custom sw.js is committed)
 public/workbox-*.js
 public/sw.js.map
 
