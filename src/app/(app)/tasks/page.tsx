@@ -12,6 +12,7 @@ import { db } from '@/lib/db/schema'
 import { fadeIn, listItem, staggerContainer, staggerItem } from '@/lib/animations'
 import { Skeleton, SkeletonTable } from '@/components/ui/skeleton'
 import { useDeleteConfirm } from '@/components/ui/delete-confirm'
+import { ErrorBoundary } from '@/components/providers/error-boundary'
 
 export default function TasksPage() {
   const searchParams = useSearchParams()
@@ -232,6 +233,7 @@ export default function TasksPage() {
   }).length
 
   return (
+    <ErrorBoundary>
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -522,5 +524,6 @@ export default function TasksPage() {
       {/* Delete Confirmation Dialog */}
       <DeleteDialog />
     </motion.div>
+    </ErrorBoundary>
   )
 }

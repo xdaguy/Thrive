@@ -7,6 +7,7 @@ import { WeightTab } from '@/components/health/weight-tab'
 import { ExerciseTab } from '@/components/health/exercise-tab'
 import { MealsTab } from '@/components/health/meals-tab'
 import { fadeIn, tabContent } from '@/lib/animations'
+import { ErrorBoundary } from '@/components/providers/error-boundary'
 
 type Tab = 'weight' | 'exercise' | 'meals'
 
@@ -86,9 +87,11 @@ export default function HealthPage() {
             {...tabContent}
             className="p-6"
           >
-            {activeTab === 'weight' && <WeightTab key={`weight-${openFormTrigger}`} openForm={openFormTrigger > 0} />}
-            {activeTab === 'exercise' && <ExerciseTab key={`exercise-${openFormTrigger}`} openForm={openFormTrigger > 0} />}
-            {activeTab === 'meals' && <MealsTab key={`meals-${openFormTrigger}`} openForm={openFormTrigger > 0} />}
+            <ErrorBoundary>
+              {activeTab === 'weight' && <WeightTab key={`weight-${openFormTrigger}`} openForm={openFormTrigger > 0} />}
+              {activeTab === 'exercise' && <ExerciseTab key={`exercise-${openFormTrigger}`} openForm={openFormTrigger > 0} />}
+              {activeTab === 'meals' && <MealsTab key={`meals-${openFormTrigger}`} openForm={openFormTrigger > 0} />}
+            </ErrorBoundary>
           </motion.div>
         </AnimatePresence>
       </div>

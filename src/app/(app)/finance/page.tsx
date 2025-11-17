@@ -7,6 +7,7 @@ import { IncomeTab } from '@/components/finance/income-tab'
 import { ExpenseTab } from '@/components/finance/expense-tab'
 import { DebtTab } from '@/components/finance/debt-tab'
 import { fadeIn, tabContent } from '@/lib/animations'
+import { ErrorBoundary } from '@/components/providers/error-boundary'
 
 type Tab = 'income' | 'expenses' | 'debts'
 
@@ -89,9 +90,11 @@ export default function FinancePage() {
             {...tabContent}
             className="p-6"
           >
-            {activeTab === 'income' && <IncomeTab key={`income-${openFormTrigger}`} openForm={openFormTrigger > 0} />}
-            {activeTab === 'expenses' && <ExpenseTab key={`expenses-${openFormTrigger}`} openForm={openFormTrigger > 0} />}
-            {activeTab === 'debts' && <DebtTab key={`debts-${openFormTrigger}`} openForm={openFormTrigger > 0} />}
+            <ErrorBoundary>
+              {activeTab === 'income' && <IncomeTab key={`income-${openFormTrigger}`} openForm={openFormTrigger > 0} />}
+              {activeTab === 'expenses' && <ExpenseTab key={`expenses-${openFormTrigger}`} openForm={openFormTrigger > 0} />}
+              {activeTab === 'debts' && <DebtTab key={`debts-${openFormTrigger}`} openForm={openFormTrigger > 0} />}
+            </ErrorBoundary>
           </motion.div>
         </AnimatePresence>
       </div>

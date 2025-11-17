@@ -20,6 +20,7 @@ import type { Routine, RoutineItem, RoutineCompletion } from '@/lib/db/schema'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
 import { fadeIn, staggerContainer, staggerItem, scaleIn } from '@/lib/animations'
 import { Skeleton, SkeletonTable } from '@/components/ui/skeleton'
+import { ErrorBoundary } from '@/components/providers/error-boundary'
 
 export default function RoutinesPage() {
   const searchParams = useSearchParams()
@@ -246,6 +247,7 @@ export default function RoutinesPage() {
     : 0
 
   return (
+    <ErrorBoundary>
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -542,5 +544,6 @@ export default function RoutinesPage() {
       {/* Delete Confirmation Dialog */}
       <DeleteDialog />
     </motion.div>
+    </ErrorBoundary>
   )
 }
