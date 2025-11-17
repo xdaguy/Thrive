@@ -74,7 +74,8 @@ export default function SettingsPage() {
             ...settings,
             syncEnabled: true,
             syncProvider: 'google',
-            lastSyncAt: new Date()
+            lastSyncAt: new Date(),
+            updatedAt: new Date()
           })
           DataEvents.emit(DATA_EVENTS.SETTINGS_CHANGED)
         }
@@ -274,7 +275,8 @@ export default function SettingsPage() {
           ...settings,
           syncEnabled: false,
           syncProvider: undefined,
-          lastSyncAt: undefined
+          lastSyncAt: undefined,
+          updatedAt: new Date()
         })
         DataEvents.emit(DATA_EVENTS.SETTINGS_CHANGED)
         

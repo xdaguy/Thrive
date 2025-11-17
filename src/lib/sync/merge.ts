@@ -111,13 +111,32 @@ function getTimestamp(item: any): number {
 }
 
 /**
- * Merge settings (always prefer local settings)
+ * Merge settings using timestamp-based conflict resolution
+ * Latest updatedAt wins (same as other data types)
  */
 function mergeSettings(localSettings: any[], remoteSettings: any[]): any[] {
-  if (localSettings.length > 0) {
+  // Settings is a singleton, so we just need to compare the single item
+  if (localSettings.length === 0) {
+    return remoteSettings
+  }
+  
+  if (remoteSettings.length === 0) {
     return localSettings
   }
-  return remoteSettings
+  
+  // Both exist - compare timestamps
+  const localSetting = localSettings[0]
+  const remoteSetting = remoteSettings[0]
+  
+  const localTime = getTimestamp(localSetting)
+  const remoteTime = getTimestamp(remoteSetting)
+  
+  // Latest write wins
+  if (remoteTime > localTime) {
+    return remoteSettings
+  }
+  
+  return localSettings
 }
 
 /**

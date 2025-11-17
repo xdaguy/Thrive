@@ -2,39 +2,46 @@
 
 ## 🔴 CRITICAL BUGS (Fix Tomorrow)
 
-### 1. **Settings Not Syncing to Cloud** ⚠️ HIGH PRIORITY
-**Issue:** User settings (name, currency, weight unit, etc.) are NOT syncing to Google Drive
-- When new user signs in on Device B, they don't see settings from Device A
-- Onboarding settings stay local, never reach cloud
-- Existing users' settings don't sync between devices
+### 1. **Settings Not Syncing to Cloud** ✅ FIXED!
+**Issue:** User settings (name, currency, weight unit, etc.) were NOT syncing to Google Drive
 
-**Root Cause Found:**
-- File: `src/lib/sync/merge.ts` line 116-121
-- Function `mergeSettings()` ALWAYS prefers local settings
-- If local settings exist (even defaults), remote settings are completely ignored
-- This breaks the entire settings sync flow
+**Root Cause:**
+1. `src/lib/sync/merge.ts` - `mergeSettings()` always preferred local settings
+2. Settings updates weren't setting `updatedAt` timestamp
+3. This broke the entire sync flow
 
-**Fix Required:**
-```typescript
-// CURRENT (BROKEN):
-function mergeSettings(localSettings: any[], remoteSettings: any[]): any[] {
-  if (localSettings.length > 0) {
-    return localSettings  // ❌ Always ignores cloud settings!
-  }
-  return remoteSettings
-}
+**Fix Applied:**
+1. **merge.ts** - Changed to timestamp-based merging (latest write wins)
+2. **settings/page.tsx** - Added `updatedAt: new Date()` to connect/disconnect
+3. **Existing code** - `savePreference()` already sets updatedAt ✅
 
-// SHOULD BE:
-// Settings should merge based on updatedAt timestamp
-// Or use "last write wins" strategy
-// Need to decide: should settings sync bidirectionally or be device-specific?
+**Files Changed:**
+- `src/lib/sync/merge.ts` - Timestamp-based settings merge
+- `src/app/(app)/settings/page.tsx` - Add updatedAt on sync enable/disable
+
+**Testing Required:**
 ```
+IMPORTANT: You need to test this with actual devices/browsers!
 
-**Testing:**
-1. Device A: Complete onboarding (name, currency, units)
-2. Sync to cloud
-3. Device B: Sign in, download cloud backup
-4. Check if name, currency, units appear ✅
+Device A (First Device):
+1. Complete onboarding: name="John", currency="EUR", weightUnit="kg"
+2. Connect to Google Drive
+3. Wait for sync (should happen automatically)
+4. Check Settings → "Last synced" shows recent time ✅
+
+Device B (Second Device/Incognito):
+1. Open app in different browser/incognito
+2. Complete onboarding with dummy data
+3. Connect to same Google account
+4. App should download cloud backup
+5. Check Settings → Should show "John", "EUR", "kg" ✅
+
+Conflict Test:
+1. Device A: Change name to "Jane"
+2. Wait for sync
+3. Device B: Refresh or manually sync
+4. Device B should show "Jane" ✅
+```
 
 ---
 
