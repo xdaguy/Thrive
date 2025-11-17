@@ -110,26 +110,40 @@ export default function OnboardingPage() {
 
         if (!confirmed) return
 
-        // Restore with migration support
-        const result = await restoreFromBackup(data)
-
-        if (result.success) {
-          // Ensure onboarding is marked complete
-          await db.settings.update('user_settings', {
-            onboardingComplete: true,
-            updatedAt: new Date()
-          })
-
-          let message = '✅ Backup restored successfully! Welcome back!'
-          if (result.warnings.length > 0) {
-            toast.success(result.message, { description: result.warnings.join(', ') })
-          } else {
-            toast.success(result.message)
+        // Restore with migration support using toast.promise
+        const restorePromise = restoreFromBackup(data).then(async (result) => {
+          if (result.success) {
+            // Ensure onboarding is marked complete
+            await db.settings.update('user_settings', {
+              onboardingComplete: true,
+              updatedAt: new Date()
+            })
+            
+            // Small delay then redirect
+            await new Promise(resolve => setTimeout(resolve, 1000))
+            router.push('/dashboard')
           }
-          router.push('/dashboard')
-        } else {
-          toast.error(result.message, { description: result.warnings.join(', ') })
-        }
+          return result
+        })
+
+        toast.promise(
+          restorePromise,
+          {
+            loading: 'Restoring backup...',
+            success: (result) => {
+              if (result.warnings.length > 0) {
+                return `${result.message} (${result.warnings.length} warnings)`
+              }
+              return 'Backup restored successfully! Welcome back!'
+            },
+            error: (result) => {
+              if (result?.message) {
+                return `${result.message}${result.warnings?.length ? ` (${result.warnings.length} issues)` : ''}`
+              }
+              return 'Failed to restore backup. Please check the file and try again.'
+            }
+          }
+        )
       } catch (error) {
         console.error('Failed to restore backup:', error)
         toast.error('Failed to restore backup. Please check the file and try again.')

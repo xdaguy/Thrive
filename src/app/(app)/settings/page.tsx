@@ -189,10 +189,11 @@ export default function SettingsPage() {
           
           DataEvents.emit(DATA_EVENTS.SETTINGS_CHANGED)
           
-          // Small delay to ensure database writes complete
-          await new Promise(resolve => setTimeout(resolve, 100))
-          
+          // Show success toast
           toast.success('Successfully connected to Google Drive!')
+          
+          // Wait to ensure toast is visible before redirect
+          await new Promise(resolve => setTimeout(resolve, 1000))
           
           // Redirect to dashboard (onboarding is complete)
           window.location.href = '/dashboard'
@@ -270,13 +271,15 @@ export default function SettingsPage() {
   }
 
   async function handleExportData() {
-    try {
-      await downloadBackup()
-      toast.success('Data exported successfully!')
-    } catch (error) {
-      console.error('Export failed:', error)
-      toast.error('Failed to export data')
-    }
+    // Use toast.promise for better UX
+    toast.promise(
+      downloadBackup(),
+      {
+        loading: 'Creating backup...',
+        success: 'Backup downloaded successfully!',
+        error: 'Failed to export data'
+      }
+    )
   }
 
   async function handleImportData() {
@@ -313,26 +316,34 @@ export default function SettingsPage() {
 
         if (!confirmed) return
 
-        // Import with migration support
-        const result = await importBackup(data, {
+        // Import with migration support using toast.promise for better UX
+        const importPromise = importBackup(data, {
           merge: true,
           preserveUnknown: true,
           skipDuplicates: true,
           validateSchema: true
         })
 
-        if (result.success) {
-          let message = `✅ ${result.message}`
-          if (result.warnings.length > 0) {
-            toast.success(result.message, { description: result.warnings.join(', ') })
-          } else {
-            toast.success(result.message)
+        toast.promise(
+          importPromise,
+          {
+            loading: 'Importing data...',
+            success: (result) => {
+              loadStats()
+              loadPreferences()
+              if (result.warnings.length > 0) {
+                return `${result.message} (${result.warnings.length} warnings)`
+              }
+              return result.message
+            },
+            error: (result) => {
+              if (result?.message) {
+                return `${result.message}${result.warnings?.length ? ` (${result.warnings.length} issues)` : ''}`
+              }
+              return 'Failed to import data. Please check the file format.'
+            }
           }
-          loadStats()
-          loadPreferences()
-        } else {
-          toast.error(result.message, { description: result.warnings.join(', ') })
-        }
+        )
       } catch (error) {
         console.error('Import failed:', error)
         toast.error('Failed to import data. Please check the file format.')
@@ -416,6 +427,12 @@ export default function SettingsPage() {
       // Stop auto-sync
       stopAutoSync()
       
+      // Show success toast BEFORE reload
+      toast.success('Disconnected from Google Drive')
+      
+      // Wait longer to ensure toast is visible
+      await new Promise(resolve => setTimeout(resolve, 1500))
+      
       // Clear auth cookies and reload page
       try {
         await signOut()
@@ -439,22 +456,27 @@ export default function SettingsPage() {
       return
     }
 
-    try {
-      setSyncing(true)
-      await syncNow()
-      
-      const lastSyncTime = getLastSyncTime()
-      if (lastSyncTime) {
-        setLastSync(new Date(lastSyncTime))
+    setSyncing(true)
+    
+    // Use toast.promise for better UX
+    toast.promise(
+      syncNow(),
+      {
+        loading: 'Syncing with Google Drive...',
+        success: () => {
+          const lastSyncTime = getLastSyncTime()
+          if (lastSyncTime) {
+            setLastSync(new Date(lastSyncTime))
+          }
+          setSyncing(false)
+          return 'Sync completed successfully!'
+        },
+        error: (error) => {
+          setSyncing(false)
+          return `Sync failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        }
       }
-      
-      toast.success('Sync completed successfully!')
-    } catch (error) {
-      console.error('Sync failed:', error)
-      toast.error('Sync failed', { description: error instanceof Error ? error.message : 'Unknown error' })
-    } finally {
-      setSyncing(false)
-    }
+    )
   }
 
   function handleSyncCompleted() {

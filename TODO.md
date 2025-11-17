@@ -2,7 +2,7 @@
 
 ## 🎨 UX IMPROVEMENTS
 
-### 1. **Better Connection/Disconnection Messages**
+### 1. **Better Connection/Disconnection Messages** ✅ DONE
 **Current:** Using `alert()` - feels outdated and blocking
 
 **Goal:** Modern toast notifications with smooth animations
