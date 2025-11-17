@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Plus, RotateCw, Trophy, Target, Trash2, CheckCircle, Circle, X, Edit } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
+import { useDeleteConfirm } from '@/components/ui/delete-confirm'
 import { 
   addRoutine, 
   getAllRoutines, 
@@ -20,6 +22,8 @@ import { fadeIn, staggerContainer, staggerItem, scaleIn } from '@/lib/animations
 import { Skeleton, SkeletonTable } from '@/components/ui/skeleton'
 
 export default function RoutinesPage() {
+  const searchParams = useSearchParams()
+  const { confirm: confirmDelete, DeleteDialog } = useDeleteConfirm()
   const [routines, setRoutines] = useState<Routine[]>([])
   const [completions, setCompletions] = useState<Record<string, RoutineCompletion>>({})
   const [streaks, setStreaks] = useState<Record<string, number>>({})
@@ -156,11 +160,16 @@ export default function RoutinesPage() {
 
   async function handleDelete(id: string | undefined) {
     if (!id) return
-    if (confirm('Delete this routine? All completion history will be lost.')) {
-      await deleteRoutine(id)
-      loadRoutines()
-      DataEvents.emit(DATA_EVENTS.ROUTINE_CHANGED)
-    }
+    confirmDelete(
+      id,
+      async () => {
+        await deleteRoutine(id)
+        loadRoutines()
+        DataEvents.emit(DATA_EVENTS.ROUTINE_CHANGED)
+      },
+      'Delete Routine',
+      'Are you sure you want to delete this routine? All completion history will be lost.'
+    )
   }
 
   async function toggleRoutineItem(routine: Routine, itemId: string) {
@@ -500,6 +509,9 @@ export default function RoutinesPage() {
           })}
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteDialog />
     </motion.div>
   )
 }

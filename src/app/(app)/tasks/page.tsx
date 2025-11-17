@@ -11,9 +11,11 @@ import { DataEvents, DATA_EVENTS } from '@/lib/events'
 import { db } from '@/lib/db/schema'
 import { fadeIn, listItem, staggerContainer, staggerItem } from '@/lib/animations'
 import { Skeleton, SkeletonTable } from '@/components/ui/skeleton'
+import { useDeleteConfirm } from '@/components/ui/delete-confirm'
 
 export default function TasksPage() {
   const searchParams = useSearchParams()
+  const { confirm: confirmDelete, DeleteDialog } = useDeleteConfirm()
   const [tasks, setTasks] = useState<Task[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -155,11 +157,16 @@ export default function TasksPage() {
 
   async function handleDelete(id: string | undefined) {
     if (!id) return
-    if (confirm('Delete this task?')) {
-      await deleteTask(id)
-      loadTasks()
-      DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
-    }
+    confirmDelete(
+      id,
+      async () => {
+        await deleteTask(id)
+        loadTasks()
+        DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
+      },
+      'Delete Task',
+      'Are you sure you want to delete this task? This action cannot be undone.'
+    )
   }
 
   const filteredTasks = tasks.filter(task => {
@@ -484,6 +491,9 @@ export default function TasksPage() {
           </AnimatePresence>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteDialog />
     </motion.div>
   )
 }

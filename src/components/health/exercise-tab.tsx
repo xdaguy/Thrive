@@ -9,12 +9,14 @@ import { db } from '@/lib/db/schema'
 import { Skeleton, SkeletonTable } from '@/components/ui/skeleton'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
+import { useDeleteConfirm } from '@/components/ui/delete-confirm'
 
 interface ExerciseTabProps {
   openForm?: boolean
 }
 
-export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
+export function ExerciseTab() {
+  const { confirm: confirmDelete, DeleteDialog } = useDeleteConfirm()
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -150,11 +152,16 @@ export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
 
   async function handleDelete(id: string | undefined) {
     if (!id) return
-    if (confirm('Delete this exercise?')) {
-      await deleteExercise(id)
-      loadExercises()
-      DataEvents.emit(DATA_EVENTS.EXERCISE_CHANGED)
-    }
+    confirmDelete(
+      id,
+      async () => {
+        await deleteExercise(id)
+        loadExercises()
+        DataEvents.emit(DATA_EVENTS.EXERCISE_CHANGED)
+      },
+      'Delete Exercise',
+      'Are you sure you want to delete this exercise entry?'
+    )
   }
 
   const totalMinutes = exercises.reduce((sum, ex) => sum + ex.duration, 0)
@@ -369,6 +376,9 @@ export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
           ))
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteDialog />
     </div>
   )
 }

@@ -9,12 +9,13 @@ import { db } from '@/lib/db/schema'
 import { Skeleton, SkeletonTable } from '@/components/ui/skeleton'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
+import { useDeleteConfirm } from '@/components/ui/delete-confirm'
 
 interface WeightTabProps {
-  openForm?: boolean
 }
 
-export function WeightTab({ openForm }: WeightTabProps = {}) {
+export function WeightTab() {
+  const { confirm: confirmDelete, DeleteDialog } = useDeleteConfirm()
   const [weights, setWeights] = useState<Weight[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -135,11 +136,16 @@ export function WeightTab({ openForm }: WeightTabProps = {}) {
 
   async function handleDelete(id: string | undefined) {
     if (!id) return
-    if (confirm('Delete this weight entry?')) {
-      await deleteWeight(id)
-      loadWeights()
-      DataEvents.emit(DATA_EVENTS.WEIGHT_CHANGED)
-    }
+    confirmDelete(
+      id,
+      async () => {
+        await deleteWeight(id)
+        loadWeights()
+        DataEvents.emit(DATA_EVENTS.WEIGHT_CHANGED)
+      },
+      'Delete Weight Entry',
+      'Are you sure you want to delete this weight entry?'
+    )
   }
 
   const latestWeight = weights[0]
@@ -315,6 +321,9 @@ export function WeightTab({ openForm }: WeightTabProps = {}) {
           ))
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteDialog />
     </div>
   )
 }
