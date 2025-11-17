@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, TrendingUp, Trash2, Edit, Calendar } from 'lucide-react'
+import { Plus, TrendingUp, Trash2, Edit, Calendar, Loader2 } from 'lucide-react'
 import { addIncome, getAllIncome, deleteIncome, updateIncome, type Income } from '@/lib/db/queries'
 import { INCOME_CATEGORIES, formatCurrency, formatDate } from '@/lib/constants'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
@@ -26,6 +26,7 @@ export function IncomeTab({ openForm }: IncomeTabProps = {}) {
   const [currency, setCurrency] = useState('USD')
   const [dateFormat, setDateFormat] = useState('MM/DD/YYYY')
   const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     amount: '',
     category: INCOME_CATEGORIES[0],
@@ -97,6 +98,8 @@ export function IncomeTab({ openForm }: IncomeTabProps = {}) {
       return
     }
     
+    setSubmitting(true)
+    
     const incomeData = {
       amount,
       category: formData.category,
@@ -106,27 +109,61 @@ export function IncomeTab({ openForm }: IncomeTabProps = {}) {
       recurring: formData.recurring
     }
     
-    if (editingId) {
-      // Update existing income
-      await updateIncome(editingId, incomeData)
-      setEditingId(null)
-    } else {
-      // Add new income
-      await addIncome(incomeData)
+    try {
+      if (editingId) {
+        // OPTIMISTIC UPDATE: Update UI immediately
+        const optimisticIncome = {
+          ...incomeData,
+          id: editingId,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+        setIncomes(prev => prev.map(i => i.id === editingId ? optimisticIncome : i))
+        setEditingId(null)
+        setShowForm(false)
+        
+        // Save to DB in background
+        await updateIncome(editingId, incomeData)
+      } else {
+        // OPTIMISTIC ADD: Show in UI immediately with temporary ID
+        const tempId = `temp-${Date.now()}`
+        const optimisticIncome = {
+          ...incomeData,
+          id: tempId,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+        setIncomes(prev => [optimisticIncome, ...prev])
+        setShowForm(false)
+        
+        // Save to DB in background and get real ID
+        const realId = await addIncome(incomeData)
+        
+        // Replace temp ID with real ID
+        setIncomes(prev => prev.map(i => 
+          i.id === tempId ? { ...i, id: realId } : i
+        ))
+      }
+      
+      // Reset form
+      setFormData({
+        amount: '',
+        category: INCOME_CATEGORIES[0],
+        source: '',
+        date: new Date().toISOString().split('T')[0],
+        description: '',
+        recurring: false
+      })
+      
+      DataEvents.emit(DATA_EVENTS.INCOME_CHANGED)
+    } catch (error) {
+      // ROLLBACK on error
+      console.error('Failed to save income:', error)
+      toast.error('Failed to save. Please try again.')
+      loadIncomes() // Reload from DB to restore correct state
+    } finally {
+      setSubmitting(false)
     }
-
-    // Reset form
-    setFormData({
-      amount: '',
-      category: INCOME_CATEGORIES[0],
-      source: '',
-      date: new Date().toISOString().split('T')[0],
-      description: '',
-      recurring: false
-    })
-    setShowForm(false)
-    loadIncomes()
-    DataEvents.emit(DATA_EVENTS.INCOME_CHANGED)
   }
 
   async function handleEdit(income: Income) {
@@ -160,9 +197,22 @@ export function IncomeTab({ openForm }: IncomeTabProps = {}) {
     confirmDelete(
       id,
       async () => {
-        await deleteIncome(id)
-        loadIncomes()
-        DataEvents.emit(DATA_EVENTS.INCOME_CHANGED)
+        // OPTIMISTIC DELETE: Remove from UI immediately
+        const deletedIncome = incomes.find(i => i.id === id)
+        setIncomes(prev => prev.filter(i => i.id !== id))
+        
+        try {
+          // Delete from DB in background
+          await deleteIncome(id)
+          DataEvents.emit(DATA_EVENTS.INCOME_CHANGED)
+        } catch (error) {
+          // ROLLBACK on error: Restore the deleted item
+          console.error('Failed to delete income:', error)
+          toast.error('Failed to delete. Please try again.')
+          if (deletedIncome) {
+            setIncomes(prev => [deletedIncome, ...prev])
+          }
+        }
       },
       'Delete Income Entry',
       'Are you sure you want to delete this income entry? This action cannot be undone.'
@@ -442,13 +492,19 @@ export function IncomeTab({ openForm }: IncomeTabProps = {}) {
           </div>
 
           <div className="flex gap-3">
-            <button type="submit" className="btn-primary">
+            <button 
+              type="submit" 
+              className="btn-primary" 
+              disabled={submitting}
+            >
+              {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {editingId ? 'Update Income' : 'Save Income'}
             </button>
             <button
               type="button"
               onClick={handleCancelEdit}
               className="btn-secondary"
+              disabled={submitting}
             >
               Cancel
             </button>

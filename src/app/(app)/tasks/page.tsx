@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Plus, CheckSquare, Square, Trash2, Calendar, Edit, Filter } from 'lucide-react'
+import { Plus, CheckCircle2, Circle, Trash2, Edit, Calendar, Tag, AlertCircle, Loader2, Filter, CheckSquare, Square } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { addTask, getAllTasks, toggleTaskCompletion, deleteTask, updateTask, type Task } from '@/lib/db/queries'
@@ -30,6 +30,7 @@ export default function TasksPage() {
     tags: ''
   })
   const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     loadTasks()
@@ -90,6 +91,8 @@ export default function TasksPage() {
       return
     }
     
+    setSubmitting(true)
+    
     const taskData = {
       title: formData.title.trim(),
       description: formData.description,
@@ -100,26 +103,38 @@ export default function TasksPage() {
       completed: false
     }
     
-    if (editingId) {
-      // Update existing task
-      await updateTask(editingId, taskData)
-      setEditingId(null)
-    } else {
-      // Add new task
-      await addTask(taskData)
-    }
+    try {
+      if (editingId) {
+        const optimistic = { ...taskData, id: editingId, createdAt: new Date(), updatedAt: new Date() }
+        setTasks(prev => prev.map(t => t.id === editingId ? optimistic : t))
+        setEditingId(null)
+        setShowForm(false)
+        await updateTask(editingId, taskData)
+      } else {
+        const tempId = `temp-${Date.now()}`
+        const optimistic = { ...taskData, id: tempId, createdAt: new Date(), updatedAt: new Date() }
+        setTasks(prev => [optimistic, ...prev])
+        setShowForm(false)
+        const realId = await addTask(taskData)
+        setTasks(prev => prev.map(t => t.id === tempId ? { ...t, id: realId } : t))
+      }
 
-    setFormData({
-      title: '',
-      description: '',
-      priority: 'medium',
-      dueDate: '',
-      category: '',
-      tags: ''
-    })
-    setShowForm(false)
-    loadTasks()
-    DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
+      setFormData({
+        title: '',
+        description: '',
+        priority: 'medium',
+        dueDate: '',
+        category: '',
+        tags: ''
+      })
+      DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
+    } catch (error) {
+      console.error('Failed to save:', error)
+      toast.error('Failed to save. Please try again.')
+      loadTasks()
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   async function handleToggle(id: string | undefined) {
@@ -160,9 +175,16 @@ export default function TasksPage() {
     confirmDelete(
       id,
       async () => {
-        await deleteTask(id)
-        loadTasks()
-        DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
+        const deleted = tasks.find(t => t.id === id)
+        setTasks(prev => prev.filter(t => t.id !== id))
+        try {
+          await deleteTask(id)
+          DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
+        } catch (error) {
+          console.error('Failed to delete:', error)
+          toast.error('Failed to delete. Please try again.')
+          if (deleted) setTasks(prev => [deleted, ...prev])
+        }
       },
       'Delete Task',
       'Are you sure you want to delete this task? This action cannot be undone.'
@@ -379,10 +401,11 @@ export default function TasksPage() {
           </div>
 
           <div className="flex gap-3">
-            <button type="submit" className="btn-primary">
+            <button type="submit" className="btn-primary" disabled={submitting}>
+              {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {editingId ? 'Update Task' : 'Save Task'}
             </button>
-            <button type="button" onClick={handleCancelEdit} className="btn-secondary">
+            <button type="button" onClick={handleCancelEdit} className="btn-secondary" disabled={submitting}>
               Cancel
             </button>
           </div>

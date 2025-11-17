@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Dumbbell, Trash2, Edit } from 'lucide-react'
+import { Plus, Activity, Trash2, Edit, Loader2, Dumbbell } from 'lucide-react'
 import { addExercise, getAllExercise, deleteExercise, updateExercise, type Exercise } from '@/lib/db/queries'
 import { EXERCISE_TYPES, formatDate } from '@/lib/constants'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
@@ -22,6 +22,7 @@ export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [dateFormat, setDateFormat] = useState('MM/DD/YYYY')
   const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     type: 'cardio' as 'cardio' | 'gym' | 'sports' | 'other',
     name: '',
@@ -91,6 +92,8 @@ export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
       return
     }
     
+    setSubmitting(true)
+    
     const exerciseData = {
       type: formData.type,
       name: formData.name,
@@ -101,25 +104,39 @@ export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
       note: formData.note
     }
     
-    if (editingId) {
-      await updateExercise(editingId, exerciseData)
-      setEditingId(null)
-    } else {
-      await addExercise(exerciseData)
-    }
+    try {
+      if (editingId) {
+        const optimistic = { ...exerciseData, id: editingId, createdAt: new Date() }
+        setExercises(prev => prev.map(e => e.id === editingId ? optimistic : e))
+        setEditingId(null)
+        setShowForm(false)
+        await updateExercise(editingId, exerciseData)
+      } else {
+        const tempId = `temp-${Date.now()}`
+        const optimistic = { ...exerciseData, id: tempId, createdAt: new Date() }
+        setExercises(prev => [optimistic, ...prev])
+        setShowForm(false)
+        const realId = await addExercise(exerciseData)
+        setExercises(prev => prev.map(e => e.id === tempId ? { ...e, id: realId } : e))
+      }
 
-    setFormData({
-      type: 'cardio',
-      name: '',
-      duration: '',
-      sets: '',
-      reps: '',
-      date: new Date().toISOString().split('T')[0],
-      note: ''
-    })
-    setShowForm(false)
-    loadExercises()
-    DataEvents.emit(DATA_EVENTS.EXERCISE_CHANGED)
+      setFormData({
+        type: 'cardio',
+        name: '',
+        duration: '',
+        sets: '',
+        reps: '',
+        date: new Date().toISOString().split('T')[0],
+        note: ''
+      })
+      DataEvents.emit(DATA_EVENTS.EXERCISE_CHANGED)
+    } catch (error) {
+      console.error('Failed to save:', error)
+      toast.error('Failed to save. Please try again.')
+      loadExercises()
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   async function handleEdit(exercise: Exercise) {
@@ -155,9 +172,16 @@ export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
     confirmDelete(
       id,
       async () => {
-        await deleteExercise(id)
-        loadExercises()
-        DataEvents.emit(DATA_EVENTS.EXERCISE_CHANGED)
+        const deleted = exercises.find(e => e.id === id)
+        setExercises(prev => prev.filter(e => e.id !== id))
+        try {
+          await deleteExercise(id)
+          DataEvents.emit(DATA_EVENTS.EXERCISE_CHANGED)
+        } catch (error) {
+          console.error('Failed to delete:', error)
+          toast.error('Failed to delete. Please try again.')
+          if (deleted) setExercises(prev => [deleted, ...prev])
+        }
       },
       'Delete Exercise',
       'Are you sure you want to delete this exercise entry?'
@@ -306,10 +330,11 @@ export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
           </div>
 
           <div className="flex gap-3">
-            <button type="submit" className="btn-primary">
+            <button type="submit" className="btn-primary" disabled={submitting}>
+              {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {editingId ? 'Update' : 'Save'}
             </button>
-            <button type="button" onClick={handleCancelEdit} className="btn-secondary">
+            <button type="button" onClick={handleCancelEdit} className="btn-secondary" disabled={submitting}>
               Cancel
             </button>
           </div>

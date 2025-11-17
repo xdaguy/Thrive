@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Plus, RotateCw, Trophy, Target, Trash2, CheckCircle, Circle, X, Edit } from 'lucide-react'
+import { Plus, Repeat, Trash2, Edit, Loader2, RotateCw, Trophy, Target, X, CheckCircle, Circle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { useDeleteConfirm } from '@/components/ui/delete-confirm'
@@ -30,6 +30,7 @@ export default function RoutinesPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     timeOfDay: 'morning' as 'morning' | 'afternoon' | 'evening' | 'night',
@@ -111,27 +112,43 @@ export default function RoutinesPage() {
       return
     }
     
+    setSubmitting(true)
+    
     const routineData = {
       name: formData.name.trim(),
       timeOfDay: formData.timeOfDay,
       items: validItems
     }
     
-    if (editingId) {
-      await updateRoutine(editingId, routineData)
-      setEditingId(null)
-    } else {
-      await addRoutine(routineData)
-    }
+    try {
+      if (editingId) {
+        const optimistic = { ...routineData, id: editingId, createdAt: new Date(), updatedAt: new Date() }
+        setRoutines(prev => prev.map(r => r.id === editingId ? optimistic : r))
+        setEditingId(null)
+        setShowForm(false)
+        await updateRoutine(editingId, routineData)
+      } else {
+        const tempId = `temp-${Date.now()}`
+        const optimistic = { ...routineData, id: tempId, createdAt: new Date(), updatedAt: new Date() }
+        setRoutines(prev => [optimistic, ...prev])
+        setShowForm(false)
+        const realId = await addRoutine(routineData)
+        setRoutines(prev => prev.map(r => r.id === tempId ? { ...r, id: realId } : r))
+      }
 
-    setFormData({
-      name: '',
-      timeOfDay: 'morning',
-      items: [{ id: generateId(), name: '', order: 0 }]
-    })
-    setShowForm(false)
-    loadRoutines()
-    DataEvents.emit(DATA_EVENTS.ROUTINE_CHANGED)
+      setFormData({
+        name: '',
+        timeOfDay: 'morning',
+        items: [{ id: generateId(), name: '', order: 0 }]
+      })
+      DataEvents.emit(DATA_EVENTS.ROUTINE_CHANGED)
+    } catch (error) {
+      console.error('Failed to save:', error)
+      toast.error('Failed to save. Please try again.')
+      loadRoutines()
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   async function handleEdit(routine: Routine) {
@@ -163,9 +180,16 @@ export default function RoutinesPage() {
     confirmDelete(
       id,
       async () => {
-        await deleteRoutine(id)
-        loadRoutines()
-        DataEvents.emit(DATA_EVENTS.ROUTINE_CHANGED)
+        const deleted = routines.find(r => r.id === id)
+        setRoutines(prev => prev.filter(r => r.id !== id))
+        try {
+          await deleteRoutine(id)
+          DataEvents.emit(DATA_EVENTS.ROUTINE_CHANGED)
+        } catch (error) {
+          console.error('Failed to delete:', error)
+          toast.error('Failed to delete. Please try again.')
+          if (deleted) setRoutines(prev => [deleted, ...prev])
+        }
       },
       'Delete Routine',
       'Are you sure you want to delete this routine? All completion history will be lost.'
@@ -388,10 +412,11 @@ export default function RoutinesPage() {
           </div>
 
           <div className="flex gap-3">
-            <button type="submit" className="btn-primary">
+            <button type="submit" className="btn-primary" disabled={submitting}>
+              {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {editingId ? 'Update Routine' : 'Create Routine'}
             </button>
-            <button type="button" onClick={handleCancelEdit} className="btn-secondary">
+            <button type="button" onClick={handleCancelEdit} className="btn-secondary" disabled={submitting}>
               Cancel
             </button>
           </div>

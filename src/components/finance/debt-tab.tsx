@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, CreditCard, Trash2, AlertCircle, CheckCircle, Edit } from 'lucide-react'
+import { Plus, DollarSign, Trash2, Edit, Calendar, TrendingUp, Loader2, CreditCard, CheckCircle, AlertCircle } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/constants'
 import { db, generateId, type Debt } from '@/lib/db/schema'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
@@ -22,6 +22,7 @@ export function DebtTab({ openForm }: DebtTabProps = {}) {
   const [currency, setCurrency] = useState('USD')
   const [dateFormat, setDateFormat] = useState('MM/DD/YYYY')
   const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     type: 'i_owe' as 'owed_to_me' | 'i_owe',
     person: '',
@@ -105,6 +106,8 @@ export function DebtTab({ openForm }: DebtTabProps = {}) {
       return
     }
     
+    setSubmitting(true)
+    
     const debtData = {
       type: formData.type,
       person: formData.person,
@@ -117,32 +120,57 @@ export function DebtTab({ openForm }: DebtTabProps = {}) {
       updatedAt: new Date()
     }
     
-    if (editingId) {
-      // Update existing debt
-      await db.debts.update(editingId, debtData)
-      setEditingId(null)
-    } else {
-      // Add new debt
-      const id = generateId()
-      await db.debts.add({
-        ...debtData,
-        id,
-        createdAt: new Date()
-      })
-    }
+    try {
+      if (editingId) {
+        // OPTIMISTIC UPDATE
+        const optimisticDebt = {
+          ...debtData,
+          id: editingId,
+          createdAt: new Date()
+        }
+        setDebts(prev => prev.map(d => d.id === editingId ? optimisticDebt : d))
+        setEditingId(null)
+        setShowForm(false)
+        await db.debts.update(editingId, debtData)
+      } else {
+        // OPTIMISTIC ADD
+        const tempId = `temp-${Date.now()}`
+        const optimisticDebt = {
+          ...debtData,
+          id: tempId,
+          createdAt: new Date()
+        }
+        setDebts(prev => [optimisticDebt, ...prev])
+        setShowForm(false)
+        const realId = generateId()
+        await db.debts.add({
+          ...debtData,
+          id: realId,
+          createdAt: new Date()
+        })
+        setDebts(prev => prev.map(d => 
+          d.id === tempId ? { ...d, id: realId } : d
+        ))
+      }
 
-    setFormData({
-      type: 'i_owe',
-      person: '',
-      amount: '',
-      paidAmount: '',
-      dueDate: '',
-      interestRate: '',
-      description: ''
-    })
-    setShowForm(false)
-    loadDebts()
-    DataEvents.emit(DATA_EVENTS.DEBT_CHANGED)
+      setFormData({
+        type: 'i_owe',
+        person: '',
+        amount: '',
+        paidAmount: '',
+        dueDate: '',
+        interestRate: '',
+        description: ''
+      })
+      
+      DataEvents.emit(DATA_EVENTS.DEBT_CHANGED)
+    } catch (error) {
+      console.error('Failed to save debt:', error)
+      toast.error('Failed to save. Please try again.')
+      loadDebts()
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   async function handleEdit(debt: Debt) {
@@ -178,9 +206,20 @@ export function DebtTab({ openForm }: DebtTabProps = {}) {
     confirmDelete(
       id,
       async () => {
-        await db.debts.delete(id)
-        loadDebts()
-        DataEvents.emit(DATA_EVENTS.DEBT_CHANGED)
+        // OPTIMISTIC DELETE
+        const deletedDebt = debts.find(d => d.id === id)
+        setDebts(prev => prev.filter(d => d.id !== id))
+        
+        try {
+          await db.debts.delete(id)
+          DataEvents.emit(DATA_EVENTS.DEBT_CHANGED)
+        } catch (error) {
+          console.error('Failed to delete debt:', error)
+          toast.error('Failed to delete. Please try again.')
+          if (deletedDebt) {
+            setDebts(prev => [deletedDebt, ...prev])
+          }
+        }
       },
       'Delete Debt Entry',
       'Are you sure you want to delete this debt entry? This action cannot be undone.'
@@ -358,10 +397,20 @@ export function DebtTab({ openForm }: DebtTabProps = {}) {
           </div>
 
           <div className="flex gap-3">
-            <button type="submit" className="btn-primary">
+            <button 
+              type="submit" 
+              className="btn-primary"
+              disabled={submitting}
+            >
+              {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {editingId ? 'Update Debt' : 'Save Debt'}
             </button>
-            <button type="button" onClick={handleCancelEdit} className="btn-secondary">
+            <button 
+              type="button" 
+              onClick={handleCancelEdit} 
+              className="btn-secondary"
+              disabled={submitting}
+            >
               Cancel
             </button>
           </div>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Scale, Trash2, TrendingDown, TrendingUp, Edit } from 'lucide-react'
+import { Plus, Scale, Trash2, Edit, TrendingUp, TrendingDown, Loader2 } from 'lucide-react'
 import { addWeight, getAllWeight, deleteWeight, updateWeight, type Weight } from '@/lib/db/queries'
 import { formatDate } from '@/lib/constants'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
@@ -23,6 +23,7 @@ export function WeightTab({ openForm }: WeightTabProps = {}) {
   const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg')
   const [dateFormat, setDateFormat] = useState('MM/DD/YYYY')
   const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     weight: '',
     date: new Date().toISOString().split('T')[0],
@@ -91,6 +92,8 @@ export function WeightTab({ openForm }: WeightTabProps = {}) {
       return
     }
     
+    setSubmitting(true)
+    
     const weightData = {
       weight,
       unit: weightUnit,
@@ -98,21 +101,35 @@ export function WeightTab({ openForm }: WeightTabProps = {}) {
       note: formData.note
     }
     
-    if (editingId) {
-      await updateWeight(editingId, weightData)
-      setEditingId(null)
-    } else {
-      await addWeight(weightData)
-    }
+    try {
+      if (editingId) {
+        const optimistic = { ...weightData, id: editingId, createdAt: new Date() }
+        setWeights(prev => prev.map(w => w.id === editingId ? optimistic : w))
+        setEditingId(null)
+        setShowForm(false)
+        await updateWeight(editingId, weightData)
+      } else {
+        const tempId = `temp-${Date.now()}`
+        const optimistic = { ...weightData, id: tempId, createdAt: new Date() }
+        setWeights(prev => [optimistic, ...prev])
+        setShowForm(false)
+        const realId = await addWeight(weightData)
+        setWeights(prev => prev.map(w => w.id === tempId ? { ...w, id: realId } : w))
+      }
 
-    setFormData({
-      weight: '',
-      date: new Date().toISOString().split('T')[0],
-      note: ''
-    })
-    setShowForm(false)
-    loadWeights()
-    DataEvents.emit(DATA_EVENTS.WEIGHT_CHANGED)
+      setFormData({
+        weight: '',
+        date: new Date().toISOString().split('T')[0],
+        note: ''
+      })
+      DataEvents.emit(DATA_EVENTS.WEIGHT_CHANGED)
+    } catch (error) {
+      console.error('Failed to save:', error)
+      toast.error('Failed to save. Please try again.')
+      loadWeights()
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   async function handleEdit(weight: Weight) {
@@ -140,9 +157,16 @@ export function WeightTab({ openForm }: WeightTabProps = {}) {
     confirmDelete(
       id,
       async () => {
-        await deleteWeight(id)
-        loadWeights()
-        DataEvents.emit(DATA_EVENTS.WEIGHT_CHANGED)
+        const deleted = weights.find(w => w.id === id)
+        setWeights(prev => prev.filter(w => w.id !== id))
+        try {
+          await deleteWeight(id)
+          DataEvents.emit(DATA_EVENTS.WEIGHT_CHANGED)
+        } catch (error) {
+          console.error('Failed to delete:', error)
+          toast.error('Failed to delete. Please try again.')
+          if (deleted) setWeights(prev => [deleted, ...prev])
+        }
       },
       'Delete Weight Entry',
       'Are you sure you want to delete this weight entry?'
@@ -256,10 +280,11 @@ export function WeightTab({ openForm }: WeightTabProps = {}) {
           </div>
 
           <div className="flex gap-3">
-            <button type="submit" className="btn-primary">
+            <button type="submit" className="btn-primary" disabled={submitting}>
+              {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {editingId ? 'Update' : 'Save'}
             </button>
-            <button type="button" onClick={handleCancelEdit} className="btn-secondary">
+            <button type="button" onClick={handleCancelEdit} className="btn-secondary" disabled={submitting}>
               Cancel
             </button>
           </div>

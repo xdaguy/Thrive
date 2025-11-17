@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Utensils, Trash2, CheckCircle, XCircle, Edit } from 'lucide-react'
+import { Plus, Coffee, Trash2, Edit, Loader2, Utensils, CheckCircle, XCircle } from 'lucide-react'
 import { addMeal, getAllMeals, deleteMeal, updateMeal, type Meal } from '@/lib/db/queries'
 import { MEAL_TYPES, formatDate } from '@/lib/constants'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
@@ -22,6 +22,7 @@ export function MealsTab({ openForm }: MealsTabProps = {}) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [dateFormat, setDateFormat] = useState('MM/DD/YYYY')
   const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     mealType: 'breakfast' as 'breakfast' | 'lunch' | 'dinner' | 'snack',
     description: '',
@@ -77,6 +78,8 @@ export function MealsTab({ openForm }: MealsTabProps = {}) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     
+    setSubmitting(true)
+    
     const mealData = {
       mealType: formData.mealType,
       description: formData.description,
@@ -84,22 +87,36 @@ export function MealsTab({ openForm }: MealsTabProps = {}) {
       date: new Date(formData.date)
     }
     
-    if (editingId) {
-      await updateMeal(editingId, mealData)
-      setEditingId(null)
-    } else {
-      await addMeal(mealData)
-    }
+    try {
+      if (editingId) {
+        const optimistic = { ...mealData, id: editingId, createdAt: new Date() }
+        setMeals(prev => prev.map(m => m.id === editingId ? optimistic : m))
+        setEditingId(null)
+        setShowForm(false)
+        await updateMeal(editingId, mealData)
+      } else {
+        const tempId = `temp-${Date.now()}`
+        const optimistic = { ...mealData, id: tempId, createdAt: new Date() }
+        setMeals(prev => [optimistic, ...prev])
+        setShowForm(false)
+        const realId = await addMeal(mealData)
+        setMeals(prev => prev.map(m => m.id === tempId ? { ...m, id: realId } : m))
+      }
 
-    setFormData({
-      mealType: 'breakfast',
-      description: '',
-      asExpected: true,
-      date: new Date().toISOString().split('T')[0]
-    })
-    setShowForm(false)
-    loadMeals()
-    DataEvents.emit(DATA_EVENTS.MEAL_CHANGED)
+      setFormData({
+        mealType: 'breakfast',
+        description: '',
+        asExpected: true,
+        date: new Date().toISOString().split('T')[0]
+      })
+      DataEvents.emit(DATA_EVENTS.MEAL_CHANGED)
+    } catch (error) {
+      console.error('Failed to save:', error)
+      toast.error('Failed to save. Please try again.')
+      loadMeals()
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   async function handleEdit(meal: Meal) {
@@ -129,9 +146,16 @@ export function MealsTab({ openForm }: MealsTabProps = {}) {
     confirmDelete(
       id,
       async () => {
-        await deleteMeal(id)
-        loadMeals()
-        DataEvents.emit(DATA_EVENTS.MEAL_CHANGED)
+        const deleted = meals.find(m => m.id === id)
+        setMeals(prev => prev.filter(m => m.id !== id))
+        try {
+          await deleteMeal(id)
+          DataEvents.emit(DATA_EVENTS.MEAL_CHANGED)
+        } catch (error) {
+          console.error('Failed to delete:', error)
+          toast.error('Failed to delete. Please try again.')
+          if (deleted) setMeals(prev => [deleted, ...prev])
+        }
       },
       'Delete Meal Entry',
       'Are you sure you want to delete this meal entry?'
@@ -238,10 +262,11 @@ export function MealsTab({ openForm }: MealsTabProps = {}) {
           </div>
 
           <div className="flex gap-3">
-            <button type="submit" className="btn-primary">
+            <button type="submit" className="btn-primary" disabled={submitting}>
+              {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {editingId ? 'Update' : 'Save'}
             </button>
-            <button type="button" onClick={handleCancelEdit} className="btn-secondary">
+            <button type="button" onClick={handleCancelEdit} className="btn-secondary" disabled={submitting}>
               Cancel
             </button>
           </div>

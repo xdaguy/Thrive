@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, TrendingDown, Trash2, Edit, Calendar, Receipt } from 'lucide-react'
+import { Plus, TrendingDown, Trash2, Edit, Calendar, Receipt, Loader2 } from 'lucide-react'
 import { addExpense, getAllExpenses, deleteExpense, updateExpense, type Expense } from '@/lib/db/queries'
 import { EXPENSE_CATEGORIES, PAYMENT_METHODS, formatCurrency, formatDate } from '@/lib/constants'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
@@ -26,6 +26,7 @@ export function ExpenseTab({ openForm }: ExpenseTabProps = {}) {
   const [currency, setCurrency] = useState('USD')
   const [dateFormat, setDateFormat] = useState('MM/DD/YYYY')
   const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     amount: '',
     category: EXPENSE_CATEGORIES[0],
@@ -97,6 +98,8 @@ export function ExpenseTab({ openForm }: ExpenseTabProps = {}) {
       return
     }
     
+    setSubmitting(true)
+    
     const expenseData = {
       amount,
       category: formData.category,
@@ -106,27 +109,53 @@ export function ExpenseTab({ openForm }: ExpenseTabProps = {}) {
       recurring: formData.recurring
     }
     
-    if (editingId) {
-      // Update existing expense
-      await updateExpense(editingId, expenseData)
-      setEditingId(null)
-    } else {
-      // Add new expense
-      await addExpense(expenseData)
+    try {
+      if (editingId) {
+        // OPTIMISTIC UPDATE
+        const optimisticExpense = {
+          ...expenseData,
+          id: editingId,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+        setExpenses(prev => prev.map(e => e.id === editingId ? optimisticExpense : e))
+        setEditingId(null)
+        setShowForm(false)
+        await updateExpense(editingId, expenseData)
+      } else {
+        // OPTIMISTIC ADD
+        const tempId = `temp-${Date.now()}`
+        const optimisticExpense = {
+          ...expenseData,
+          id: tempId,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+        setExpenses(prev => [optimisticExpense, ...prev])
+        setShowForm(false)
+        const realId = await addExpense(expenseData)
+        setExpenses(prev => prev.map(e => 
+          e.id === tempId ? { ...e, id: realId } : e
+        ))
+      }
+      
+      setFormData({
+        amount: '',
+        category: EXPENSE_CATEGORIES[0],
+        paymentMethod: PAYMENT_METHODS[0],
+        date: new Date().toISOString().split('T')[0],
+        description: '',
+        recurring: false
+      })
+      
+      DataEvents.emit(DATA_EVENTS.EXPENSE_CHANGED)
+    } catch (error) {
+      console.error('Failed to save expense:', error)
+      toast.error('Failed to save. Please try again.')
+      loadExpenses()
+    } finally {
+      setSubmitting(false)
     }
-
-    // Reset form
-    setFormData({
-      amount: '',
-      category: EXPENSE_CATEGORIES[0],
-      paymentMethod: PAYMENT_METHODS[0],
-      date: new Date().toISOString().split('T')[0],
-      description: '',
-      recurring: false
-    })
-    setShowForm(false)
-    loadExpenses()
-    DataEvents.emit(DATA_EVENTS.EXPENSE_CHANGED)
   }
 
   async function handleEdit(expense: Expense) {
@@ -160,9 +189,20 @@ export function ExpenseTab({ openForm }: ExpenseTabProps = {}) {
     confirmDelete(
       id,
       async () => {
-        await deleteExpense(id)
-        loadExpenses()
-        DataEvents.emit(DATA_EVENTS.EXPENSE_CHANGED)
+        // OPTIMISTIC DELETE
+        const deletedExpense = expenses.find(e => e.id === id)
+        setExpenses(prev => prev.filter(e => e.id !== id))
+        
+        try {
+          await deleteExpense(id)
+          DataEvents.emit(DATA_EVENTS.EXPENSE_CHANGED)
+        } catch (error) {
+          console.error('Failed to delete expense:', error)
+          toast.error('Failed to delete. Please try again.')
+          if (deletedExpense) {
+            setExpenses(prev => [deletedExpense, ...prev])
+          }
+        }
       },
       'Delete Expense',
       'Are you sure you want to delete this expense? This action cannot be undone.'
@@ -444,13 +484,19 @@ export function ExpenseTab({ openForm }: ExpenseTabProps = {}) {
           </div>
 
           <div className="flex gap-3">
-            <button type="submit" className="btn-primary">
+            <button 
+              type="submit" 
+              className="btn-primary"
+              disabled={submitting}
+            >
+              {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {editingId ? 'Update Expense' : 'Save Expense'}
             </button>
             <button
               type="button"
               onClick={handleCancelEdit}
               className="btn-secondary"
+              disabled={submitting}
             >
               Cancel
             </button>
