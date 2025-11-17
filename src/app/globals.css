@@ -49,6 +49,27 @@
     @apply bg-white dark:bg-[#0A0A0A] text-[#1A1A1A] dark:text-[#F9FAFB];
   }
   
+  /* Smooth theme transitions */
+  html {
+    transition: background-color 500ms ease-in-out;
+  }
+
+  body {
+    transition: background-color 500ms ease-in-out, color 500ms ease-in-out;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition: background-color 400ms ease, 
+                border-color 400ms ease, 
+                color 400ms ease, 
+                fill 400ms ease, 
+                stroke 400ms ease, 
+                opacity 400ms ease, 
+                box-shadow 400ms ease;
+  }
+
   /* Smooth scrolling */
   html {
     scroll-behavior: smooth;
