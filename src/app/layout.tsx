@@ -76,18 +76,13 @@ export default function RootLayout({
               <ServiceWorkerProvider />
               <OfflineIndicator />
               <Toaster 
-                position="top-right"
+                position="bottom-center"
                 expand={false}
-                richColors
                 closeButton
                 duration={4000}
                 gap={12}
-                toastOptions={{
-                  className: 'toast-custom',
-                  style: {
-                    padding: '14px 18px',
-                  },
-                }}
+                visibleToasts={3}
+                offset={20}
               />
               {children}
             </DBProvider>
