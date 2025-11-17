@@ -107,9 +107,11 @@ export default function SettingsPage() {
                 validateSchema: true
               })
               
-              // Mark onboarding complete
+              // Mark onboarding complete (or create if import didn't have settings)
               const settings = await db.settings.get('user_settings')
               if (settings) {
+                // Cloud had settings, update them
+                console.log('✅ Cloud settings exist, marking onboarding complete')
                 await db.settings.put({
                   ...settings,
                   onboardingComplete: true,
@@ -117,8 +119,24 @@ export default function SettingsPage() {
                   syncProvider: 'google'
                   // Keep cloud updatedAt!
                 })
+              } else {
+                // Cloud backup had no settings, create from form data
+                console.log('⚠️ Cloud backup had no settings, creating from form')
+                await db.settings.put({
+                  id: 'user_settings',
+                  name: formData.name || 'User',
+                  currency: formData.currency || 'USD',
+                  weightUnit: formData.weightUnit || 'kg',
+                  dateFormat: formData.dateFormat || 'MM/DD/YYYY',
+                  theme: 'system',
+                  onboardingComplete: true,
+                  syncEnabled: true,
+                  syncProvider: 'google',
+                  encryptionEnabled: false,
+                  updatedAt: new Date()
+                })
               }
-              console.log('✅ Cloud settings imported and onboarding marked complete')
+              console.log('✅ Settings ready with onboarding complete')
             } else {
               // No cloud backup, create new settings from form
               console.log('📝 No cloud backup, creating new settings')
@@ -168,8 +186,13 @@ export default function SettingsPage() {
           
           DataEvents.emit(DATA_EVENTS.SETTINGS_CHANGED)
           
+          // Small delay to ensure database writes complete
+          await new Promise(resolve => setTimeout(resolve, 100))
+          
           alert('✅ Successfully connected to Google Drive!')
-          window.history.replaceState({}, '', '/settings')
+          
+          // Redirect to dashboard (onboarding is complete)
+          window.location.href = '/dashboard'
         } else {
           // REGULAR CONNECT FLOW: User connecting from settings
           console.log('⚙️ Regular connect flow')
