@@ -60,9 +60,9 @@ export function BottomSheet({ isOpen, onClose, title, children }: BottomSheetPro
             className="fixed bottom-0 left-0 right-0 z-50 md:hidden"
           >
             <div className="bg-white dark:bg-[#1A1A1A] rounded-t-3xl shadow-2xl max-h-[90vh] overflow-hidden flex flex-col">
-              {/* Handle Bar */}
-              <div className="flex justify-center pt-3 pb-2">
-                <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full" />
+              {/* Handle Bar - More Visible */}
+              <div className="flex justify-center pt-4 pb-3 bg-gray-50 dark:bg-[#0A0A0A] rounded-t-3xl">
+                <div className="w-16 h-1.5 bg-gray-400 dark:bg-gray-600 rounded-full" />
               </div>
 
               {/* Header */}

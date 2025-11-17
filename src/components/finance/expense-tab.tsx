@@ -10,6 +10,8 @@ import { Skeleton, SkeletonTable } from '@/components/ui/skeleton'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { useDeleteConfirm } from '@/components/ui/delete-confirm'
+import { BottomSheet } from '@/components/ui/bottom-sheet'
+import { haptics } from '@/lib/haptics'
 
 interface ExpenseTabProps {
   openForm?: boolean
@@ -86,19 +88,23 @@ export function ExpenseTab({ openForm }: ExpenseTabProps = {}) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    haptics.light()
     
     // Validation
     const amount = parseFloat(formData.amount)
     if (amount <= 0) {
       toast.error('Amount must be greater than 0')
+      haptics.error()
       return
     }
     if (amount > 1000000000) {
       toast.error('Amount seems unrealistically high. Please check.')
+      haptics.error()
       return
     }
     
     setSubmitting(true)
+    haptics.medium()
     
     const expenseData = {
       amount,
@@ -151,9 +157,11 @@ export function ExpenseTab({ openForm }: ExpenseTabProps = {}) {
       })
       
       DataEvents.emit(DATA_EVENTS.EXPENSE_CHANGED)
+      haptics.success()
     } catch (error) {
       console.error('Failed to save expense:', error)
       toast.error('Failed to save. Please try again.')
+      haptics.error()
       loadExpenses()
     } finally {
       setSubmitting(false)
@@ -161,6 +169,7 @@ export function ExpenseTab({ openForm }: ExpenseTabProps = {}) {
   }
 
   async function handleEdit(expense: Expense) {
+    haptics.light()
     setEditingId(expense.id!)
     setFormData({
       amount: expense.amount.toString(),
@@ -174,6 +183,7 @@ export function ExpenseTab({ openForm }: ExpenseTabProps = {}) {
   }
   
   function handleCancelEdit() {
+    haptics.light()
     setEditingId(null)
     setFormData({
       amount: '',
@@ -186,29 +196,33 @@ export function ExpenseTab({ openForm }: ExpenseTabProps = {}) {
     setShowForm(false)
   }
 
-  async function handleDelete(id: string | undefined) {
-    if (!id) return
-    confirmDelete(
-      id,
-      async () => {
-        // OPTIMISTIC DELETE
-        const deletedExpense = expenses.find(e => e.id === id)
-        setExpenses(prev => prev.filter(e => e.id !== id))
-        
-        try {
-          await deleteExpense(id)
-          DataEvents.emit(DATA_EVENTS.EXPENSE_CHANGED)
-        } catch (error) {
-          console.error('Failed to delete expense:', error)
-          toast.error('Failed to delete. Please try again.')
-          if (deletedExpense) {
-            setExpenses(prev => [deletedExpense, ...prev])
-          }
+  async function handleDelete(id: string) {
+    const confirmed = await confirmDelete()
+    if (!confirmed) return
+
+    haptics.medium()
+    try {
+      // OPTIMISTIC DELETE
+      const deletedExpense = expenses.find(e => e.id === id)
+      setExpenses(prev => prev.filter(e => e.id !== id))
+      
+      try {
+        await deleteExpense(id)
+        DataEvents.emit(DATA_EVENTS.EXPENSE_CHANGED)
+        haptics.success()
+      } catch (error) {
+        console.error('Failed to delete expense:', error)
+        toast.error('Failed to delete. Please try again.')
+        haptics.error()
+        if (deletedExpense) {
+          setExpenses(prev => [deletedExpense, ...prev])
         }
-      },
-      'Delete Expense',
-      'Are you sure you want to delete this expense? This action cannot be undone.'
-    )
+      }
+    } catch (error) {
+      console.error('Failed to delete expense:', error)
+      toast.error('Failed to delete. Please try again.')
+      haptics.error()
+    }
   }
 
   // Filter expenses based on date range
@@ -382,23 +396,13 @@ export function ExpenseTab({ openForm }: ExpenseTabProps = {}) {
         </div>
       </div>
 
-      {/* Add Form */}
-      <AnimatePresence mode="wait">
-        {showForm && (
-          <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            transition={{ 
-              duration: 0.25,
-              ease: [0.25, 0.1, 0.25, 1]
-            }}
-          >
-            <form onSubmit={handleSubmit} className="card space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {editingId ? 'Edit Expense' : 'Add Expense'}
-          </h3>
-          
+      {/* Add Form - BottomSheet */}
+      <BottomSheet
+        isOpen={showForm}
+        onClose={handleCancelEdit}
+        title={editingId ? 'Edit Expense' : 'Add Expense'}
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -412,6 +416,7 @@ export function ExpenseTab({ openForm }: ExpenseTabProps = {}) {
                 onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                 className="input"
                 placeholder="0.00"
+                autoFocus
               />
             </div>
 
@@ -473,14 +478,37 @@ export function ExpenseTab({ openForm }: ExpenseTabProps = {}) {
             </div>
 
             <div className="md:col-span-2">
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={formData.recurring}
-                  onChange={(e) => setFormData({ ...formData, recurring: e.target.checked })}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-700 dark:text-gray-300">Recurring expense</span>
+              <label className="flex items-center justify-between p-4 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-xl cursor-pointer hover:shadow-md transition-all border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-gradient-to-br from-red-100 to-red-200 dark:from-red-900/40 dark:to-red-800/30 rounded-xl shadow-sm">
+                    <svg className="w-5 h-5 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-white">Recurring Expense</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">Repeats automatically</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    haptics.light()
+                    setFormData({ ...formData, recurring: !formData.recurring })
+                  }}
+                  className={`relative inline-flex h-8 w-14 flex-shrink-0 items-center rounded-full transition-all duration-200 shadow-inner ${
+                    formData.recurring 
+                      ? 'bg-red-600 shadow-red-600/30' 
+                      : 'bg-gray-300 dark:bg-gray-600'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-lg transition-all duration-200 ${
+                      formData.recurring ? 'translate-x-7' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
               </label>
             </div>
           </div>
@@ -503,10 +531,8 @@ export function ExpenseTab({ openForm }: ExpenseTabProps = {}) {
               Cancel
             </button>
           </div>
-            </form>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        </form>
+      </BottomSheet>
 
       {/* Expense List */}
       <div className="space-y-3">

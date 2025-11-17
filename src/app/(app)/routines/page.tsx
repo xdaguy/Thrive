@@ -6,6 +6,8 @@ import { Plus, Repeat, Trash2, Edit, Loader2, RotateCw, Trophy, Target, X, Check
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { useDeleteConfirm } from '@/components/ui/delete-confirm'
+import { BottomSheet } from '@/components/ui/bottom-sheet'
+import { haptics } from '@/lib/haptics'
 import { 
   addRoutine, 
   getAllRoutines, 
@@ -101,10 +103,12 @@ export default function RoutinesPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    haptics.light()
     
     // Validation
     if (!formData.name.trim()) {
       toast.error('Routine name is required')
+      haptics.error()
       return
     }
     const validItems = formData.items.filter(item => item.name.trim() !== '')
@@ -114,6 +118,7 @@ export default function RoutinesPage() {
     }
     
     setSubmitting(true)
+    haptics.medium()
     
     const routineData = {
       name: formData.name.trim(),
@@ -147,9 +152,11 @@ export default function RoutinesPage() {
         items: [{ id: generateId(), name: '', order: 0 }]
       })
       DataEvents.emit(DATA_EVENTS.ROUTINE_CHANGED)
+      haptics.success()
     } catch (error) {
       console.error('Failed to save:', error)
       toast.error('Failed to save. Please try again.')
+      haptics.error()
       loadRoutines()
     } finally {
       setSubmitting(false)
@@ -157,6 +164,7 @@ export default function RoutinesPage() {
   }
 
   async function handleEdit(routine: Routine) {
+    haptics.light()
     setEditingId(routine.id!)
     setFormData({
       name: routine.name,
@@ -171,6 +179,7 @@ export default function RoutinesPage() {
   }
   
   function handleCancelEdit() {
+    haptics.light()
     setEditingId(null)
     setFormData({
       name: '',
@@ -180,25 +189,23 @@ export default function RoutinesPage() {
     setShowForm(false)
   }
 
-  async function handleDelete(id: string | undefined) {
-    if (!id) return
-    confirmDelete(
-      id,
-      async () => {
-        const deleted = routines.find(r => r.id === id)
-        setRoutines(prev => prev.filter(r => r.id !== id))
-        try {
-          await deleteRoutine(id)
-          DataEvents.emit(DATA_EVENTS.ROUTINE_CHANGED)
-        } catch (error) {
-          console.error('Failed to delete:', error)
-          toast.error('Failed to delete. Please try again.')
-          if (deleted) setRoutines(prev => [deleted, ...prev])
-        }
-      },
-      'Delete Routine',
-      'Are you sure you want to delete this routine? All completion history will be lost.'
-    )
+  async function handleDelete(id: string) {
+    const confirmed = await confirmDelete()
+    if (!confirmed) return
+
+    haptics.medium()
+    try {
+      await deleteRoutine(id)
+      setRoutines(prev => prev.filter(r => r.id !== id))
+      loadRoutines()
+      DataEvents.emit(DATA_EVENTS.ROUTINE_CHANGED)
+      haptics.success()
+    } catch (error) {
+      console.error('Failed to delete routine:', error)
+      toast.error('Failed to delete')
+      haptics.error()
+      loadRoutines()
+    }
   }
 
   async function toggleRoutineItem(routine: Routine, itemId: string) {
@@ -330,23 +337,13 @@ export default function RoutinesPage() {
         </motion.div>
       </motion.div>
 
-      {/* Create Form */}
-      <AnimatePresence mode="wait">
-        {showForm && (
-          <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            transition={{ 
-              duration: 0.25,
-              ease: [0.25, 0.1, 0.25, 1]
-            }}
-          >
-            <form onSubmit={handleSubmit} className="card space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {editingId ? 'Edit Routine' : 'Create Routine'}
-          </h3>
-          
+      {/* Create Form - BottomSheet */}
+      <BottomSheet
+        isOpen={showForm}
+        onClose={handleCancelEdit}
+        title={editingId ? 'Edit Routine' : 'Create Routine'}
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -359,6 +356,7 @@ export default function RoutinesPage() {
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 className="input"
                 placeholder="e.g., Morning Routine"
+                autoFocus
               />
             </div>
 
@@ -426,10 +424,8 @@ export default function RoutinesPage() {
               Cancel
             </button>
           </div>
-            </form>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        </form>
+      </BottomSheet>
 
       {/* Routines List */}
       {loading ? (

@@ -10,6 +10,8 @@ import { Skeleton, SkeletonTable } from '@/components/ui/skeleton'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { useDeleteConfirm } from '@/components/ui/delete-confirm'
+import { BottomSheet } from '@/components/ui/bottom-sheet'
+import { haptics } from '@/lib/haptics'
 
 interface ExerciseTabProps {
   openForm?: boolean
@@ -80,6 +82,7 @@ export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    haptics.light()
     
     // Validation
     const duration = parseInt(formData.duration)
@@ -93,6 +96,7 @@ export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
     }
     
     setSubmitting(true)
+    haptics.medium()
     
     const exerciseData = {
       type: formData.type,
@@ -134,9 +138,11 @@ export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
         note: ''
       })
       DataEvents.emit(DATA_EVENTS.EXERCISE_CHANGED)
+      haptics.success()
     } catch (error) {
       console.error('Failed to save:', error)
       toast.error('Failed to save. Please try again.')
+      haptics.error()
       loadExercises()
     } finally {
       setSubmitting(false)
@@ -144,6 +150,7 @@ export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
   }
 
   async function handleEdit(exercise: Exercise) {
+    haptics.light()
     setEditingId(exercise.id!)
     setFormData({
       type: exercise.type as any,
@@ -158,6 +165,7 @@ export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
   }
   
   function handleCancelEdit() {
+    haptics.light()
     setEditingId(null)
     setFormData({
       type: 'cardio',
@@ -171,25 +179,22 @@ export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
     setShowForm(false)
   }
 
-  async function handleDelete(id: string | undefined) {
-    if (!id) return
-    confirmDelete(
-      id,
-      async () => {
-        const deleted = exercises.find(e => e.id === id)
-        setExercises(prev => prev.filter(e => e.id !== id))
-        try {
-          await deleteExercise(id)
-          DataEvents.emit(DATA_EVENTS.EXERCISE_CHANGED)
-        } catch (error) {
-          console.error('Failed to delete:', error)
-          toast.error('Failed to delete. Please try again.')
-          if (deleted) setExercises(prev => [deleted, ...prev])
-        }
-      },
-      'Delete Exercise',
-      'Are you sure you want to delete this exercise entry?'
-    )
+  async function handleDelete(id: string) {
+    const confirmed = await confirmDelete()
+    if (!confirmed) return
+
+    haptics.medium()
+    try {
+      await deleteExercise(id)
+      setExercises(prev => prev.filter(e => e.id !== id))
+      DataEvents.emit(DATA_EVENTS.EXERCISE_CHANGED)
+      haptics.success()
+    } catch (error) {
+      console.error('Failed to delete exercise:', error)
+      toast.error('Failed to delete')
+      haptics.error()
+      loadExercises()
+    }
   }
 
   const totalMinutes = exercises.reduce((sum, ex) => sum + ex.duration, 0)
@@ -215,22 +220,12 @@ export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
         </button>
       </div>
 
-      <AnimatePresence mode="wait">
-        {showForm && (
-          <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            transition={{ 
-              duration: 0.25,
-              ease: [0.25, 0.1, 0.25, 1]
-            }}
-          >
-            <form onSubmit={handleSubmit} className="card space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {editingId ? 'Edit Exercise' : 'Log Exercise'}
-          </h3>
-          
+      <BottomSheet
+        isOpen={showForm}
+        onClose={handleCancelEdit}
+        title={editingId ? 'Edit Exercise' : 'Log Exercise'}
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -259,6 +254,7 @@ export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 className="input"
                 placeholder="e.g., Running, Bench Press"
+                autoFocus
               />
             </div>
 
@@ -342,10 +338,8 @@ export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
               Cancel
             </button>
           </div>
-            </form>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        </form>
+      </BottomSheet>
 
       <div className="space-y-3">
         {loading ? (

@@ -7,6 +7,8 @@ import { MEAL_TYPES, formatDate } from '@/lib/constants'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
 import { toast } from 'sonner'
 import { useDeleteConfirm } from '@/components/ui/delete-confirm'
+import { BottomSheet } from '@/components/ui/bottom-sheet'
+import { haptics } from '@/lib/haptics'
 import { db } from '@/lib/db/schema'
 import { Skeleton, SkeletonTable } from '@/components/ui/skeleton'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -77,8 +79,10 @@ export function MealsTab({ openForm }: MealsTabProps = {}) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    haptics.light()
     
     setSubmitting(true)
+    haptics.medium()
     
     const mealData = {
       mealType: formData.mealType,
@@ -114,9 +118,11 @@ export function MealsTab({ openForm }: MealsTabProps = {}) {
         date: new Date().toISOString().split('T')[0]
       })
       DataEvents.emit(DATA_EVENTS.MEAL_CHANGED)
+      haptics.success()
     } catch (error) {
       console.error('Failed to save:', error)
       toast.error('Failed to save. Please try again.')
+      haptics.error()
       loadMeals()
     } finally {
       setSubmitting(false)
@@ -124,6 +130,7 @@ export function MealsTab({ openForm }: MealsTabProps = {}) {
   }
 
   async function handleEdit(meal: Meal) {
+    haptics.light()
     setEditingId(meal.id!)
     setFormData({
       mealType: meal.mealType as any,
@@ -135,6 +142,7 @@ export function MealsTab({ openForm }: MealsTabProps = {}) {
   }
   
   function handleCancelEdit() {
+    haptics.light()
     setEditingId(null)
     setFormData({
       mealType: 'breakfast',
@@ -145,25 +153,22 @@ export function MealsTab({ openForm }: MealsTabProps = {}) {
     setShowForm(false)
   }
 
-  async function handleDelete(id: string | undefined) {
-    if (!id) return
-    confirmDelete(
-      id,
-      async () => {
-        const deleted = meals.find(m => m.id === id)
-        setMeals(prev => prev.filter(m => m.id !== id))
-        try {
-          await deleteMeal(id)
-          DataEvents.emit(DATA_EVENTS.MEAL_CHANGED)
-        } catch (error) {
-          console.error('Failed to delete:', error)
-          toast.error('Failed to delete. Please try again.')
-          if (deleted) setMeals(prev => [deleted, ...prev])
-        }
-      },
-      'Delete Meal Entry',
-      'Are you sure you want to delete this meal entry?'
-    )
+  async function handleDelete(id: string) {
+    const confirmed = await confirmDelete()
+    if (!confirmed) return
+
+    haptics.medium()
+    try {
+      await deleteMeal(id)
+      setMeals(prev => prev.filter(m => m.id !== id))
+      DataEvents.emit(DATA_EVENTS.MEAL_CHANGED)
+      haptics.success()
+    } catch (error) {
+      console.error('Failed to delete meal:', error)
+      toast.error('Failed to delete. Please try again.')
+      haptics.error()
+      loadMeals()
+    }
   }
 
   const adherenceRate = meals.length > 0
@@ -191,22 +196,12 @@ export function MealsTab({ openForm }: MealsTabProps = {}) {
         </button>
       </div>
 
-      <AnimatePresence mode="wait">
-        {showForm && (
-          <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            transition={{ 
-              duration: 0.25,
-              ease: [0.25, 0.1, 0.25, 1]
-            }}
-          >
-            <form onSubmit={handleSubmit} className="card space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {editingId ? 'Edit Meal' : 'Log Meal'}
-          </h3>
-          
+      <BottomSheet
+        isOpen={showForm}
+        onClose={handleCancelEdit}
+        title={editingId ? 'Edit Meal' : 'Log Meal'}
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -247,20 +242,40 @@ export function MealsTab({ openForm }: MealsTabProps = {}) {
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 className="input min-h-[80px]"
                 placeholder="What did you eat?"
+                autoFocus
               />
             </div>
 
             <div className="md:col-span-2">
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={formData.asExpected}
-                  onChange={(e) => setFormData({ ...formData, asExpected: e.target.checked })}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-700 dark:text-gray-300">
-                  Ate as expected (healthy/planned)
-                </span>
+              <label className="flex items-center justify-between p-4 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-xl cursor-pointer hover:shadow-md transition-all border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/40 dark:to-green-800/30 rounded-xl shadow-sm">
+                    <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 stroke-[2.5]" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-white">Ate as Expected</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">Healthy & planned</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    haptics.light()
+                    setFormData({ ...formData, asExpected: !formData.asExpected })
+                  }}
+                  className={`relative inline-flex h-8 w-14 flex-shrink-0 items-center rounded-full transition-all duration-200 shadow-inner ${
+                    formData.asExpected 
+                      ? 'bg-green-600 shadow-green-600/30' 
+                      : 'bg-gray-300 dark:bg-gray-600'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-lg transition-all duration-200 ${
+                      formData.asExpected ? 'translate-x-7' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
               </label>
             </div>
           </div>
@@ -274,10 +289,8 @@ export function MealsTab({ openForm }: MealsTabProps = {}) {
               Cancel
             </button>
           </div>
-            </form>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        </form>
+      </BottomSheet>
 
       <div className="space-y-3">
         {loading ? (

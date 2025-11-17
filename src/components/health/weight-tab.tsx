@@ -10,6 +10,8 @@ import { Skeleton, SkeletonTable } from '@/components/ui/skeleton'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { useDeleteConfirm } from '@/components/ui/delete-confirm'
+import { BottomSheet } from '@/components/ui/bottom-sheet'
+import { haptics } from '@/lib/haptics'
 
 interface WeightTabProps {
   openForm?: boolean
@@ -80,6 +82,7 @@ export function WeightTab({ openForm }: WeightTabProps = {}) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    haptics.light()
     
     // Validation
     const weight = parseFloat(formData.weight)
@@ -93,6 +96,7 @@ export function WeightTab({ openForm }: WeightTabProps = {}) {
     }
     
     setSubmitting(true)
+    haptics.medium()
     
     const weightData = {
       weight,
@@ -127,9 +131,11 @@ export function WeightTab({ openForm }: WeightTabProps = {}) {
         note: ''
       })
       DataEvents.emit(DATA_EVENTS.WEIGHT_CHANGED)
+      haptics.success()
     } catch (error) {
       console.error('Failed to save:', error)
       toast.error('Failed to save. Please try again.')
+      haptics.error()
       loadWeights()
     } finally {
       setSubmitting(false)
@@ -137,6 +143,7 @@ export function WeightTab({ openForm }: WeightTabProps = {}) {
   }
 
   async function handleEdit(weight: Weight) {
+    haptics.light()
     setEditingId(weight.id!)
     setFormData({
       weight: weight.weight.toString(),
@@ -147,6 +154,7 @@ export function WeightTab({ openForm }: WeightTabProps = {}) {
   }
   
   function handleCancelEdit() {
+    haptics.light()
     setEditingId(null)
     setFormData({
       weight: '',
@@ -156,25 +164,22 @@ export function WeightTab({ openForm }: WeightTabProps = {}) {
     setShowForm(false)
   }
 
-  async function handleDelete(id: string | undefined) {
-    if (!id) return
-    confirmDelete(
-      id,
-      async () => {
-        const deleted = weights.find(w => w.id === id)
-        setWeights(prev => prev.filter(w => w.id !== id))
-        try {
-          await deleteWeight(id)
-          DataEvents.emit(DATA_EVENTS.WEIGHT_CHANGED)
-        } catch (error) {
-          console.error('Failed to delete:', error)
-          toast.error('Failed to delete. Please try again.')
-          if (deleted) setWeights(prev => [deleted, ...prev])
-        }
-      },
-      'Delete Weight Entry',
-      'Are you sure you want to delete this weight entry?'
-    )
+  async function handleDelete(id: string) {
+    const confirmed = await confirmDelete()
+    if (!confirmed) return
+
+    haptics.medium()
+    try {
+      await deleteWeight(id)
+      setWeights(prev => prev.filter(w => w.id !== id))
+      DataEvents.emit(DATA_EVENTS.WEIGHT_CHANGED)
+      haptics.success()
+    } catch (error) {
+      console.error('Failed to delete weight:', error)
+      toast.error('Failed to delete')
+      haptics.error()
+      loadWeights()
+    }
   }
 
   const latestWeight = weights[0]
@@ -218,22 +223,12 @@ export function WeightTab({ openForm }: WeightTabProps = {}) {
         </button>
       </div>
 
-      <AnimatePresence mode="wait">
-        {showForm && (
-          <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            transition={{ 
-              duration: 0.25,
-              ease: [0.25, 0.1, 0.25, 1]
-            }}
-          >
-            <form onSubmit={handleSubmit} className="card space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {editingId ? 'Edit Weight' : 'Log Weight'}
-          </h3>
-          
+      <BottomSheet
+        isOpen={showForm}
+        onClose={handleCancelEdit}
+        title={editingId ? 'Edit Weight' : 'Log Weight'}
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -247,6 +242,7 @@ export function WeightTab({ openForm }: WeightTabProps = {}) {
                 onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
                 className="input"
                 placeholder="0.0"
+                autoFocus
               />
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Unit preference: {weightUnit} (change in Settings)
@@ -292,10 +288,8 @@ export function WeightTab({ openForm }: WeightTabProps = {}) {
               Cancel
             </button>
           </div>
-            </form>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        </form>
+      </BottomSheet>
 
       <div className="space-y-3">
         {loading ? (

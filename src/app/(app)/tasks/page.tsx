@@ -11,8 +11,9 @@ import { DataEvents, DATA_EVENTS } from '@/lib/events'
 import { db } from '@/lib/db/schema'
 import { fadeIn, listItem, staggerContainer, staggerItem } from '@/lib/animations'
 import { Skeleton, SkeletonTable } from '@/components/ui/skeleton'
+import { BottomSheet } from '@/components/ui/bottom-sheet'
+import { haptics } from '@/lib/haptics'
 import { useDeleteConfirm } from '@/components/ui/delete-confirm'
-import { ErrorBoundary } from '@/components/providers/error-boundary'
 
 export default function TasksPage() {
   const searchParams = useSearchParams()
@@ -81,10 +82,12 @@ export default function TasksPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    haptics.light()
     
     // Validation
     if (!formData.title.trim()) {
       toast.error('Title is required')
+      haptics.error()
       return
     }
     if (formData.title.length > 200) {
@@ -93,6 +96,7 @@ export default function TasksPage() {
     }
     
     setSubmitting(true)
+    haptics.medium()
     
     const taskData = {
       title: formData.title.trim(),
@@ -133,9 +137,11 @@ export default function TasksPage() {
         tags: ''
       })
       DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
+      haptics.success()
     } catch (error) {
       console.error('Failed to save:', error)
       toast.error('Failed to save. Please try again.')
+      haptics.error()
       loadTasks()
     } finally {
       setSubmitting(false)
@@ -150,6 +156,7 @@ export default function TasksPage() {
   }
 
   async function handleEdit(task: Task) {
+    haptics.light()
     setEditingId(task.id!)
     setFormData({
       title: task.title,
@@ -163,6 +170,7 @@ export default function TasksPage() {
   }
   
   function handleCancelEdit() {
+    haptics.light()
     setEditingId(null)
     setFormData({
       title: '',
@@ -175,25 +183,23 @@ export default function TasksPage() {
     setShowForm(false)
   }
 
-  async function handleDelete(id: string | undefined) {
-    if (!id) return
-    confirmDelete(
-      id,
-      async () => {
-        const deleted = tasks.find(t => t.id === id)
-        setTasks(prev => prev.filter(t => t.id !== id))
-        try {
-          await deleteTask(id)
-          DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
-        } catch (error) {
-          console.error('Failed to delete:', error)
-          toast.error('Failed to delete. Please try again.')
-          if (deleted) setTasks(prev => [deleted, ...prev])
-        }
-      },
-      'Delete Task',
-      'Are you sure you want to delete this task? This action cannot be undone.'
-    )
+  async function handleDelete(id: string) {
+    const confirmed = await confirmDelete()
+    if (!confirmed) return
+
+    haptics.medium()
+    try {
+      await deleteTask(id)
+      setTasks(prev => prev.filter(t => t.id !== id))
+      loadTasks()
+      DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
+      haptics.success()
+    } catch (error) {
+      console.error('Failed to delete task:', error)
+      toast.error('Failed to delete')
+      haptics.error()
+      loadTasks()
+    }
   }
 
   const filteredTasks = tasks.filter(task => {
@@ -233,7 +239,6 @@ export default function TasksPage() {
   }).length
 
   return (
-    <ErrorBoundary>
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -319,23 +324,13 @@ export default function TasksPage() {
         </div>
       </div>
 
-      {/* Add Form */}
-      <AnimatePresence mode="wait">
-        {showForm && (
-          <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            transition={{ 
-              duration: 0.25,
-              ease: [0.25, 0.1, 0.25, 1]
-            }}
-          >
-            <form onSubmit={handleSubmit} className="card space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {editingId ? 'Edit Task' : 'Add Task'}
-          </h3>
-          
+      {/* Add Form - BottomSheet */}
+      <BottomSheet
+        isOpen={showForm}
+        onClose={handleCancelEdit}
+        title={editingId ? 'Edit Task' : 'Add Task'}
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -348,6 +343,7 @@ export default function TasksPage() {
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 className="input"
                 placeholder="What needs to be done?"
+                autoFocus
               />
             </div>
 
@@ -415,10 +411,8 @@ export default function TasksPage() {
               Cancel
             </button>
           </div>
-            </form>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        </form>
+      </BottomSheet>
 
       {/* Task List */}
       <div className="space-y-2">
@@ -524,6 +518,5 @@ export default function TasksPage() {
       {/* Delete Confirmation Dialog */}
       <DeleteDialog />
     </motion.div>
-    </ErrorBoundary>
   )
 }

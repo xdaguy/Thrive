@@ -9,6 +9,8 @@ import { Skeleton, SkeletonTable } from '@/components/ui/skeleton'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { useDeleteConfirm } from '@/components/ui/delete-confirm'
+import { BottomSheet } from '@/components/ui/bottom-sheet'
+import { haptics } from '@/lib/haptics'
 
 interface DebtTabProps {
   openForm?: boolean
@@ -83,6 +85,7 @@ export function DebtTab({ openForm }: DebtTabProps = {}) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    haptics.light()
     
     // Validation
     const amount = parseFloat(formData.amount)
@@ -91,6 +94,7 @@ export function DebtTab({ openForm }: DebtTabProps = {}) {
     
     if (amount <= 0) {
       toast.error('Amount must be greater than 0')
+      haptics.error()
       return
     }
     if (amount > 1000000000) {
@@ -107,6 +111,7 @@ export function DebtTab({ openForm }: DebtTabProps = {}) {
     }
     
     setSubmitting(true)
+    haptics.medium()
     
     const debtData = {
       type: formData.type,
@@ -166,9 +171,11 @@ export function DebtTab({ openForm }: DebtTabProps = {}) {
       })
       
       DataEvents.emit(DATA_EVENTS.DEBT_CHANGED)
+      haptics.success()
     } catch (error) {
       console.error('Failed to save debt:', error)
       toast.error('Failed to save. Please try again.')
+      haptics.error()
       loadDebts()
     } finally {
       setSubmitting(false)
@@ -176,6 +183,7 @@ export function DebtTab({ openForm }: DebtTabProps = {}) {
   }
 
   async function handleEdit(debt: Debt) {
+    haptics.light()
     setEditingId(debt.id!)
     setFormData({
       type: debt.type,
@@ -190,6 +198,7 @@ export function DebtTab({ openForm }: DebtTabProps = {}) {
   }
   
   function handleCancelEdit() {
+    haptics.light()
     setEditingId(null)
     setFormData({
       type: 'i_owe',
@@ -203,29 +212,34 @@ export function DebtTab({ openForm }: DebtTabProps = {}) {
     setShowForm(false)
   }
 
-  async function handleDelete(id: string | undefined) {
-    if (!id) return
-    confirmDelete(
-      id,
-      async () => {
-        // OPTIMISTIC DELETE
-        const deletedDebt = debts.find(d => d.id === id)
-        setDebts(prev => prev.filter(d => d.id !== id))
-        
-        try {
-          await db.debts.delete(id)
-          DataEvents.emit(DATA_EVENTS.DEBT_CHANGED)
-        } catch (error) {
-          console.error('Failed to delete debt:', error)
-          toast.error('Failed to delete. Please try again.')
-          if (deletedDebt) {
-            setDebts(prev => [deletedDebt, ...prev])
-          }
+  async function handleDelete(id: string) {
+    const confirmed = await confirmDelete()
+    if (!confirmed) return
+
+    haptics.medium()
+    try {
+      // OPTIMISTIC DELETE
+      const deletedDebt = debts.find(d => d.id === id)
+      setDebts(prev => prev.filter(d => d.id !== id))
+      
+      try {
+        await db.debts.delete(id)
+        loadDebts()
+        DataEvents.emit(DATA_EVENTS.DEBT_CHANGED)
+        haptics.success()
+      } catch (error) {
+        console.error('Failed to delete debt:', error)
+        toast.error('Failed to delete. Please try again.')
+        haptics.error()
+        if (deletedDebt) {
+          setDebts(prev => [deletedDebt, ...prev])
         }
-      },
-      'Delete Debt Entry',
-      'Are you sure you want to delete this debt entry? This action cannot be undone.'
-    )
+      }
+    } catch (error) {
+      console.error('Failed to delete debt:', error)
+      toast.error('Failed to delete. Please try again.')
+      haptics.error()
+    }
   }
 
   async function markAsPaid(id: string | undefined) {
@@ -283,23 +297,13 @@ export function DebtTab({ openForm }: DebtTabProps = {}) {
         </button>
       </div>
 
-      {/* Add Form */}
-      <AnimatePresence mode="wait">
-        {showForm && (
-          <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            transition={{ 
-              duration: 0.25,
-              ease: [0.25, 0.1, 0.25, 1]
-            }}
-          >
-            <form onSubmit={handleSubmit} className="card space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {editingId ? 'Edit Debt' : 'Add Debt'}
-          </h3>
-          
+      {/* Add Form - BottomSheet */}
+      <BottomSheet
+        isOpen={showForm}
+        onClose={handleCancelEdit}
+        title={editingId ? 'Edit Debt' : 'Add Debt'}
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -416,10 +420,8 @@ export function DebtTab({ openForm }: DebtTabProps = {}) {
               Cancel
             </button>
           </div>
-            </form>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        </form>
+      </BottomSheet>
 
       {/* Debt List */}
       <div className="space-y-3">
