@@ -100,7 +100,11 @@ export function MealsTab({ openForm }: MealsTabProps = {}) {
         setMeals(prev => [optimistic, ...prev])
         setShowForm(false)
         const realId = await addMeal(mealData)
-        setMeals(prev => prev.map(m => m.id === tempId ? { ...m, id: realId } : m))
+        setMeals(prev => {
+          const withoutTemp = prev.filter(m => m.id !== tempId)
+          const withReal = { ...optimistic, id: realId }
+          return [withReal, ...withoutTemp]
+        })
       }
 
       setFormData({

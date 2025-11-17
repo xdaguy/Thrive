@@ -139,10 +139,12 @@ export function IncomeTab({ openForm }: IncomeTabProps = {}) {
         // Save to DB in background and get real ID
         const realId = await addIncome(incomeData)
         
-        // Replace temp ID with real ID
-        setIncomes(prev => prev.map(i => 
-          i.id === tempId ? { ...i, id: realId } : i
-        ))
+        // Replace temp ID with real ID - use filter to prevent duplicates
+        setIncomes(prev => {
+          const withoutTemp = prev.filter(i => i.id !== tempId)
+          const withReal = { ...optimisticIncome, id: realId }
+          return [withReal, ...withoutTemp]
+        })
       }
       
       // Reset form

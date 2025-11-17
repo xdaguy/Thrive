@@ -117,7 +117,11 @@ export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
         setExercises(prev => [optimistic, ...prev])
         setShowForm(false)
         const realId = await addExercise(exerciseData)
-        setExercises(prev => prev.map(e => e.id === tempId ? { ...e, id: realId } : e))
+        setExercises(prev => {
+          const withoutTemp = prev.filter(e => e.id !== tempId)
+          const withReal = { ...optimistic, id: realId }
+          return [withReal, ...withoutTemp]
+        })
       }
 
       setFormData({

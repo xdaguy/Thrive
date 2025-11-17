@@ -114,7 +114,11 @@ export function WeightTab({ openForm }: WeightTabProps = {}) {
         setWeights(prev => [optimistic, ...prev])
         setShowForm(false)
         const realId = await addWeight(weightData)
-        setWeights(prev => prev.map(w => w.id === tempId ? { ...w, id: realId } : w))
+        setWeights(prev => {
+          const withoutTemp = prev.filter(w => w.id !== tempId)
+          const withReal = { ...optimistic, id: realId }
+          return [withReal, ...withoutTemp]
+        })
       }
 
       setFormData({

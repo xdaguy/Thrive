@@ -148,9 +148,11 @@ export function DebtTab({ openForm }: DebtTabProps = {}) {
           id: realId,
           createdAt: new Date()
         })
-        setDebts(prev => prev.map(d => 
-          d.id === tempId ? { ...d, id: realId } : d
-        ))
+        setDebts(prev => {
+          const withoutTemp = prev.filter(d => d.id !== tempId)
+          const withReal = { ...optimisticDebt, id: realId }
+          return [withReal, ...withoutTemp]
+        })
       }
 
       setFormData({

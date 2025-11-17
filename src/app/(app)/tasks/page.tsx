@@ -116,7 +116,11 @@ export default function TasksPage() {
         setTasks(prev => [optimistic, ...prev])
         setShowForm(false)
         const realId = await addTask(taskData)
-        setTasks(prev => prev.map(t => t.id === tempId ? { ...t, id: realId } : t))
+        setTasks(prev => {
+          const withoutTemp = prev.filter(t => t.id !== tempId)
+          const withReal = { ...optimistic, id: realId }
+          return [withReal, ...withoutTemp]
+        })
       }
 
       setFormData({

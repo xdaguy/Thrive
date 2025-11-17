@@ -133,7 +133,11 @@ export default function RoutinesPage() {
         setRoutines(prev => [optimistic, ...prev])
         setShowForm(false)
         const realId = await addRoutine(routineData)
-        setRoutines(prev => prev.map(r => r.id === tempId ? { ...r, id: realId } : r))
+        setRoutines(prev => {
+          const withoutTemp = prev.filter(r => r.id !== tempId)
+          const withReal = { ...optimistic, id: realId }
+          return [withReal, ...withoutTemp]
+        })
       }
 
       setFormData({

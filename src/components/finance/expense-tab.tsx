@@ -134,9 +134,11 @@ export function ExpenseTab({ openForm }: ExpenseTabProps = {}) {
         setExpenses(prev => [optimisticExpense, ...prev])
         setShowForm(false)
         const realId = await addExpense(expenseData)
-        setExpenses(prev => prev.map(e => 
-          e.id === tempId ? { ...e, id: realId } : e
-        ))
+        setExpenses(prev => {
+          const withoutTemp = prev.filter(e => e.id !== tempId)
+          const withReal = { ...optimisticExpense, id: realId }
+          return [withReal, ...withoutTemp]
+        })
       }
       
       setFormData({
