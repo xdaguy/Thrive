@@ -67,38 +67,103 @@ export default function SettingsPage() {
     
     const handleCallback = async () => {
       if (params.get('connected') === 'true') {
-        // Update database settings with sync enabled
-        const settings = await db.settings.get('user_settings')
-        if (settings) {
-          await db.settings.put({
-            ...settings,
-            syncEnabled: true,
-            syncProvider: 'google',
-            lastSyncAt: new Date(),
-            updatedAt: new Date()
-          })
+        // Check if this is from onboarding
+        const onboardingPending = sessionStorage.getItem('onboarding_pending')
+        const onboardingFormData = sessionStorage.getItem('onboarding_form_data')
+        
+        if (onboardingPending === 'true' && onboardingFormData) {
+          // ONBOARDING FLOW: Let sync happen first, then create settings
+          console.log('🎓 Onboarding flow detected')
+          
+          // Set connected state
+          setGoogleConnected(true)
+          
+          // Load email
+          const emailCookie = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('google_user_email='))
+          if (emailCookie) {
+            const email = emailCookie.split('=')[1]
+            setGoogleEmail(decodeURIComponent(email))
+          }
+          
+          // Start auto-sync (downloads cloud data)
+          await startAutoSync(true)
+          
+          // Wait a bit for sync to complete
+          await new Promise(resolve => setTimeout(resolve, 2000))
+          
+          // Now create/update settings with form data
+          const formData = JSON.parse(onboardingFormData)
+          const existingSettings = await db.settings.get('user_settings')
+          
+          if (existingSettings) {
+            // Cloud settings exist! Use them (user is connecting to existing account)
+            console.log('✅ Cloud settings found, using cloud settings')
+            await db.settings.put({
+              ...existingSettings,
+              // Keep all cloud settings, just mark onboarding as complete
+              onboardingComplete: true,
+              syncEnabled: true,
+              syncProvider: 'google',
+              // DON'T update updatedAt - keep cloud timestamp!
+            })
+          } else {
+            // No cloud settings, create new with form data
+            console.log('📝 No cloud settings, creating new')
+            await db.settings.put({
+              id: 'user_settings',
+              name: formData.name || 'User',
+              currency: formData.currency || 'USD',
+              weightUnit: formData.weightUnit || 'kg',
+              dateFormat: formData.dateFormat || 'MM/DD/YYYY',
+              theme: 'system',
+              onboardingComplete: true,
+              syncEnabled: true,
+              syncProvider: 'google',
+              encryptionEnabled: false,
+              updatedAt: new Date()
+            })
+          }
+          
+          // Clear onboarding flags
+          sessionStorage.removeItem('onboarding_pending')
+          sessionStorage.removeItem('onboarding_form_data')
+          
           DataEvents.emit(DATA_EVENTS.SETTINGS_CHANGED)
+          alert('✅ Successfully connected to Google Drive!')
+          window.history.replaceState({}, '', '/settings')
+        } else {
+          // REGULAR CONNECT FLOW: User connecting from settings
+          console.log('⚙️ Regular connect flow')
+          
+          const settings = await db.settings.get('user_settings')
+          if (settings) {
+            await db.settings.put({
+              ...settings,
+              syncEnabled: true,
+              syncProvider: 'google',
+              lastSyncAt: new Date(),
+              updatedAt: new Date()
+            })
+            DataEvents.emit(DATA_EVENTS.SETTINGS_CHANGED)
+          }
+          
+          setGoogleConnected(true)
+          
+          const emailCookie = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('google_user_email='))
+          if (emailCookie) {
+            const email = emailCookie.split('=')[1]
+            setGoogleEmail(decodeURIComponent(email))
+          }
+          
+          await startAutoSync(true)
+          
+          alert('✅ Successfully connected to Google Drive!')
+          window.history.replaceState({}, '', '/settings')
         }
-        
-        // Set connected state
-        setGoogleConnected(true)
-        
-        // Load Google user email from cookie
-        const emailCookie = document.cookie
-          .split('; ')
-          .find(row => row.startsWith('google_user_email='))
-        
-        if (emailCookie) {
-          const email = emailCookie.split('=')[1]
-          setGoogleEmail(decodeURIComponent(email))
-        }
-        
-        // Start auto-sync
-        await startAutoSync(true)
-        
-        alert('✅ Successfully connected to Google Drive!')
-        // Clean URL
-        window.history.replaceState({}, '', '/settings')
       } else if (params.get('error')) {
         const error = params.get('error')
         alert(`❌ Connection failed: ${error}`)

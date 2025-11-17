@@ -140,30 +140,12 @@ export default function OnboardingPage() {
 
   async function handleConnectGoogleDrive() {
     try {
-      // Save settings first before OAuth redirect
-      const existingSettings = await db.settings.get('user_settings')
+      // IMPORTANT: Do NOT create settings here!
+      // Let sync download cloud data first, then we'll merge on callback
       
-      if (existingSettings) {
-        // Update existing settings
-        await db.settings.update('user_settings', {
-          onboardingComplete: true,
-          updatedAt: new Date()
-        })
-      } else {
-        // Create new settings with defaults
-        await db.settings.put({
-          id: 'user_settings',
-          name: formData.name || 'User',
-          currency: formData.currency || 'USD',
-          weightUnit: formData.weightUnit || 'kg',
-          dateFormat: formData.dateFormat || 'MM/DD/YYYY',
-          theme: 'system',
-          onboardingComplete: true,
-          syncEnabled: true,
-          encryptionEnabled: false,
-          updatedAt: new Date()
-        })
-      }
+      // Store form data in sessionStorage for after OAuth
+      sessionStorage.setItem('onboarding_form_data', JSON.stringify(formData))
+      sessionStorage.setItem('onboarding_pending', 'true')
       
       // Store return path in sessionStorage
       sessionStorage.setItem('oauth_return_path', '/dashboard')

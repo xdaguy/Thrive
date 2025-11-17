@@ -3,44 +3,77 @@
 ## 🔴 CRITICAL BUGS (Fix Tomorrow)
 
 ### 1. **Settings Not Syncing to Cloud** ✅ FIXED!
-**Issue:** User settings (name, currency, weight unit, etc.) were NOT syncing to Google Drive
+**Issue:** User settings (name, currency, weight unit, etc.) were NOT syncing to Google Drive. Worse, cloud settings were being OVERWRITTEN with defaults!
 
-**Root Cause:**
-1. `src/lib/sync/merge.ts` - `mergeSettings()` always preferred local settings
-2. Settings updates weren't setting `updatedAt` timestamp
-3. This broke the entire sync flow
+**Real Root Cause (After User Testing):**
+1. ❌ **Onboarding created settings BEFORE sync**
+   - User clicks "Connect Google Drive" in Step 0 (before filling form!)
+   - Onboarding created NEW settings with empty/default values
+   - These NEW settings had NEWER timestamp than cloud
+   - Merge chose NEW (empty) settings over cloud settings
+   - Cloud data got overwritten with defaults! 🚨
+
+2. ❌ **mergeSettings() always preferred local**
+   - Even with timestamps, local was always chosen
+
+3. ❌ **Missing updatedAt on connect/disconnect**
 
 **Fix Applied:**
-1. **merge.ts** - Changed to timestamp-based merging (latest write wins)
-2. **settings/page.tsx** - Added `updatedAt: new Date()` to connect/disconnect
-3. **Existing code** - `savePreference()` already sets updatedAt ✅
+1. **onboarding/page.tsx** - Don't create settings before OAuth!
+   - Store form data in sessionStorage
+   - Let OAuth and sync happen first
+   - THEN create settings after downloading cloud data
+
+2. **settings/page.tsx** - Split onboarding vs regular connect
+   - Onboarding flow: Download cloud → Fill missing fields only
+   - Regular flow: Update existing settings with sync enabled
+   - Preserves cloud timestamp in onboarding!
+
+3. **merge.ts** - Timestamp-based merging
+
+**Flow Now:**
+```
+ONBOARDING WITH GOOGLE DRIVE:
+1. User clicks "Connect Google Drive" (Step 0, form empty)
+2. Store formData in sessionStorage (don't create settings!)
+3. OAuth redirect
+4. After OAuth: Start sync (download cloud backup)
+5. Wait for sync to complete
+6. Check if cloud settings exist:
+   - YES: Use cloud settings, fill missing fields from form
+   - NO: Create new settings from form data
+7. Keep cloud timestamp (don't overwrite!)
+8. Complete onboarding
+
+RESULT: Cloud settings are preserved! ✅
+```
 
 **Files Changed:**
 - `src/lib/sync/merge.ts` - Timestamp-based settings merge
-- `src/app/(app)/settings/page.tsx` - Add updatedAt on sync enable/disable
+- `src/app/(app)/settings/page.tsx` - Split onboarding/regular flows
+- `src/app/(app)/onboarding/page.tsx` - Don't create settings before OAuth
 
 **Testing Required:**
 ```
-IMPORTANT: You need to test this with actual devices/browsers!
+CRITICAL TEST - Existing User on New Device:
 
-Device A (First Device):
-1. Complete onboarding: name="John", currency="EUR", weightUnit="kg"
+Device A (Setup):
+1. Set name="John", currency="EUR", weightUnit="kg"
 2. Connect to Google Drive
-3. Wait for sync (should happen automatically)
-4. Check Settings → "Last synced" shows recent time ✅
+3. Verify sync completes
 
-Device B (Second Device/Incognito):
-1. Open app in different browser/incognito
-2. Complete onboarding with dummy data
-3. Connect to same Google account
-4. App should download cloud backup
-5. Check Settings → Should show "John", "EUR", "kg" ✅
+Device B (New Device - THE FIX):
+1. Open app in incognito/new browser
+2. Step 0: Click "Connect Google Drive" immediately
+3. OAuth completes
+4. CHECK: Should see "John", "EUR", "kg" ✅
+5. Cloud settings should NOT be overwritten! ✅
 
-Conflict Test:
-1. Device A: Change name to "Jane"
-2. Wait for sync
-3. Device B: Refresh or manually sync
-4. Device B should show "Jane" ✅
+New User Test:
+1. New device, no cloud data
+2. Fill form: name="Jane", currency="USD"
+3. Connect Google Drive
+4. Should save "Jane", "USD" to cloud ✅
 ```
 
 ---
