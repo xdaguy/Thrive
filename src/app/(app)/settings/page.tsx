@@ -493,10 +493,15 @@ export default function SettingsPage() {
   }
 
   async function handleFirstClearConfirm() {
-    setConfirmDialog({
-      isOpen: true,
-      type: 'clearFinal',
-    })
+    // Close first modal, then open second after animation completes
+    setConfirmDialog({ isOpen: false, type: 'clear' })
+    setTimeout(() => {
+      setConfirmDialog({
+        isOpen: true,
+        type: 'clearFinal',
+        data: undefined
+      })
+    }, 250)
   }
 
   async function executeClearData() {
@@ -1017,10 +1022,7 @@ export default function SettingsPage() {
       <ConfirmDialog
         isOpen={confirmDialog.isOpen && confirmDialog.type === 'clear'}
         onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
-        onConfirm={() => {
-          handleFirstClearConfirm()
-          setConfirmDialog({ ...confirmDialog, isOpen: false })
-        }}
+        onConfirm={handleFirstClearConfirm}
         title="Delete All Data"
         message="This will permanently delete ALL your data. This action cannot be undone."
         details={[
