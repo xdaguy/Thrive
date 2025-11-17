@@ -9,12 +9,14 @@ import { db } from '@/lib/db/schema'
 import { Skeleton, SkeletonTable } from '@/components/ui/skeleton'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
+import { useDeleteConfirm } from '@/components/ui/delete-confirm'
 
 interface IncomeTabProps {
   openForm?: boolean
 }
 
 export function IncomeTab({ openForm }: IncomeTabProps = {}) {
+  const { confirm: confirmDelete, DeleteDialog } = useDeleteConfirm()
   const [incomes, setIncomes] = useState<Income[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -155,11 +157,16 @@ export function IncomeTab({ openForm }: IncomeTabProps = {}) {
 
   async function handleDelete(id: string | undefined) {
     if (!id) return
-    if (confirm('Are you sure you want to delete this income entry?')) {
-      await deleteIncome(id)
-      loadIncomes()
-      DataEvents.emit(DATA_EVENTS.INCOME_CHANGED)
-    }
+    confirmDelete(
+      id,
+      async () => {
+        await deleteIncome(id)
+        loadIncomes()
+        DataEvents.emit(DATA_EVENTS.INCOME_CHANGED)
+      },
+      'Delete Income Entry',
+      'Are you sure you want to delete this income entry? This action cannot be undone.'
+    )
   }
 
   // Filter incomes based on date range
@@ -519,6 +526,9 @@ export function IncomeTab({ openForm }: IncomeTabProps = {}) {
           ))
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteDialog />
     </div>
   )
 }

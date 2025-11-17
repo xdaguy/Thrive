@@ -15,7 +15,7 @@ interface ExerciseTabProps {
   openForm?: boolean
 }
 
-export function ExerciseTab() {
+export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
   const { confirm: confirmDelete, DeleteDialog } = useDeleteConfirm()
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [showForm, setShowForm] = useState(false)

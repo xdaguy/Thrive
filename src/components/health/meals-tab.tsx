@@ -5,6 +5,8 @@ import { Plus, Utensils, Trash2, CheckCircle, XCircle, Edit } from 'lucide-react
 import { addMeal, getAllMeals, deleteMeal, updateMeal, type Meal } from '@/lib/db/queries'
 import { MEAL_TYPES, formatDate } from '@/lib/constants'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
+import { toast } from 'sonner'
+import { useDeleteConfirm } from '@/components/ui/delete-confirm'
 import { db } from '@/lib/db/schema'
 import { Skeleton, SkeletonTable } from '@/components/ui/skeleton'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -14,6 +16,7 @@ interface MealsTabProps {
 }
 
 export function MealsTab({ openForm }: MealsTabProps = {}) {
+  const { confirm: confirmDelete, DeleteDialog } = useDeleteConfirm()
   const [meals, setMeals] = useState<Meal[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -123,11 +126,16 @@ export function MealsTab({ openForm }: MealsTabProps = {}) {
 
   async function handleDelete(id: string | undefined) {
     if (!id) return
-    if (confirm('Delete this meal entry?')) {
-      await deleteMeal(id)
-      loadMeals()
-      DataEvents.emit(DATA_EVENTS.MEAL_CHANGED)
-    }
+    confirmDelete(
+      id,
+      async () => {
+        await deleteMeal(id)
+        loadMeals()
+        DataEvents.emit(DATA_EVENTS.MEAL_CHANGED)
+      },
+      'Delete Meal Entry',
+      'Are you sure you want to delete this meal entry?'
+    )
   }
 
   const adherenceRate = meals.length > 0
@@ -305,6 +313,9 @@ export function MealsTab({ openForm }: MealsTabProps = {}) {
           ))
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteDialog />
     </div>
   )
 }

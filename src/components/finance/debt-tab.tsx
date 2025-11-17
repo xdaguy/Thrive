@@ -8,12 +8,14 @@ import { DataEvents, DATA_EVENTS } from '@/lib/events'
 import { Skeleton, SkeletonTable } from '@/components/ui/skeleton'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
+import { useDeleteConfirm } from '@/components/ui/delete-confirm'
 
 interface DebtTabProps {
   openForm?: boolean
 }
 
 export function DebtTab({ openForm }: DebtTabProps = {}) {
+  const { confirm: confirmDelete, DeleteDialog } = useDeleteConfirm()
   const [debts, setDebts] = useState<Debt[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -173,11 +175,16 @@ export function DebtTab({ openForm }: DebtTabProps = {}) {
 
   async function handleDelete(id: string | undefined) {
     if (!id) return
-    if (confirm('Delete this debt entry?')) {
-      await db.debts.delete(id)
-      loadDebts()
-      DataEvents.emit(DATA_EVENTS.DEBT_CHANGED)
-    }
+    confirmDelete(
+      id,
+      async () => {
+        await db.debts.delete(id)
+        loadDebts()
+        DataEvents.emit(DATA_EVENTS.DEBT_CHANGED)
+      },
+      'Delete Debt Entry',
+      'Are you sure you want to delete this debt entry? This action cannot be undone.'
+    )
   }
 
   async function markAsPaid(id: string | undefined) {
@@ -480,6 +487,9 @@ export function DebtTab({ openForm }: DebtTabProps = {}) {
           })
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteDialog />
     </div>
   )
 }

@@ -9,12 +9,14 @@ import { db } from '@/lib/db/schema'
 import { Skeleton, SkeletonTable } from '@/components/ui/skeleton'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
+import { useDeleteConfirm } from '@/components/ui/delete-confirm'
 
 interface ExpenseTabProps {
   openForm?: boolean
 }
 
 export function ExpenseTab({ openForm }: ExpenseTabProps = {}) {
+  const { confirm: confirmDelete, DeleteDialog } = useDeleteConfirm()
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -155,11 +157,16 @@ export function ExpenseTab({ openForm }: ExpenseTabProps = {}) {
 
   async function handleDelete(id: string | undefined) {
     if (!id) return
-    if (confirm('Are you sure you want to delete this expense?')) {
-      await deleteExpense(id)
-      loadExpenses()
-      DataEvents.emit(DATA_EVENTS.EXPENSE_CHANGED)
-    }
+    confirmDelete(
+      id,
+      async () => {
+        await deleteExpense(id)
+        loadExpenses()
+        DataEvents.emit(DATA_EVENTS.EXPENSE_CHANGED)
+      },
+      'Delete Expense',
+      'Are you sure you want to delete this expense? This action cannot be undone.'
+    )
   }
 
   // Filter expenses based on date range
@@ -521,6 +528,9 @@ export function ExpenseTab({ openForm }: ExpenseTabProps = {}) {
           ))
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteDialog />
     </div>
   )
 }

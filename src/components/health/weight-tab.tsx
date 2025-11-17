@@ -12,9 +12,10 @@ import { toast } from 'sonner'
 import { useDeleteConfirm } from '@/components/ui/delete-confirm'
 
 interface WeightTabProps {
+  openForm?: boolean
 }
 
-export function WeightTab() {
+export function WeightTab({ openForm }: WeightTabProps = {}) {
   const { confirm: confirmDelete, DeleteDialog } = useDeleteConfirm()
   const [weights, setWeights] = useState<Weight[]>([])
   const [showForm, setShowForm] = useState(false)
