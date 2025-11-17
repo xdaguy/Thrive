@@ -87,30 +87,87 @@ export default function SettingsPage() {
             setGoogleEmail(decodeURIComponent(email))
           }
           
-          // Start auto-sync (downloads cloud data)
-          await startAutoSync(true)
+          // Setup one-time listener for sync completion
+          let syncHandled = false
+          const handleOnboardingSync = async () => {
+            if (syncHandled) return // Prevent double execution
+            syncHandled = true
+            
+            try {
+              console.log('📥 Sync completed, processing onboarding...')
+              
+              const formData = JSON.parse(onboardingFormData)
+              const existingSettings = await db.settings.get('user_settings')
+              
+              if (existingSettings) {
+                // Cloud settings downloaded! Use them (existing user reconnecting)
+                console.log('✅ Cloud settings found, using cloud settings')
+                await db.settings.put({
+                  ...existingSettings,
+                  onboardingComplete: true,
+                  syncEnabled: true,
+                  syncProvider: 'google',
+                  // Keep cloud updatedAt timestamp!
+                })
+              } else {
+                // No cloud settings (new user)
+                console.log('📝 No cloud settings, creating from form data')
+                
+                // Warn if user didn't fill form (connecting in Step 0)
+                if (!formData.name || formData.name === '') {
+                  console.warn('⚠️ No name provided in form data')
+                }
+                
+                await db.settings.put({
+                  id: 'user_settings',
+                  name: formData.name || 'User',
+                  currency: formData.currency || 'USD',
+                  weightUnit: formData.weightUnit || 'kg',
+                  dateFormat: formData.dateFormat || 'MM/DD/YYYY',
+                  theme: 'system',
+                  onboardingComplete: true,
+                  syncEnabled: true,
+                  syncProvider: 'google',
+                  encryptionEnabled: false,
+                  updatedAt: new Date()
+                })
+              }
+              
+              // Clear flags
+              sessionStorage.removeItem('onboarding_pending')
+              sessionStorage.removeItem('onboarding_form_data')
+              
+              DataEvents.emit(DATA_EVENTS.SETTINGS_CHANGED)
+              DataEvents.off(DATA_EVENTS.SYNC_COMPLETED, handleOnboardingSync)
+              
+              alert('✅ Successfully connected to Google Drive!')
+            } catch (error) {
+              console.error('Onboarding settings creation failed:', error)
+              alert('⚠️ Connected but failed to load settings. Please check Settings page.')
+            }
+          }
           
-          // Wait a bit for sync to complete
-          await new Promise(resolve => setTimeout(resolve, 2000))
+          // Listen for first sync completion
+          DataEvents.on(DATA_EVENTS.SYNC_COMPLETED, handleOnboardingSync)
           
-          // Now create/update settings with form data
-          const formData = JSON.parse(onboardingFormData)
-          const existingSettings = await db.settings.get('user_settings')
+          // Timeout fallback: If sync doesn't complete in 10 seconds, proceed anyway
+          setTimeout(() => {
+            if (!syncHandled) {
+              console.warn('⏱️ Sync timeout, proceeding with available data')
+              handleOnboardingSync()
+            }
+          }, 10000)
           
-          if (existingSettings) {
-            // Cloud settings exist! Use them (user is connecting to existing account)
-            console.log('✅ Cloud settings found, using cloud settings')
-            await db.settings.put({
-              ...existingSettings,
-              // Keep all cloud settings, just mark onboarding as complete
-              onboardingComplete: true,
-              syncEnabled: true,
-              syncProvider: 'google',
-              // DON'T update updatedAt - keep cloud timestamp!
-            })
-          } else {
-            // No cloud settings, create new with form data
-            console.log('📝 No cloud settings, creating new')
+          // Start auto-sync (triggers immediate sync)
+          try {
+            await startAutoSync(true)
+            console.log('🔄 Auto-sync started')
+          } catch (error) {
+            console.error('Failed to start auto-sync:', error)
+            DataEvents.off(DATA_EVENTS.SYNC_COMPLETED, handleOnboardingSync)
+            
+            // Fallback: Create settings immediately with form data
+            const formData = JSON.parse(onboardingFormData)
             await db.settings.put({
               id: 'user_settings',
               name: formData.name || 'User',
@@ -124,14 +181,13 @@ export default function SettingsPage() {
               encryptionEnabled: false,
               updatedAt: new Date()
             })
+            
+            sessionStorage.removeItem('onboarding_pending')
+            sessionStorage.removeItem('onboarding_form_data')
+            
+            alert('✅ Connected to Google Drive (working offline)')
           }
           
-          // Clear onboarding flags
-          sessionStorage.removeItem('onboarding_pending')
-          sessionStorage.removeItem('onboarding_form_data')
-          
-          DataEvents.emit(DATA_EVENTS.SETTINGS_CHANGED)
-          alert('✅ Successfully connected to Google Drive!')
           window.history.replaceState({}, '', '/settings')
         } else {
           // REGULAR CONNECT FLOW: User connecting from settings
