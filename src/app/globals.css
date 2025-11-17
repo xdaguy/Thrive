@@ -79,6 +79,35 @@
   * {
     -webkit-tap-highlight-color: transparent;
   }
+
+  /* Mobile touch target sizes - minimum 44x44px for accessibility */
+  @media (max-width: 768px) {
+    button,
+    a,
+    input[type="checkbox"],
+    input[type="radio"],
+    [role="button"] {
+      min-height: 44px;
+      min-width: 44px;
+    }
+
+    /* Larger tap targets for icons */
+    .btn-icon {
+      @apply w-12 h-12;
+    }
+
+    /* Better mobile spacing */
+    .btn-primary,
+    .btn-secondary {
+      @apply px-6 py-3.5 text-base;
+    }
+
+    /* Safe area insets for notch devices */
+    body {
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+  }
   
   /* Custom scrollbar */
   ::-webkit-scrollbar {
