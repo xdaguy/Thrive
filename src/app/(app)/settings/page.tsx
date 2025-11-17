@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Database, Cloud, Download, Upload, Trash2, Info, DollarSign, Weight as WeightIcon, Calendar, User, RefreshCw, LogOut, Check } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { toast } from 'sonner'
 import { db } from '@/lib/db/schema'
 import { useTheme } from 'next-themes'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
@@ -191,7 +192,7 @@ export default function SettingsPage() {
           // Small delay to ensure database writes complete
           await new Promise(resolve => setTimeout(resolve, 100))
           
-          alert('✅ Successfully connected to Google Drive!')
+          toast.success('Successfully connected to Google Drive!')
           
           // Redirect to dashboard (onboarding is complete)
           window.location.href = '/dashboard'
@@ -223,12 +224,12 @@ export default function SettingsPage() {
           
           await startAutoSync(true)
           
-          alert('✅ Successfully connected to Google Drive!')
+          toast.success('Successfully connected to Google Drive!')
           window.history.replaceState({}, '', '/settings')
         }
       } else if (params.get('error')) {
         const error = params.get('error')
-        alert(`❌ Connection failed: ${error}`)
+        toast.error(`Connection failed: ${error}`)
         window.history.replaceState({}, '', '/settings')
       }
     }
@@ -271,10 +272,10 @@ export default function SettingsPage() {
   async function handleExportData() {
     try {
       await downloadBackup()
-      alert('✅ Data exported successfully!')
+      toast.success('Data exported successfully!')
     } catch (error) {
       console.error('Export failed:', error)
-      alert('❌ Failed to export data')
+      toast.error('Failed to export data')
     }
   }
 
@@ -323,17 +324,18 @@ export default function SettingsPage() {
         if (result.success) {
           let message = `✅ ${result.message}`
           if (result.warnings.length > 0) {
-            message += '\n\nWarnings:\n' + result.warnings.join('\n')
+            toast.success(result.message, { description: result.warnings.join(', ') })
+          } else {
+            toast.success(result.message)
           }
-          alert(message)
           loadStats()
           loadPreferences()
         } else {
-          alert(`❌ ${result.message}\n\n${result.warnings.join('\n')}`)
+          toast.error(result.message, { description: result.warnings.join(', ') })
         }
       } catch (error) {
         console.error('Import failed:', error)
-        alert('❌ Failed to import data. Please check the file format.')
+        toast.error('Failed to import data. Please check the file format.')
       }
     }
 
@@ -377,7 +379,7 @@ export default function SettingsPage() {
       await authorizeWithGoogle()
     } catch (error) {
       console.error('Google Drive connection failed:', error)
-      alert('❌ Failed to connect to Google Drive.')
+      toast.error('Failed to connect to Google Drive.')
     }
   }
 
@@ -427,13 +429,13 @@ export default function SettingsPage() {
       }
     } catch (error) {
       console.error('Disconnect failed:', error)
-      alert('❌ Failed to disconnect. Please try again.')
+      toast.error('Failed to disconnect. Please try again.')
     }
   }
 
   async function handleSyncNow() {
     if (syncing) {
-      alert('⏳ Sync already in progress...')
+      toast.info('Sync already in progress...')
       return
     }
 
@@ -446,10 +448,10 @@ export default function SettingsPage() {
         setLastSync(new Date(lastSyncTime))
       }
       
-      alert('✅ Sync completed successfully!')
+      toast.success('Sync completed successfully!')
     } catch (error) {
       console.error('Sync failed:', error)
-      alert('❌ Sync failed\n\n' + (error instanceof Error ? error.message : 'Unknown error'))
+      toast.error('Sync failed', { description: error instanceof Error ? error.message : 'Unknown error' })
     } finally {
       setSyncing(false)
     }
@@ -500,11 +502,11 @@ export default function SettingsPage() {
       await db.routines.clear()
       await db.routineCompletions.clear()
 
-      alert('✅ All data cleared successfully')
+      toast.success('All data cleared successfully')
       loadStats()
     } catch (error) {
       console.error('Clear failed:', error)
-      alert('❌ Failed to clear data')
+      toast.error('Failed to clear data')
     }
   }
 

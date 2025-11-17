@@ -7,6 +7,7 @@ import { db, generateId, type Debt } from '@/lib/db/schema'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
 import { Skeleton, SkeletonTable } from '@/components/ui/skeleton'
 import { motion, AnimatePresence } from 'framer-motion'
+import { toast } from 'sonner'
 
 interface DebtTabProps {
   openForm?: boolean
@@ -86,19 +87,19 @@ export function DebtTab({ openForm }: DebtTabProps = {}) {
     const interestRate = formData.interestRate ? parseFloat(formData.interestRate) : 0
     
     if (amount <= 0) {
-      alert('Amount must be greater than 0')
+      toast.error('Amount must be greater than 0')
       return
     }
     if (amount > 1000000000) {
-      alert('Amount seems unrealistically high. Please check.')
+      toast.error('Amount seems unrealistically high. Please check.')
       return
     }
     if (paidAmount < 0 || paidAmount > amount) {
-      alert('Paid amount must be between 0 and total amount')
+      toast.error('Paid amount must be between 0 and total amount')
       return
     }
     if (interestRate < 0 || interestRate > 100) {
-      alert('Interest rate must be between 0 and 100%')
+      toast.error('Interest rate must be between 0 and 100%')
       return
     }
     

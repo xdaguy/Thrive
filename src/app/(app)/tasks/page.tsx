@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Plus, CheckSquare, Square, Trash2, Calendar, Edit, Filter } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { toast } from 'sonner'
 import { addTask, getAllTasks, toggleTaskCompletion, deleteTask, updateTask, type Task } from '@/lib/db/queries'
 import { formatDate } from '@/lib/constants'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
@@ -79,11 +80,11 @@ export default function TasksPage() {
     
     // Validation
     if (!formData.title.trim()) {
-      alert('Title is required')
+      toast.error('Title is required')
       return
     }
     if (formData.title.length > 200) {
-      alert('Title is too long (max 200 characters)')
+      toast.error('Title is too long (max 200 characters)')
       return
     }
     

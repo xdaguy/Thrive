@@ -8,6 +8,7 @@ import { DataEvents, DATA_EVENTS } from '@/lib/events'
 import { db } from '@/lib/db/schema'
 import { Skeleton, SkeletonTable } from '@/components/ui/skeleton'
 import { motion, AnimatePresence } from 'framer-motion'
+import { toast } from 'sonner'
 
 interface ExpenseTabProps {
   openForm?: boolean
@@ -86,11 +87,11 @@ export function ExpenseTab({ openForm }: ExpenseTabProps = {}) {
     // Validation
     const amount = parseFloat(formData.amount)
     if (amount <= 0) {
-      alert('Amount must be greater than 0')
+      toast.error('Amount must be greater than 0')
       return
     }
     if (amount > 1000000000) {
-      alert('Amount seems unrealistically high. Please check.')
+      toast.error('Amount seems unrealistically high. Please check.')
       return
     }
     

@@ -5,7 +5,7 @@ import { ThemeProvider } from '@/components/providers/theme-provider'
 import { DBProvider } from '@/components/providers/db-provider'
 import { ServiceWorkerProvider } from '@/components/providers/sw-provider'
 import { ErrorBoundary } from '@/components/providers/error-boundary'
-import { ToastProvider } from '@/components/ui/toast'
+import { Toaster } from 'sonner'
 import { OfflineIndicator } from '@/components/providers/offline-indicator'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
@@ -71,13 +71,17 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <ToastProvider>
-              <DBProvider>
-                <ServiceWorkerProvider />
-                <OfflineIndicator />
-                {children}
-              </DBProvider>
-            </ToastProvider>
+            <DBProvider>
+              <ServiceWorkerProvider />
+              <OfflineIndicator />
+              <Toaster 
+                position="top-right" 
+                richColors 
+                closeButton
+                duration={4000}
+              />
+              {children}
+            </DBProvider>
           </ThemeProvider>
         </ErrorBoundary>
       </body>

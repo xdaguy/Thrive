@@ -8,6 +8,7 @@ import { DataEvents, DATA_EVENTS } from '@/lib/events'
 import { db } from '@/lib/db/schema'
 import { Skeleton, SkeletonTable } from '@/components/ui/skeleton'
 import { motion, AnimatePresence } from 'framer-motion'
+import { toast } from 'sonner'
 
 interface ExerciseTabProps {
   openForm?: boolean
@@ -80,11 +81,11 @@ export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
     // Validation
     const duration = parseInt(formData.duration)
     if (duration <= 0) {
-      alert('Duration must be greater than 0')
+      toast.error('Duration must be greater than 0')
       return
     }
     if (duration > 1440) {
-      alert('Duration seems too long (max 24 hours)')
+      toast.error('Duration seems too long (max 24 hours)')
       return
     }
     

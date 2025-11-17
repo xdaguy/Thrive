@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Plus, RotateCw, Trophy, Target, Trash2, CheckCircle, Circle, X, Edit } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { toast } from 'sonner'
 import { 
   addRoutine, 
   getAllRoutines, 
@@ -97,12 +98,12 @@ export default function RoutinesPage() {
     
     // Validation
     if (!formData.name.trim()) {
-      alert('Routine name is required')
+      toast.error('Routine name is required')
       return
     }
     const validItems = formData.items.filter(item => item.name.trim() !== '')
     if (validItems.length === 0) {
-      alert('At least one routine item is required')
+      toast.error('At least one routine item is required')
       return
     }
     

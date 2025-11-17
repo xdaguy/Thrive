@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { User, DollarSign, Scale, Calendar, ArrowRight, Sparkles, Database, Cloud, HardDrive, UserPlus, Upload, FileUp } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { toast } from 'sonner'
 import { db } from '@/lib/db/schema'
 import { restoreFromBackup, parseBackupFile } from '@/lib/sync'
 import { fadeIn, slideRight, slideLeft, scaleIn } from '@/lib/animations'
@@ -51,7 +52,7 @@ export default function OnboardingPage() {
 
     // Validation
     if (!formData.name.trim()) {
-      alert('Please enter your name')
+      toast.error('Please enter your name')
       return
     }
 
@@ -71,7 +72,7 @@ export default function OnboardingPage() {
       router.push('/dashboard')
     } catch (error) {
       console.error('Failed to save settings:', error)
-      alert('Failed to save settings. Please try again.')
+      toast.error('Failed to save settings. Please try again.')
     }
   }
 
@@ -121,17 +122,17 @@ export default function OnboardingPage() {
 
           let message = '✅ Backup restored successfully! Welcome back!'
           if (result.warnings.length > 0) {
-            message += '\n\nNotes:\n' + result.warnings.join('\n')
+            toast.success(result.message, { description: result.warnings.join(', ') })
+          } else {
+            toast.success(result.message)
           }
-          
-          alert(message)
           router.push('/dashboard')
         } else {
-          alert(`❌ ${result.message}\n\n${result.warnings.join('\n')}`)
+          toast.error(result.message, { description: result.warnings.join(', ') })
         }
       } catch (error) {
         console.error('Failed to restore backup:', error)
-        alert('❌ Failed to restore backup. Please check the file and try again.')
+        toast.error('Failed to restore backup. Please check the file and try again.')
       }
     }
 
@@ -154,7 +155,7 @@ export default function OnboardingPage() {
       await authorizeWithGoogle()
     } catch (error) {
       console.error('Google Drive connection failed:', error)
-      alert('❌ Failed to connect to Google Drive.')
+      toast.error('Failed to connect to Google Drive.')
     }
   }
 
@@ -701,7 +702,7 @@ export default function OnboardingPage() {
                   type="button"
                   onClick={() => {
                     if (step === 1 && !formData.name.trim()) {
-                      alert('Please enter your name')
+                      toast.error('Please enter your name')
                       return
                     }
                     setStep(step + 1)

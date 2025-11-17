@@ -8,6 +8,7 @@ import { DataEvents, DATA_EVENTS } from '@/lib/events'
 import { db } from '@/lib/db/schema'
 import { Skeleton, SkeletonTable } from '@/components/ui/skeleton'
 import { motion, AnimatePresence } from 'framer-motion'
+import { toast } from 'sonner'
 
 interface WeightTabProps {
   openForm?: boolean
@@ -80,11 +81,11 @@ export function WeightTab({ openForm }: WeightTabProps = {}) {
     // Validation
     const weight = parseFloat(formData.weight)
     if (weight <= 0) {
-      alert('Weight must be greater than 0')
+      toast.error('Weight must be greater than 0')
       return
     }
     if (weight > 1000) {
-      alert('Weight seems unrealistic. Please check.')
+      toast.error('Weight seems unrealistic. Please check.')
       return
     }
     
