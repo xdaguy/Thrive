@@ -44,6 +44,7 @@ export default function SettingsPage() {
   const [googleEmail, setGoogleEmail] = useState('')
   const [syncing, setSyncing] = useState(false)
   const [lastSync, setLastSync] = useState<Date | null>(null)
+  const [processingOnboarding, setProcessingOnboarding] = useState(false)
 
   useEffect(() => {
     setMounted(true)
@@ -74,6 +75,7 @@ export default function SettingsPage() {
         if (onboardingPending === 'true' && onboardingFormData) {
           // ONBOARDING FLOW: Download cloud backup FIRST, then create if needed
           console.log('🎓 Onboarding flow detected')
+          setProcessingOnboarding(true)
           
           const formData = JSON.parse(onboardingFormData)
           
@@ -527,6 +529,25 @@ export default function SettingsPage() {
   }
 
   const totalEntries = Object.values(stats).reduce((sum, count) => sum + count, 0)
+
+  // Show loading screen while processing onboarding OAuth callback
+  if (processingOnboarding) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-[#0A0A0A] flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
+          <div className="space-y-2">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+              Connecting to Google Drive
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400">
+              Downloading your settings and data...
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <motion.div 

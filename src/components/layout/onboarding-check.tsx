@@ -19,6 +19,17 @@ export function OnboardingCheck({ children }: { children: React.ReactNode }) {
 
     async function checkOnboarding() {
       try {
+        // Check if we're processing OAuth callback from onboarding
+        const onboardingPending = sessionStorage.getItem('onboarding_pending')
+        
+        if (onboardingPending === 'true') {
+          // Skip onboarding check - we're in the middle of OAuth flow
+          console.log('⏳ Onboarding OAuth in progress, skipping check')
+          setIsChecking(false)
+          hasChecked.current = true
+          return
+        }
+        
         // Initialize settings if they don't exist
         await initializeSettings()
         
