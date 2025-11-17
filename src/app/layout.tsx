@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
-import './globals.css'
 import { ThemeProvider } from '@/components/providers/theme-provider'
 import { DBProvider } from '@/components/providers/db-provider'
 import { ServiceWorkerProvider } from '@/components/providers/sw-provider'
 import { ErrorBoundary } from '@/components/providers/error-boundary'
 import { Toaster } from 'sonner'
+import 'sonner/dist/styles.css'
+import './globals.css'
 import { OfflineIndicator } from '@/components/providers/offline-indicator'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
@@ -75,10 +76,18 @@ export default function RootLayout({
               <ServiceWorkerProvider />
               <OfflineIndicator />
               <Toaster 
-                position="top-right" 
-                richColors 
+                position="top-right"
+                expand={false}
+                richColors
                 closeButton
                 duration={4000}
+                gap={12}
+                toastOptions={{
+                  className: 'toast-custom',
+                  style: {
+                    padding: '14px 18px',
+                  },
+                }}
               />
               {children}
             </DBProvider>
