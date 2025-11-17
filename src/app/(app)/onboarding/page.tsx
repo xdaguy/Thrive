@@ -10,6 +10,7 @@ import { restoreFromBackup, parseBackupFile } from '@/lib/sync'
 import { fadeIn, slideRight, slideLeft, scaleIn } from '@/lib/animations'
 import { authorizeWithGoogle } from '@/lib/google/oauth-new'
 import { startAutoSync, syncNow } from '@/lib/google'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 
 const CURRENCIES = [
   { code: 'USD', symbol: '$', name: 'US Dollar' },
@@ -30,7 +31,9 @@ const DATE_FORMATS = [
 
 export default function OnboardingPage() {
   const router = useRouter()
-  const [step, setStep] = useState(0)
+  const [step, setStep] = useState(1)
+  const [showRestoreConfirm, setShowRestoreConfirm] = useState(false)
+  const [restoreData, setRestoreData] = useState<any>(null)
   const [userType, setUserType] = useState<'new' | 'existing' | null>(null)
   const [formData, setFormData] = useState({
     name: '',
@@ -90,28 +93,24 @@ export default function OnboardingPage() {
         // Parse backup file
         const data = await parseBackupFile(file)
 
-        // Show confirmation with details
-        const confirmed = confirm(
-          '✅ Restore from Backup\n\n' +
-          `This will restore ALL your data including:\n\n` +
-          `• Settings and preferences\n` +
-          `• ${data.income?.length || 0} income entries\n` +
-          `• ${data.expenses?.length || 0} expense entries\n` +
-          `• ${data.debts?.length || 0} debt entries\n` +
-          `• ${data.tasks?.length || 0} tasks\n` +
-          `• ${data.weight?.length || 0} weight entries\n` +
-          `• ${data.exercise?.length || 0} exercises\n` +
-          `• ${data.meals?.length || 0} meals\n` +
-          `• ${data.routines?.length || 0} routines\n\n` +
-          `Schema Version: ${data.schemaVersion || 1}\n` +
-          `Backup Date: ${data.exportDate ? new Date(data.exportDate).toLocaleDateString() : 'Unknown'}\n\n` +
-          'Continue with restore?'
-        )
+        // Show confirmation modal
+        setRestoreData(data)
+        setShowRestoreConfirm(true)
+      } catch (error) {
+        console.error('Failed to restore backup:', error)
+        toast.error('Failed to restore backup. Please check the file and try again.')
+      }
+    }
 
-        if (!confirmed) return
+    input.click()
+  }
 
-        // Restore with migration support using toast.promise
-        const restorePromise = restoreFromBackup(data).then(async (result) => {
+  async function executeRestore() {
+    if (!restoreData) return
+
+    try {
+      // Restore with migration support using toast.promise
+      const restorePromise = restoreFromBackup(restoreData).then(async (result) => {
           if (result.success) {
             // Ensure onboarding is marked complete
             await db.settings.update('user_settings', {
@@ -144,13 +143,10 @@ export default function OnboardingPage() {
             }
           }
         )
-      } catch (error) {
-        console.error('Failed to restore backup:', error)
-        toast.error('Failed to restore backup. Please check the file and try again.')
-      }
+    } catch (error) {
+      console.error('Failed to restore backup:', error)
+      toast.error('Failed to restore backup. Please check the file and try again.')
     }
-
-    input.click()
   }
 
   async function handleConnectGoogleDrive() {
@@ -768,6 +764,35 @@ export default function OnboardingPage() {
           </div>
         )}
       </div>
+
+      {/* Restore Backup Confirmation Modal */}
+      <ConfirmDialog
+        isOpen={showRestoreConfirm}
+        onClose={() => {
+          setShowRestoreConfirm(false)
+          setRestoreData(null)
+        }}
+        onConfirm={() => {
+          executeRestore()
+          setShowRestoreConfirm(false)
+        }}
+        title="Restore from Backup"
+        message="This will restore ALL your data and complete the onboarding process."
+        details={restoreData ? [
+          'Settings and preferences',
+          `${restoreData.income?.length || 0} income entries`,
+          `${restoreData.expenses?.length || 0} expense entries`,
+          `${restoreData.debts?.length || 0} debt entries`,
+          `${restoreData.tasks?.length || 0} tasks`,
+          `${restoreData.weight?.length || 0} weight entries`,
+          `${restoreData.exercise?.length || 0} exercises`,
+          `${restoreData.meals?.length || 0} meals`,
+          `${restoreData.routines?.length || 0} routines`,
+        ] : []}
+        variant="info"
+        confirmText="Restore Data"
+        cancelText="Cancel"
+      />
     </div>
   )
 }

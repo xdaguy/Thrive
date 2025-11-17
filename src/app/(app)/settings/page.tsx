@@ -21,6 +21,7 @@ import {
   isSyncing,
   getLastSyncTime,
 } from '@/lib/google'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 
 export default function SettingsPage() {
   const [stats, setStats] = useState({
@@ -46,6 +47,11 @@ export default function SettingsPage() {
   const [syncing, setSyncing] = useState(false)
   const [lastSync, setLastSync] = useState<Date | null>(null)
   const [processingOnboarding, setProcessingOnboarding] = useState(false)
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean
+    type: 'import' | 'disconnect' | 'clear' | 'clearFinal'
+    data?: any
+  }>({ isOpen: false, type: 'import' })
 
   useEffect(() => {
     setMounted(true)
@@ -296,54 +302,12 @@ export default function SettingsPage() {
         // Parse backup file
         const data = await parseBackupFile(file)
 
-        // Show confirmation
-        const confirmed = confirm(
-          '⚠️ Import Data\n\n' +
-          'This will MERGE the following with your existing data:\n\n' +
-          `• ${data.income?.length || 0} income entries\n` +
-          `• ${data.expenses?.length || 0} expense entries\n` +
-          `• ${data.debts?.length || 0} debt entries\n` +
-          `• ${data.tasks?.length || 0} tasks\n` +
-          `• ${data.weight?.length || 0} weight entries\n` +
-          `• ${data.exercise?.length || 0} exercise entries\n` +
-          `• ${data.meals?.length || 0} meal entries\n` +
-          `• ${data.routines?.length || 0} routines\n\n` +
-          `Schema Version: ${data.schemaVersion || 1}\n` +
-          `Export Date: ${data.exportDate ? new Date(data.exportDate).toLocaleDateString() : 'Unknown'}\n\n` +
-          'Newer versions will be kept, duplicates will be skipped.\n\n' +
-          'Continue with import?'
-        )
-
-        if (!confirmed) return
-
-        // Import with migration support using toast.promise for better UX
-        const importPromise = importBackup(data, {
-          merge: true,
-          preserveUnknown: true,
-          skipDuplicates: true,
-          validateSchema: true
+        // Show confirmation modal
+        setConfirmDialog({
+          isOpen: true,
+          type: 'import',
+          data,
         })
-
-        toast.promise(
-          importPromise,
-          {
-            loading: 'Importing data...',
-            success: (result) => {
-              loadStats()
-              loadPreferences()
-              if (result.warnings.length > 0) {
-                return `${result.message} (${result.warnings.length} warnings)`
-              }
-              return result.message
-            },
-            error: (result) => {
-              if (result?.message) {
-                return `${result.message}${result.warnings?.length ? ` (${result.warnings.length} issues)` : ''}`
-              }
-              return 'Failed to import data. Please check the file format.'
-            }
-          }
-        )
       } catch (error) {
         console.error('Import failed:', error)
         toast.error('Failed to import data. Please check the file format.')
@@ -351,6 +315,41 @@ export default function SettingsPage() {
     }
 
     input.click()
+  }
+
+  async function executeImport(data: any) {
+    try {
+      const importPromise = importBackup(data, {
+        merge: true,
+        preserveUnknown: true,
+        skipDuplicates: true,
+        validateSchema: true
+      })
+
+      toast.promise(
+        importPromise,
+        {
+          loading: 'Importing data...',
+          success: (result) => {
+            loadStats()
+            loadPreferences()
+            if (result.warnings.length > 0) {
+              return `${result.message} (${result.warnings.length} warnings)`
+            }
+            return result.message
+          },
+          error: (result) => {
+            if (result?.message) {
+              return `${result.message}${result.warnings?.length ? ` (${result.warnings.length} issues)` : ''}`
+            }
+            return 'Failed to import data. Please check the file format.'
+          }
+        }
+      )
+    } catch (error) {
+      console.error('Import failed:', error)
+      toast.error('Failed to import data. Please check the file format.')
+    }
   }
 
   // Google Drive sync functions
@@ -395,18 +394,13 @@ export default function SettingsPage() {
   }
 
   async function handleDisconnectGoogleDrive() {
-    const confirmed = confirm(
-      '⚠️ Disconnect Google Drive\n\n' +
-      'This will:\n' +
-      '• Stop auto-sync\n' +
-      '• Remove connection to Google Drive\n' +
-      '• Keep your local data\n\n' +
-      'You can reconnect anytime.\n\n' +
-      'Continue?'
-    )
+    setConfirmDialog({
+      isOpen: true,
+      type: 'disconnect',
+    })
+  }
 
-    if (!confirmed) return
-
+  async function executeDisconnect() {
     try {
       // Update database settings
       const settings = await db.settings.get('user_settings')
@@ -492,26 +486,20 @@ export default function SettingsPage() {
   }
 
   async function handleClearAllData() {
-    const confirmed = confirm(
-      '⚠️ WARNING: This will delete ALL your data permanently!\n\n' +
-      'This includes:\n' +
-      `• ${stats.income} income entries\n` +
-      `• ${stats.expenses} expense entries\n` +
-      `• ${stats.debts} debt entries\n` +
-      `• ${stats.tasks} tasks\n` +
-      `• ${stats.weight} weight entries\n` +
-      `• ${stats.exercise} exercise entries\n` +
-      `• ${stats.meals} meal entries\n` +
-      `• ${stats.routines} routines\n\n` +
-      'Are you absolutely sure?'
-    )
+    setConfirmDialog({
+      isOpen: true,
+      type: 'clear',
+    })
+  }
 
-    if (!confirmed) return
+  async function handleFirstClearConfirm() {
+    setConfirmDialog({
+      isOpen: true,
+      type: 'clearFinal',
+    })
+  }
 
-    const doubleConfirm = confirm('⚠️ Last chance! This CANNOT be undone. Proceed?')
-    
-    if (!doubleConfirm) return
-
+  async function executeClearData() {
     try {
       await db.income.clear()
       await db.expenses.clear()
@@ -981,6 +969,88 @@ export default function SettingsPage() {
           </a>
         </div>
       </motion.div>
+
+      {/* Confirmation Modals */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen && confirmDialog.type === 'import'}
+        onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+        onConfirm={() => {
+          executeImport(confirmDialog.data)
+          setConfirmDialog({ ...confirmDialog, isOpen: false })
+        }}
+        title="Import Data"
+        message="This will merge the imported data with your existing data. Newer versions will be kept, duplicates will be skipped."
+        details={confirmDialog.data ? [
+          `${confirmDialog.data.income?.length || 0} income entries`,
+          `${confirmDialog.data.expenses?.length || 0} expense entries`,
+          `${confirmDialog.data.debts?.length || 0} debt entries`,
+          `${confirmDialog.data.tasks?.length || 0} tasks`,
+          `${confirmDialog.data.weight?.length || 0} weight entries`,
+          `${confirmDialog.data.exercise?.length || 0} exercise entries`,
+          `${confirmDialog.data.meals?.length || 0} meal entries`,
+          `${confirmDialog.data.routines?.length || 0} routines`,
+        ] : []}
+        variant="info"
+        confirmText="Import Data"
+        cancelText="Cancel"
+      />
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen && confirmDialog.type === 'disconnect'}
+        onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+        onConfirm={() => {
+          executeDisconnect()
+          setConfirmDialog({ ...confirmDialog, isOpen: false })
+        }}
+        title="Disconnect Google Drive"
+        message="This will stop auto-sync and remove the connection to Google Drive. Your local data will be kept. You can reconnect anytime."
+        details={[
+          'Stop auto-sync',
+          'Remove connection',
+          'Keep local data',
+        ]}
+        variant="warning"
+        confirmText="Disconnect"
+        cancelText="Cancel"
+      />
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen && confirmDialog.type === 'clear'}
+        onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+        onConfirm={() => {
+          handleFirstClearConfirm()
+          setConfirmDialog({ ...confirmDialog, isOpen: false })
+        }}
+        title="Delete All Data"
+        message="This will permanently delete ALL your data. This action cannot be undone."
+        details={[
+          `${stats.income} income entries`,
+          `${stats.expenses} expense entries`,
+          `${stats.debts} debt entries`,
+          `${stats.tasks} tasks`,
+          `${stats.weight} weight entries`,
+          `${stats.exercise} exercise entries`,
+          `${stats.meals} meal entries`,
+          `${stats.routines} routines`,
+        ]}
+        variant="danger"
+        confirmText="Continue"
+        cancelText="Cancel"
+      />
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen && confirmDialog.type === 'clearFinal'}
+        onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+        onConfirm={() => {
+          executeClearData()
+          setConfirmDialog({ ...confirmDialog, isOpen: false })
+        }}
+        title="⚠️ Final Warning"
+        message="This is your last chance! All data will be permanently deleted and CANNOT be recovered."
+        variant="danger"
+        confirmText="Delete Everything"
+        cancelText="Cancel"
+      />
     </motion.div>
   )
 }
