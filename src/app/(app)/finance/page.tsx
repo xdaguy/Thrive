@@ -10,6 +10,10 @@ import { DebtTab } from '@/components/finance/debt-tab'
 import { fadeIn, tabContent } from '@/lib/animations'
 import { ErrorBoundary } from '@/components/providers/error-boundary'
 import { usePullToRefresh } from '@/hooks/use-pull-to-refresh'
+import { ExpenseBreakdownChart } from '@/components/charts/expense-breakdown-chart'
+import { getExpenseBreakdownData } from '@/lib/db/queries'
+import { DataEvents, DATA_EVENTS } from '@/lib/events'
+import { db } from '@/lib/db/schema'
 
 type Tab = 'income' | 'expenses' | 'debts'
 
@@ -18,15 +22,56 @@ export default function FinancePage() {
   const [activeTab, setActiveTab] = useState<Tab>('income')
   const [openFormTrigger, setOpenFormTrigger] = useState(0)
   const [refreshKey, setRefreshKey] = useState(0)
+  const [expenseData, setExpenseData] = useState<Array<{ category: string; amount: number }>>([])
+  const [chartLoading, setChartLoading] = useState(true)
+  const [currency, setCurrency] = useState('USD')
 
   const { containerRef, pullHandlers, pullDistance, pullProgress, isRefreshing, showRefreshIndicator } = usePullToRefresh({
     onRefresh: async () => {
       // Trigger tab re-render by changing key
       setRefreshKey(prev => prev + 1)
+      await loadChartData()
       // Small delay to let data reload
       await new Promise(resolve => setTimeout(resolve, 500))
     }
   })
+
+  async function loadChartData() {
+    try {
+      setChartLoading(true)
+      const data = await getExpenseBreakdownData(1) // Last month
+      setExpenseData(data)
+      setChartLoading(false)
+    } catch (error) {
+      console.error('Failed to load chart data:', error)
+      setChartLoading(false)
+    }
+  }
+
+  async function loadCurrency() {
+    try {
+      const settings = await db.settings.get('user_settings')
+      if (settings?.currency) {
+        setCurrency(settings.currency)
+      }
+    } catch (error) {
+      console.error('Failed to load currency:', error)
+    }
+  }
+
+  useEffect(() => {
+    loadCurrency()
+    loadChartData()
+
+    // Listen for changes
+    DataEvents.on(DATA_EVENTS.EXPENSE_CHANGED, loadChartData)
+    DataEvents.on(DATA_EVENTS.SETTINGS_CHANGED, loadCurrency)
+    
+    return () => {
+      DataEvents.off(DATA_EVENTS.EXPENSE_CHANGED, loadChartData)
+      DataEvents.off(DATA_EVENTS.SETTINGS_CHANGED, loadCurrency)
+    }
+  }, [])
 
   useEffect(() => {
     // Handle URL parameters for tab and form opening
@@ -84,6 +129,20 @@ export default function FinancePage() {
         <p className="text-gray-600 dark:text-gray-400">
           Track your income, expenses, and debts
         </p>
+      </motion.div>
+
+      {/* Expense Breakdown Chart */}
+      <motion.div {...fadeIn} className="card p-4 sm:p-5">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">
+          Expenses by Category (This Month)
+        </h3>
+        {chartLoading ? (
+          <div className="h-[300px] flex items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+          </div>
+        ) : (
+          <ExpenseBreakdownChart data={expenseData} currency={currency} />
+        )}
       </motion.div>
 
       {/* Tabs */}

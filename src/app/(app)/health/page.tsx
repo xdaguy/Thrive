@@ -10,6 +10,9 @@ import { MealsTab } from '@/components/health/meals-tab'
 import { fadeIn, tabContent } from '@/lib/animations'
 import { ErrorBoundary } from '@/components/providers/error-boundary'
 import { usePullToRefresh } from '@/hooks/use-pull-to-refresh'
+import { WeightProgressChart } from '@/components/charts/weight-progress-chart'
+import { getWeightProgressData } from '@/lib/db/queries'
+import { DataEvents, DATA_EVENTS } from '@/lib/events'
 
 type Tab = 'weight' | 'exercise' | 'meals'
 
@@ -18,13 +21,36 @@ export default function HealthPage() {
   const [activeTab, setActiveTab] = useState<Tab>('weight')
   const [openFormTrigger, setOpenFormTrigger] = useState(0)
   const [refreshKey, setRefreshKey] = useState(0)
+  const [weightData, setWeightData] = useState<Array<{ date: string; weight: number }>>([])
+  const [chartLoading, setChartLoading] = useState(true)
 
   const { containerRef, pullHandlers, pullDistance, pullProgress, isRefreshing, showRefreshIndicator } = usePullToRefresh({
     onRefresh: async () => {
       setRefreshKey(prev => prev + 1)
+      await loadChartData()
       await new Promise(resolve => setTimeout(resolve, 500))
     }
   })
+
+  async function loadChartData() {
+    try {
+      setChartLoading(true)
+      const data = await getWeightProgressData(30) // Last 30 days
+      setWeightData(data)
+      setChartLoading(false)
+    } catch (error) {
+      console.error('Failed to load chart data:', error)
+      setChartLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadChartData()
+    DataEvents.on(DATA_EVENTS.WEIGHT_CHANGED, loadChartData)
+    return () => {
+      DataEvents.off(DATA_EVENTS.WEIGHT_CHANGED, loadChartData)
+    }
+  }, [])
 
   useEffect(() => {
     // Handle URL parameters for tab and form opening
@@ -81,6 +107,20 @@ export default function HealthPage() {
         <p className="text-gray-600 dark:text-gray-400">
           Track your weight, exercise, and meals
         </p>
+      </motion.div>
+
+      {/* Weight Progress Chart */}
+      <motion.div {...fadeIn} className="card p-4 sm:p-5">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">
+          Weight Progress (Last 30 Days)
+        </h3>
+        {chartLoading ? (
+          <div className="h-[300px] flex items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+          </div>
+        ) : (
+          <WeightProgressChart data={weightData} />
+        )}
       </motion.div>
 
       <div className="card p-0 overflow-hidden">

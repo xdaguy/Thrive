@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Wallet, TrendingUp, TrendingDown, CheckSquare, Heart, Target, RefreshCw, Loader2 } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { getTotalBalance, getMonthlyIncome, getMonthlyExpenses, getTasksCompletedToday, getTotalTasksToday, getAllTasks, getAllRoutines } from '@/lib/db/queries'
+import { getTotalBalance, getMonthlyIncome, getMonthlyExpenses, getTasksCompletedToday, getTotalTasksToday, getAllTasks, getAllRoutines, getFinancialTrendData } from '@/lib/db/queries'
 import { formatCurrency } from '@/lib/constants'
 import { DataEvents, DATA_EVENTS } from '@/lib/events'
 import type { Task, Routine } from '@/lib/db/schema'
@@ -12,6 +12,7 @@ import { db } from '@/lib/db/schema'
 import { fadeIn, staggerContainer, staggerItem } from '@/lib/animations'
 import { Skeleton, SkeletonCard } from '@/components/ui/skeleton'
 import { usePullToRefresh } from '@/hooks/use-pull-to-refresh'
+import { FinanceTrendChart } from '@/components/charts/finance-trend-chart'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -27,6 +28,8 @@ export default function DashboardPage() {
   const [userName, setUserName] = useState<string>('')
   const [currency, setCurrency] = useState('USD')
   const [loading, setLoading] = useState(true)
+  const [financeTrendData, setFinanceTrendData] = useState<Array<{ month: string; income: number; expenses: number }>>([])
+  const [chartLoading, setChartLoading] = useState(true)
 
   const { containerRef, pullHandlers, pullDistance, pullProgress, isRefreshing, showRefreshIndicator } = usePullToRefresh({
     onRefresh: async () => {
@@ -37,10 +40,13 @@ export default function DashboardPage() {
   useEffect(() => {
     loadUserName()
     loadStats()
+    loadChartData()
     
     // Listen to data change events
     DataEvents.on(DATA_EVENTS.INCOME_CHANGED, loadStats)
     DataEvents.on(DATA_EVENTS.EXPENSE_CHANGED, loadStats)
+    DataEvents.on(DATA_EVENTS.INCOME_CHANGED, loadChartData)
+    DataEvents.on(DATA_EVENTS.EXPENSE_CHANGED, loadChartData)
     DataEvents.on(DATA_EVENTS.TASK_CHANGED, loadStats)
     DataEvents.on(DATA_EVENTS.SETTINGS_CHANGED, loadUserName)
     DataEvents.on(DATA_EVENTS.SETTINGS_CHANGED, loadStats) // Reload stats when currency changes
@@ -48,6 +54,8 @@ export default function DashboardPage() {
     return () => {
       DataEvents.off(DATA_EVENTS.INCOME_CHANGED, loadStats)
       DataEvents.off(DATA_EVENTS.EXPENSE_CHANGED, loadStats)
+      DataEvents.off(DATA_EVENTS.INCOME_CHANGED, loadChartData)
+      DataEvents.off(DATA_EVENTS.EXPENSE_CHANGED, loadChartData)
       DataEvents.off(DATA_EVENTS.TASK_CHANGED, loadStats)
       DataEvents.off(DATA_EVENTS.SETTINGS_CHANGED, loadUserName)
       DataEvents.off(DATA_EVENTS.SETTINGS_CHANGED, loadStats)
@@ -118,9 +126,22 @@ export default function DashboardPage() {
     }
   }
 
+  async function loadChartData() {
+    try {
+      setChartLoading(true)
+      const data = await getFinancialTrendData(6)
+      setFinanceTrendData(data)
+      setChartLoading(false)
+    } catch (error) {
+      console.error('Failed to load chart data:', error)
+      setChartLoading(false)
+    }
+  }
+
   async function handleRefresh() {
     setLoading(true)
     await loadStats()
+    await loadChartData()
   }
 
   return (
@@ -264,6 +285,20 @@ export default function DashboardPage() {
         </motion.div>
       </motion.div>
       )}
+
+      {/* Financial Trend Chart */}
+      <motion.div {...fadeIn} className="card p-4 sm:p-5">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">
+          Financial Trends (Last 6 Months)
+        </h3>
+        {chartLoading ? (
+          <div className="h-[300px] flex items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+          </div>
+        ) : (
+          <FinanceTrendChart data={financeTrendData} currency={currency} />
+        )}
+      </motion.div>
 
       {/* Quick Actions */}
       <div className="card p-4 sm:p-5">

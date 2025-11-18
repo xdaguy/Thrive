@@ -246,6 +246,73 @@ export async function getTotalBalance() {
   return totalIncome - totalExpenses
 }
 
+export async function getFinancialTrendData(months: number = 6) {
+  const result = []
+  const now = new Date()
+  
+  for (let i = months - 1; i >= 0; i--) {
+    const targetDate = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const year = targetDate.getFullYear()
+    const month = targetDate.getMonth()
+    
+    const monthName = targetDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+    
+    const income = await getMonthlyIncome(year, month)
+    const expenses = await getMonthlyExpenses(year, month)
+    
+    result.push({
+      month: monthName,
+      income,
+      expenses
+    })
+  }
+  
+  return result
+}
+
+export async function getExpenseBreakdownData(months: number = 1) {
+  const now = new Date()
+  const startDate = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1)
+  
+  // Get all expenses for the time period
+  const expenses = await db.expenses
+    .where('date')
+    .between(startDate, now, true, true)
+    .toArray()
+  
+  // Group by category and sum amounts
+  const categoryMap = new Map<string, number>()
+  
+  expenses.forEach(expense => {
+    const current = categoryMap.get(expense.category) || 0
+    categoryMap.set(expense.category, current + expense.amount)
+  })
+  
+  // Convert to array and sort by amount descending
+  const result = Array.from(categoryMap.entries())
+    .map(([category, amount]) => ({ category, amount }))
+    .sort((a, b) => b.amount - a.amount)
+  
+  return result
+}
+
+export async function getWeightProgressData(days: number = 30) {
+  const now = new Date()
+  const startDate = new Date(now)
+  startDate.setDate(startDate.getDate() - days)
+  
+  const weights = await db.weights
+    .where('date')
+    .between(startDate, now, true, true)
+    .toArray()
+  
+  // Format for chart
+  return weights.map(w => ({
+    date: new Date(w.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    weight: w.weight
+  }))
+}
+
 export async function getTasksCompletedToday() {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
