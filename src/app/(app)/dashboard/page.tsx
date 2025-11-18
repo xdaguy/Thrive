@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Wallet, TrendingUp, TrendingDown, CheckSquare, Heart, Target, RefreshCw } from 'lucide-react'
+import { Wallet, TrendingUp, TrendingDown, CheckSquare, Heart, Target, RefreshCw, Loader2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { getTotalBalance, getMonthlyIncome, getMonthlyExpenses, getTasksCompletedToday, getTotalTasksToday, getAllTasks, getAllRoutines } from '@/lib/db/queries'
 import { formatCurrency } from '@/lib/constants'
@@ -11,6 +11,7 @@ import type { Task, Routine } from '@/lib/db/schema'
 import { db } from '@/lib/db/schema'
 import { fadeIn, staggerContainer, staggerItem } from '@/lib/animations'
 import { Skeleton, SkeletonCard } from '@/components/ui/skeleton'
+import { usePullToRefresh } from '@/hooks/use-pull-to-refresh'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -26,6 +27,12 @@ export default function DashboardPage() {
   const [userName, setUserName] = useState<string>('')
   const [currency, setCurrency] = useState('USD')
   const [loading, setLoading] = useState(true)
+
+  const { containerRef, pullHandlers, pullDistance, pullProgress, isRefreshing, showRefreshIndicator } = usePullToRefresh({
+    onRefresh: async () => {
+      await loadStats()
+    }
+  })
 
   useEffect(() => {
     loadUserName()
@@ -117,12 +124,38 @@ export default function DashboardPage() {
   }
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-4 sm:space-y-6"
+    <div
+      ref={containerRef}
+      {...pullHandlers}
+      className="relative overflow-y-auto h-full"
+      style={{ WebkitOverflowScrolling: 'touch' }}
     >
+      {/* Pull-to-Refresh Indicator */}
+      {showRefreshIndicator && (
+        <div 
+          className="absolute top-0 left-0 right-0 flex justify-center items-center transition-opacity"
+          style={{ 
+            height: `${pullDistance}px`,
+            opacity: pullProgress 
+          }}
+        >
+          <Loader2 
+            className={`w-6 h-6 text-blue-600 dark:text-blue-400 ${isRefreshing ? 'animate-spin' : ''}`}
+            style={{ 
+              transform: `rotate(${pullProgress * 360}deg)`,
+              transition: isRefreshing ? 'none' : 'transform 0.2s ease'
+            }}
+          />
+        </div>
+      )}
+
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+        className="space-y-4 sm:space-y-6"
+        style={{ paddingTop: showRefreshIndicator ? `${pullDistance}px` : '0' }}
+      >
       {/* Welcome Section */}
       <motion.div 
         {...fadeIn}
@@ -403,6 +436,7 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
-    </motion.div>
+      </motion.div>
+    </div>
   )
 }

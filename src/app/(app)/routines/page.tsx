@@ -24,6 +24,7 @@ import { fadeIn, staggerContainer, staggerItem, scaleIn } from '@/lib/animations
 import { Skeleton, SkeletonTable } from '@/components/ui/skeleton'
 import { ErrorBoundary } from '@/components/providers/error-boundary'
 import { useSwipeToDelete } from '@/hooks/use-swipe'
+import { usePullToRefresh } from '@/hooks/use-pull-to-refresh'
 
 // Swipeable Routine Item Wrapper
 interface SwipeableRoutineItemProps {
@@ -147,6 +148,12 @@ export default function RoutinesPage() {
     name: '',
     timeOfDay: 'morning' as 'morning' | 'afternoon' | 'evening' | 'night',
     items: [{ id: generateId(), name: '', order: 0 }]
+  })
+
+  const { containerRef, pullHandlers, pullDistance, pullProgress, isRefreshing, showRefreshIndicator } = usePullToRefresh({
+    onRefresh: async () => {
+      await loadRoutines()
+    }
   })
 
   useEffect(() => {
@@ -364,12 +371,38 @@ export default function RoutinesPage() {
 
   return (
     <ErrorBoundary>
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-6"
+    <div
+      ref={containerRef}
+      {...pullHandlers}
+      className="relative overflow-y-auto h-full"
+      style={{ WebkitOverflowScrolling: 'touch' }}
     >
+      {/* Pull-to-Refresh Indicator */}
+      {showRefreshIndicator && (
+        <div 
+          className="absolute top-0 left-0 right-0 flex justify-center items-center transition-opacity z-50"
+          style={{ 
+            height: `${pullDistance}px`,
+            opacity: pullProgress 
+          }}
+        >
+          <Loader2 
+            className={`w-6 h-6 text-blue-600 dark:text-blue-400 ${isRefreshing ? 'animate-spin' : ''}`}
+            style={{ 
+              transform: `rotate(${pullProgress * 360}deg)`,
+              transition: isRefreshing ? 'none' : 'transform 0.2s ease'
+            }}
+          />
+        </div>
+      )}
+
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+        className="space-y-6"
+        style={{ paddingTop: showRefreshIndicator ? `${pullDistance}px` : '0' }}
+      >
       {/* Header */}
       <motion.div {...fadeIn} className="flex items-start sm:items-center justify-between gap-3">
         <div className="flex-1 min-w-0">
@@ -571,7 +604,8 @@ export default function RoutinesPage() {
 
       {/* Delete Confirmation Dialog */}
       <DeleteDialog />
-    </motion.div>
+      </motion.div>
+    </div>
     </ErrorBoundary>
   )
 }

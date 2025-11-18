@@ -15,6 +15,7 @@ import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { haptics } from '@/lib/haptics'
 import { useDeleteConfirm } from '@/components/ui/delete-confirm'
 import { useSwipeToDelete } from '@/hooks/use-swipe'
+import { usePullToRefresh } from '@/hooks/use-pull-to-refresh'
 
 // Swipeable Task Item Wrapper
 interface SwipeableTaskItemProps {
@@ -136,6 +137,12 @@ export default function TasksPage() {
   })
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+
+  const { containerRef, pullHandlers, pullDistance, pullProgress, isRefreshing, showRefreshIndicator } = usePullToRefresh({
+    onRefresh: async () => {
+      await loadTasks()
+    }
+  })
 
   useEffect(() => {
     loadTasks()
@@ -342,12 +349,38 @@ export default function TasksPage() {
   }).length
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-6"
+    <div
+      ref={containerRef}
+      {...pullHandlers}
+      className="relative overflow-y-auto h-full"
+      style={{ WebkitOverflowScrolling: 'touch' }}
     >
+      {/* Pull-to-Refresh Indicator */}
+      {showRefreshIndicator && (
+        <div 
+          className="absolute top-0 left-0 right-0 flex justify-center items-center transition-opacity z-50"
+          style={{ 
+            height: `${pullDistance}px`,
+            opacity: pullProgress 
+          }}
+        >
+          <Loader2 
+            className={`w-6 h-6 text-blue-600 dark:text-blue-400 ${isRefreshing ? 'animate-spin' : ''}`}
+            style={{ 
+              transform: `rotate(${pullProgress * 360}deg)`,
+              transition: isRefreshing ? 'none' : 'transform 0.2s ease'
+            }}
+          />
+        </div>
+      )}
+
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+        className="space-y-6"
+        style={{ paddingTop: showRefreshIndicator ? `${pullDistance}px` : '0' }}
+      >
       <motion.div {...fadeIn} className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
@@ -552,6 +585,7 @@ export default function TasksPage() {
 
       {/* Delete Confirmation Dialog */}
       <DeleteDialog />
-    </motion.div>
+      </motion.div>
+    </div>
   )
 }

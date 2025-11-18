@@ -3,11 +3,13 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Loader2 } from 'lucide-react'
 import { IncomeTab } from '@/components/finance/income-tab'
 import { ExpenseTab } from '@/components/finance/expense-tab'
 import { DebtTab } from '@/components/finance/debt-tab'
 import { fadeIn, tabContent } from '@/lib/animations'
 import { ErrorBoundary } from '@/components/providers/error-boundary'
+import { usePullToRefresh } from '@/hooks/use-pull-to-refresh'
 
 type Tab = 'income' | 'expenses' | 'debts'
 
@@ -15,6 +17,16 @@ export default function FinancePage() {
   const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState<Tab>('income')
   const [openFormTrigger, setOpenFormTrigger] = useState(0)
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  const { containerRef, pullHandlers, pullDistance, pullProgress, isRefreshing, showRefreshIndicator } = usePullToRefresh({
+    onRefresh: async () => {
+      // Trigger tab re-render by changing key
+      setRefreshKey(prev => prev + 1)
+      // Small delay to let data reload
+      await new Promise(resolve => setTimeout(resolve, 500))
+    }
+  })
 
   useEffect(() => {
     // Handle URL parameters for tab and form opening
@@ -32,12 +44,38 @@ export default function FinancePage() {
   }, [searchParams])
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-6"
+    <div
+      ref={containerRef}
+      {...pullHandlers}
+      className="relative overflow-y-auto h-full"
+      style={{ WebkitOverflowScrolling: 'touch' }}
     >
+      {/* Pull-to-Refresh Indicator */}
+      {showRefreshIndicator && (
+        <div 
+          className="absolute top-0 left-0 right-0 flex justify-center items-center transition-opacity z-50"
+          style={{ 
+            height: `${pullDistance}px`,
+            opacity: pullProgress 
+          }}
+        >
+          <Loader2 
+            className={`w-6 h-6 text-blue-600 dark:text-blue-400 ${isRefreshing ? 'animate-spin' : ''}`}
+            style={{ 
+              transform: `rotate(${pullProgress * 360}deg)`,
+              transition: isRefreshing ? 'none' : 'transform 0.2s ease'
+            }}
+          />
+        </div>
+      )}
+
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+        className="space-y-6"
+        style={{ paddingTop: showRefreshIndicator ? `${pullDistance}px` : '0' }}
+      >
       {/* Header */}
       <motion.div {...fadeIn}>
         <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
@@ -91,13 +129,14 @@ export default function FinancePage() {
             className="p-6"
           >
             <ErrorBoundary>
-              {activeTab === 'income' && <IncomeTab key={`income-${openFormTrigger}`} openForm={openFormTrigger > 0} />}
-              {activeTab === 'expenses' && <ExpenseTab key={`expenses-${openFormTrigger}`} openForm={openFormTrigger > 0} />}
-              {activeTab === 'debts' && <DebtTab key={`debts-${openFormTrigger}`} openForm={openFormTrigger > 0} />}
+              {activeTab === 'income' && <IncomeTab key={`income-${openFormTrigger}-${refreshKey}`} openForm={openFormTrigger > 0} />}
+              {activeTab === 'expenses' && <ExpenseTab key={`expenses-${openFormTrigger}-${refreshKey}`} openForm={openFormTrigger > 0} />}
+              {activeTab === 'debts' && <DebtTab key={`debts-${openFormTrigger}-${refreshKey}`} openForm={openFormTrigger > 0} />}
             </ErrorBoundary>
           </motion.div>
         </AnimatePresence>
       </div>
-    </motion.div>
+      </motion.div>
+    </div>
   )
 }
