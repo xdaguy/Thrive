@@ -37,7 +37,7 @@ function SwipeableDebtItem({ debt, currency, dateFormat, onEdit, onDelete, onMar
   const isOwedToMe = debt.type === 'owed_to_me'
 
   return (
-    <div className="relative overflow-hidden rounded-xl">
+    <div className="relative overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1A1A1A]">
       {/* Delete Background */}
       <div className="absolute inset-0 bg-red-500 dark:bg-red-600 flex items-center justify-end px-6">
         <Trash2 className="w-6 h-6 text-white" />
@@ -47,7 +47,7 @@ function SwipeableDebtItem({ debt, currency, dateFormat, onEdit, onDelete, onMar
       <div
         {...swipeHandlers}
         style={swipeStyle}
-        className={`card p-4 hover:shadow-md transition-shadow relative bg-white dark:bg-[#1A1A1A] ${
+        className={`relative p-4 bg-white dark:bg-[#1A1A1A] hover:shadow-md transition-shadow ${
           isPaid ? 'opacity-60' : ''
         }`}
       >

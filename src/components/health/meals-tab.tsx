@@ -32,7 +32,7 @@ function SwipeableMealItem({ meal, dateFormat, onEdit, onDelete }: SwipeableMeal
   })
 
   return (
-    <div className="relative overflow-hidden rounded-xl">
+    <div className="relative overflow-hidden rounded-xl bg-gray-50 dark:bg-gray-800">
       {/* Delete Background */}
       <div className="absolute inset-0 bg-red-500 dark:bg-red-600 flex items-center justify-end px-6">
         <Trash2 className="w-6 h-6 text-white" />
@@ -42,7 +42,7 @@ function SwipeableMealItem({ meal, dateFormat, onEdit, onDelete }: SwipeableMeal
       <div
         {...swipeHandlers}
         style={swipeStyle}
-        className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl relative"
+        className="relative flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800"
       >
         <div className="flex items-center gap-4 flex-1">
           <div className="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center">

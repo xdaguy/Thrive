@@ -31,7 +31,11 @@ function SwipeableTaskItem({ task, dateFormat, onToggle, onEdit, onDelete }: Swi
   })
 
   return (
-    <div className="relative overflow-hidden rounded-xl">
+    <div className={`relative overflow-hidden rounded-xl border bg-white dark:bg-[#1A1A1A] ${
+      task.completed
+        ? 'border-green-200 dark:border-green-900/30'
+        : 'border-gray-200 dark:border-gray-800'
+    }`}>
       {/* Delete Background */}
       <div className="absolute inset-0 bg-red-500 dark:bg-red-600 flex items-center justify-end px-6">
         <Trash2 className="w-6 h-6 text-white" />
@@ -44,10 +48,8 @@ function SwipeableTaskItem({ task, dateFormat, onToggle, onEdit, onDelete }: Swi
         whileHover={{ scale: 1.01, y: -2 }}
         {...swipeHandlers}
         style={swipeStyle}
-        className={`flex items-start gap-4 p-4 bg-white dark:bg-[#1A1A1A] border rounded-xl transition-all hover:shadow-md relative ${
-          task.completed
-            ? 'border-green-200 dark:border-green-900/30 opacity-60'
-            : 'border-gray-200 dark:border-gray-800'
+        className={`relative flex items-start gap-4 p-4 bg-white dark:bg-[#1A1A1A] transition-all hover:shadow-md ${
+          task.completed ? 'opacity-60' : ''
         }`}
       >
         <button

@@ -44,7 +44,7 @@ function SwipeableRoutineItem({ routine, completion, streak, onEdit, onDelete, o
   const progress = completion?.completionRate || 0
 
   return (
-    <div className="relative overflow-hidden rounded-xl">
+    <div className="relative overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1A1A1A]">
       {/* Delete Background */}
       <div className="absolute inset-0 bg-red-500 dark:bg-red-600 flex items-center justify-end px-6">
         <Trash2 className="w-6 h-6 text-white" />
@@ -54,7 +54,7 @@ function SwipeableRoutineItem({ routine, completion, streak, onEdit, onDelete, o
       <div
         {...swipeHandlers}
         style={swipeStyle}
-        className="card p-4 relative bg-white dark:bg-[#1A1A1A]"
+        className="relative p-4 bg-white dark:bg-[#1A1A1A]"
       >
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex-1 min-w-0">
