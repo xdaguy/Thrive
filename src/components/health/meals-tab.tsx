@@ -12,9 +12,80 @@ import { haptics } from '@/lib/haptics'
 import { db } from '@/lib/db/schema'
 import { Skeleton, SkeletonTable } from '@/components/ui/skeleton'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useSwipeToDelete } from '@/hooks/use-swipe'
 
 interface MealsTabProps {
   openForm?: boolean
+}
+
+// Swipeable Meal Item Wrapper
+interface SwipeableMealItemProps {
+  meal: Meal
+  dateFormat: string
+  onEdit: (meal: Meal) => void
+  onDelete: (id: string) => void
+}
+
+function SwipeableMealItem({ meal, dateFormat, onEdit, onDelete }: SwipeableMealItemProps) {
+  const { swipeHandlers, swipeStyle } = useSwipeToDelete(() => {
+    onDelete(meal.id!)
+  })
+
+  return (
+    <div className="relative overflow-hidden rounded-xl">
+      {/* Delete Background */}
+      <div className="absolute inset-0 bg-red-500 dark:bg-red-600 flex items-center justify-end px-6">
+        <Trash2 className="w-6 h-6 text-white" />
+      </div>
+
+      {/* Main Content */}
+      <div
+        {...swipeHandlers}
+        style={swipeStyle}
+        className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl relative"
+      >
+        <div className="flex items-center gap-4 flex-1">
+          <div className="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+            <Utensils className="w-6 h-6 text-green-600 dark:text-green-400" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <h4 className="font-semibold text-gray-900 dark:text-white capitalize">
+                {meal.mealType}
+              </h4>
+              {meal.asExpected ? (
+                <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
+              ) : (
+                <XCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
+              )}
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {meal.description}
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+              {formatDate(meal.date, dateFormat)}
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => onEdit(meal)}
+            className="btn-icon text-blue-600 dark:text-blue-400"
+            title="Edit meal"
+          >
+            <Edit className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => onDelete(meal.id!)}
+            className="btn-icon text-red-600 dark:text-red-400"
+            title="Delete meal"
+          >
+            <Trash2 className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export function MealsTab({ openForm }: MealsTabProps = {}) {
@@ -308,50 +379,13 @@ export function MealsTab({ openForm }: MealsTabProps = {}) {
           </div>
         ) : (
           meals.map((meal) => (
-            <div
+            <SwipeableMealItem
               key={meal.id}
-              className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl"
-            >
-              <div className="flex items-center gap-4 flex-1">
-                <div className="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                  <Utensils className="w-6 h-6 text-green-600 dark:text-green-400" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-semibold text-gray-900 dark:text-white capitalize">
-                      {meal.mealType}
-                    </h4>
-                    {meal.asExpected ? (
-                      <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
-                    ) : (
-                      <XCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {meal.description}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                    {formatDate(meal.date, dateFormat)}
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleEdit(meal)}
-                  className="btn-icon text-blue-600 dark:text-blue-400"
-                  title="Edit meal"
-                >
-                  <Edit className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => handleDelete(meal.id)}
-                  className="btn-icon text-red-600 dark:text-red-400"
-                  title="Delete meal"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
+              meal={meal}
+              dateFormat={dateFormat}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
           ))
         )}
       </div>

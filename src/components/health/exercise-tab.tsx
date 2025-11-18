@@ -12,9 +12,75 @@ import { toast } from 'sonner'
 import { useDeleteConfirm } from '@/components/ui/delete-confirm'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { haptics } from '@/lib/haptics'
+import { useSwipeToDelete } from '@/hooks/use-swipe'
 
 interface ExerciseTabProps {
   openForm?: boolean
+}
+
+// Swipeable Exercise Item Wrapper
+interface SwipeableExerciseItemProps {
+  exercise: Exercise
+  dateFormat: string
+  onEdit: (exercise: Exercise) => void
+  onDelete: (id: string) => void
+}
+
+function SwipeableExerciseItem({ exercise, dateFormat, onEdit, onDelete }: SwipeableExerciseItemProps) {
+  const { swipeHandlers, swipeStyle } = useSwipeToDelete(() => {
+    onDelete(exercise.id!)
+  })
+
+  return (
+    <div className="relative overflow-hidden rounded-xl">
+      {/* Delete Background */}
+      <div className="absolute inset-0 bg-red-500 dark:bg-red-600 flex items-center justify-end px-6">
+        <Trash2 className="w-6 h-6 text-white" />
+      </div>
+
+      {/* Main Content */}
+      <div
+        {...swipeHandlers}
+        style={swipeStyle}
+        className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl relative"
+      >
+        <div className="flex items-center gap-4 flex-1">
+          <div className="w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+            <Dumbbell className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <h4 className="font-semibold text-gray-900 dark:text-white">{exercise.name}</h4>
+              <span className="text-xs px-2 py-1 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400">
+                {exercise.type}
+              </span>
+            </div>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {formatDate(exercise.date, dateFormat)} • {exercise.duration} min
+              {exercise.sets && exercise.reps && ` • ${exercise.sets}x${exercise.reps}`}
+              {exercise.note && ` • ${exercise.note}`}
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => onEdit(exercise)}
+            className="btn-icon text-blue-600 dark:text-blue-400"
+            title="Edit exercise"
+          >
+            <Edit className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => onDelete(exercise.id!)}
+            className="btn-icon text-red-600 dark:text-red-400"
+            title="Delete exercise"
+          >
+            <Trash2 className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
@@ -357,45 +423,13 @@ export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
           </div>
         ) : (
           exercises.map((exercise) => (
-            <div
+            <SwipeableExerciseItem
               key={exercise.id}
-              className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl"
-            >
-              <div className="flex items-center gap-4 flex-1">
-                <div className="w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
-                  <Dumbbell className="w-6 h-6 text-orange-600 dark:text-orange-400" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-semibold text-gray-900 dark:text-white">{exercise.name}</h4>
-                    <span className="text-xs px-2 py-1 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400">
-                      {exercise.type}
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {formatDate(exercise.date, dateFormat)} • {exercise.duration} min
-                    {exercise.sets && exercise.reps && ` • ${exercise.sets}x${exercise.reps}`}
-                    {exercise.note && ` • ${exercise.note}`}
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleEdit(exercise)}
-                  className="btn-icon text-blue-600 dark:text-blue-400"
-                  title="Edit exercise"
-                >
-                  <Edit className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => handleDelete(exercise.id)}
-                  className="btn-icon text-red-600 dark:text-red-400"
-                  title="Delete exercise"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
+              exercise={exercise}
+              dateFormat={dateFormat}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
           ))
         )}
       </div>

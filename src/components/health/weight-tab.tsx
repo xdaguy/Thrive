@@ -12,9 +12,71 @@ import { toast } from 'sonner'
 import { useDeleteConfirm } from '@/components/ui/delete-confirm'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { haptics } from '@/lib/haptics'
+import { useSwipeToDelete } from '@/hooks/use-swipe'
 
 interface WeightTabProps {
   openForm?: boolean
+}
+
+// Swipeable Weight Item Wrapper
+interface SwipeableWeightItemProps {
+  weight: Weight
+  dateFormat: string
+  onEdit: (weight: Weight) => void
+  onDelete: (id: string) => void
+}
+
+function SwipeableWeightItem({ weight, dateFormat, onEdit, onDelete }: SwipeableWeightItemProps) {
+  const { swipeHandlers, swipeStyle } = useSwipeToDelete(() => {
+    onDelete(weight.id!)
+  })
+
+  return (
+    <div className="relative overflow-hidden rounded-xl">
+      {/* Delete Background */}
+      <div className="absolute inset-0 bg-red-500 dark:bg-red-600 flex items-center justify-end px-6">
+        <Trash2 className="w-6 h-6 text-white" />
+      </div>
+
+      {/* Main Content */}
+      <div
+        {...swipeHandlers}
+        style={swipeStyle}
+        className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl relative"
+      >
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+            <Scale className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+          </div>
+          <div>
+            <p className="font-semibold text-gray-900 dark:text-white">
+              {weight.weight} {weight.unit}
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {formatDate(weight.date, dateFormat)}
+              {weight.note && ` • ${weight.note}`}
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => onEdit(weight)}
+            className="btn-icon text-blue-600 dark:text-blue-400"
+            title="Edit weight"
+          >
+            <Edit className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => onDelete(weight.id!)}
+            className="btn-icon text-red-600 dark:text-red-400"
+            title="Delete weight"
+          >
+            <Trash2 className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export function WeightTab({ openForm }: WeightTabProps = {}) {
@@ -307,41 +369,13 @@ export function WeightTab({ openForm }: WeightTabProps = {}) {
           </div>
         ) : (
           weights.map((weight) => (
-            <div
+            <SwipeableWeightItem
               key={weight.id}
-              className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                  <Scale className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-                </div>
-                <div>
-                  <p className="font-semibold text-gray-900 dark:text-white">
-                    {weight.weight} {weight.unit}
-                  </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {formatDate(weight.date, dateFormat)}
-                    {weight.note && ` • ${weight.note}`}
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleEdit(weight)}
-                  className="btn-icon text-blue-600 dark:text-blue-400"
-                  title="Edit weight"
-                >
-                  <Edit className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => handleDelete(weight.id)}
-                  className="btn-icon text-red-600 dark:text-red-400"
-                  title="Delete weight"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
+              weight={weight}
+              dateFormat={dateFormat}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
           ))
         )}
       </div>

@@ -23,6 +23,115 @@ import { DataEvents, DATA_EVENTS } from '@/lib/events'
 import { fadeIn, staggerContainer, staggerItem, scaleIn } from '@/lib/animations'
 import { Skeleton, SkeletonTable } from '@/components/ui/skeleton'
 import { ErrorBoundary } from '@/components/providers/error-boundary'
+import { useSwipeToDelete } from '@/hooks/use-swipe'
+
+// Swipeable Routine Item Wrapper
+interface SwipeableRoutineItemProps {
+  routine: Routine
+  completion: RoutineCompletion | undefined
+  streak: number
+  onEdit: (routine: Routine) => void
+  onDelete: (id: string) => void
+  onToggleItem: (routineId: string, itemId: string) => void
+}
+
+function SwipeableRoutineItem({ routine, completion, streak, onEdit, onDelete, onToggleItem }: SwipeableRoutineItemProps) {
+  const { swipeHandlers, swipeStyle } = useSwipeToDelete(() => {
+    onDelete(routine.id!)
+  })
+
+  const completedItems = completion?.completedItems || []
+  const progress = completion?.completionRate || 0
+
+  return (
+    <div className="relative overflow-hidden rounded-xl">
+      {/* Delete Background */}
+      <div className="absolute inset-0 bg-red-500 dark:bg-red-600 flex items-center justify-end px-6">
+        <Trash2 className="w-6 h-6 text-white" />
+      </div>
+
+      {/* Main Content */}
+      <div
+        {...swipeHandlers}
+        style={swipeStyle}
+        className="card p-4 relative bg-white dark:bg-[#1A1A1A]"
+      >
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-1.5">
+              {routine.name}
+            </h3>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 capitalize">
+                {routine.timeOfDay}
+              </span>
+              {streak > 0 && (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 flex items-center gap-1">
+                  <Trophy className="w-3 h-3" />
+                  {streak}d
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="flex gap-2 flex-shrink-0">
+            <button
+              onClick={() => onEdit(routine)}
+              className="btn-icon text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+              title="Edit"
+            >
+              <Edit className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => onDelete(routine.id!)}
+              className="btn-icon text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+              title="Delete"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="mb-3">
+          <div className="flex items-center justify-between text-sm mb-2">
+            <span className="text-gray-600 dark:text-gray-400">Today's Progress</span>
+            <span className="font-semibold text-gray-900 dark:text-white">{progress}%</span>
+          </div>
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+            <div
+              className="h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Items */}
+        <div className="space-y-2">
+          {routine.items.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => onToggleItem(routine.id!, item.id)}
+              className="flex items-center gap-3 w-full text-left p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors touch-manipulation"
+            >
+              {completedItems.includes(item.id) ? (
+                <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+              ) : (
+                <Circle className="w-5 h-5 text-gray-400 dark:text-gray-600 flex-shrink-0" />
+              )}
+              <span className={`text-sm ${
+                completedItems.includes(item.id)
+                  ? 'text-gray-500 dark:text-gray-400 line-through'
+                  : 'text-gray-900 dark:text-white'
+              }`}>
+                {item.name}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function RoutinesPage() {
   const searchParams = useSearchParams()
@@ -445,93 +554,16 @@ export default function RoutinesPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {routines.map((routine) => {
             if (!routine.id) return null
-            const completion = completions[routine.id]
-            const streak = streaks[routine.id] || 0
-            const completedItems = completion?.completedItems || []
-            const progress = completion?.completionRate || 0
-
             return (
-              <div key={routine.id} className="card p-4">
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-1.5">
-                      {routine.name}
-                    </h3>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 capitalize">
-                        {routine.timeOfDay}
-                      </span>
-                      {streak > 0 && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 flex items-center gap-1">
-                          <Trophy className="w-3 h-3" />
-                          {streak}d
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex gap-2 flex-shrink-0">
-                    <button
-                      onClick={() => handleEdit(routine)}
-                      className="btn-icon text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                      title="Edit"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(routine.id)}
-                      className="btn-icon text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                      title="Delete"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Progress Bar */}
-                <div className="mb-3">
-                  <div className="flex items-center justify-between text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1.5">
-                    <span>Progress</span>
-                    <span className="font-medium">{progress}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 sm:h-2">
-                    <div
-                      className="bg-green-500 h-1.5 sm:h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
-                </div>
-
-                {/* Checklist */}
-                <div className="space-y-1.5 sm:space-y-2">
-                  {routine.items.map((item) => {
-                    const isCompleted = completedItems.includes(item.id)
-                    return (
-                      <button
-                        key={item.id}
-                        onClick={() => toggleRoutineItem(routine, item.id)}
-                        className={`w-full flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-lg transition-all touch-manipulation ${
-                          isCompleted
-                            ? 'bg-green-50 dark:bg-green-900/20'
-                            : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-[0.98]'
-                        }`}
-                      >
-                        {isCompleted ? (
-                          <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 dark:text-green-400 flex-shrink-0" />
-                        ) : (
-                          <Circle className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 dark:text-gray-600 flex-shrink-0" />
-                        )}
-                        <span className={`text-sm sm:text-base text-left ${
-                          isCompleted
-                            ? 'text-gray-600 dark:text-gray-400 line-through'
-                            : 'text-gray-900 dark:text-white'
-                        }`}>
-                          {item.name}
-                        </span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
+              <SwipeableRoutineItem
+                key={routine.id}
+                routine={routine}
+                completion={completions[routine.id]}
+                streak={streaks[routine.id] || 0}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onToggleItem={(routineId, itemId) => toggleRoutineItem(routine, itemId)}
+              />
             )
           })}
         </div>

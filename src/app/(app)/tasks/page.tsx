@@ -14,6 +14,107 @@ import { Skeleton, SkeletonTable } from '@/components/ui/skeleton'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { haptics } from '@/lib/haptics'
 import { useDeleteConfirm } from '@/components/ui/delete-confirm'
+import { useSwipeToDelete } from '@/hooks/use-swipe'
+
+// Swipeable Task Item Wrapper
+interface SwipeableTaskItemProps {
+  task: Task
+  dateFormat: string
+  onToggle: (id: string) => void
+  onEdit: (task: Task) => void
+  onDelete: (id: string) => void
+}
+
+function SwipeableTaskItem({ task, dateFormat, onToggle, onEdit, onDelete }: SwipeableTaskItemProps) {
+  const { swipeHandlers, swipeStyle } = useSwipeToDelete(() => {
+    onDelete(task.id!)
+  })
+
+  return (
+    <div className="relative overflow-hidden rounded-xl">
+      {/* Delete Background */}
+      <div className="absolute inset-0 bg-red-500 dark:bg-red-600 flex items-center justify-end px-6">
+        <Trash2 className="w-6 h-6 text-white" />
+      </div>
+
+      {/* Main Content */}
+      <motion.div
+        {...listItem}
+        layout
+        whileHover={{ scale: 1.01, y: -2 }}
+        {...swipeHandlers}
+        style={swipeStyle}
+        className={`flex items-start gap-4 p-4 bg-white dark:bg-[#1A1A1A] border rounded-xl transition-all hover:shadow-md relative ${
+          task.completed
+            ? 'border-green-200 dark:border-green-900/30 opacity-60'
+            : 'border-gray-200 dark:border-gray-800'
+        }`}
+      >
+        <button
+          onClick={() => onToggle(task.id!)}
+          className="mt-1 flex-shrink-0"
+        >
+          {task.completed ? (
+            <CheckSquare className="w-6 h-6 text-green-600 dark:text-green-400" />
+          ) : (
+            <Square className="w-6 h-6 text-gray-400 dark:text-gray-600" />
+          )}
+        </button>
+
+        <div className="flex-1 min-w-0">
+          <h4 className={`font-semibold text-gray-900 dark:text-white ${
+            task.completed ? 'line-through' : ''
+          }`}>
+            {task.title}
+          </h4>
+          {task.description && (
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              {task.description}
+            </p>
+          )}
+          <div className="flex flex-wrap gap-2 mt-2">
+            <span className={`text-xs px-2 py-1 rounded-full ${
+              task.priority === 'high'
+                ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                : task.priority === 'medium'
+                ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+            }`}>
+              {task.priority}
+            </span>
+            {task.category && (
+              <span className="text-xs px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
+                {task.category}
+              </span>
+            )}
+            {task.dueDate && (
+              <span className="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
+                {formatDate(task.dueDate, dateFormat)}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="flex gap-2 flex-shrink-0">
+          <button
+            onClick={() => onEdit(task)}
+            className="btn-icon text-blue-600 dark:text-blue-400"
+            title="Edit"
+          >
+            <Edit className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => onDelete(task.id!)}
+            className="btn-icon text-red-600 dark:text-red-400"
+            title="Delete"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  )
+}
 
 export default function TasksPage() {
   const searchParams = useSearchParams()
@@ -434,82 +535,14 @@ export default function TasksPage() {
         ) : (
           <AnimatePresence mode="popLayout">
             {filteredTasks.map((task) => (
-              <motion.div
+              <SwipeableTaskItem
                 key={task.id}
-                {...listItem}
-                layout
-                whileHover={{ scale: 1.01, y: -2 }}
-                className={`flex items-start gap-4 p-4 bg-white dark:bg-[#1A1A1A] border rounded-xl transition-all hover:shadow-md ${
-                task.completed
-                  ? 'border-green-200 dark:border-green-900/30 opacity-60'
-                  : 'border-gray-200 dark:border-gray-800'
-              }`}
-            >
-              <button
-                onClick={() => handleToggle(task.id)}
-                className="mt-1 flex-shrink-0"
-              >
-                {task.completed ? (
-                  <CheckSquare className="w-6 h-6 text-green-600 dark:text-green-400" />
-                ) : (
-                  <Square className="w-6 h-6 text-gray-400 dark:text-gray-600" />
-                )}
-              </button>
-
-              <div className="flex-1 min-w-0">
-                <h4 className={`font-semibold text-gray-900 dark:text-white ${
-                  task.completed ? 'line-through' : ''
-                }`}>
-                  {task.title}
-                </h4>
-                {task.description && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    {task.description}
-                  </p>
-                )}
-                <div className="flex flex-wrap gap-2 mt-2">
-                  <span className={`text-xs px-2 py-1 rounded-full ${
-                    task.priority === 'high'
-                      ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
-                      : task.priority === 'medium'
-                      ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
-                  }`}>
-                    {task.priority}
-                  </span>
-                  {task.category && (
-                    <span className="text-xs px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
-                      {task.category}
-                    </span>
-                  )}
-                  {task.dueDate && (
-                    <span className="text-xs px-2 py-1 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      {formatDate(task.dueDate, dateFormat)}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex gap-2">
-                {!task.completed && (
-                  <button
-                    onClick={() => handleEdit(task)}
-                    className="btn-icon text-blue-600 dark:text-blue-400"
-                    title="Edit task"
-                  >
-                    <Edit className="w-5 h-5" />
-                  </button>
-                )}
-                <button
-                  onClick={() => handleDelete(task.id)}
-                  className="btn-icon text-red-600 dark:text-red-400"
-                  title="Delete task"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
-              </div>
-            </motion.div>
+                task={task}
+                dateFormat={dateFormat}
+                onToggle={handleToggle}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
           ))}
           </AnimatePresence>
         )}

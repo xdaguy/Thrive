@@ -12,9 +12,85 @@ import { toast } from 'sonner'
 import { useDeleteConfirm } from '@/components/ui/delete-confirm'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { haptics } from '@/lib/haptics'
+import { useSwipeToDelete } from '@/hooks/use-swipe'
 
 interface IncomeTabProps {
   openForm?: boolean
+}
+
+// Swipeable Income Item Wrapper
+interface SwipeableIncomeItemProps {
+  income: Income
+  currency: string
+  dateFormat: string
+  onEdit: (income: Income) => void
+  onDelete: (id: string) => void
+}
+
+function SwipeableIncomeItem({ income, currency, dateFormat, onEdit, onDelete }: SwipeableIncomeItemProps) {
+  const { swipeHandlers, swipeStyle, showDeleteButton } = useSwipeToDelete(() => {
+    onDelete(income.id!)
+  })
+
+  return (
+    <div className="relative overflow-hidden rounded-xl">
+      {/* Delete Background (revealed on swipe) */}
+      <div className="absolute inset-0 bg-red-500 dark:bg-red-600 flex items-center justify-end px-6">
+        <Trash2 className="w-6 h-6 text-white" />
+      </div>
+
+      {/* Main Content (swipeable) */}
+      <div
+        {...swipeHandlers}
+        style={swipeStyle}
+        className="card p-4 hover:shadow-md transition-shadow relative bg-white dark:bg-[#1A1A1A]"
+      >
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex items-start gap-3 flex-1 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
+              <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-1.5">{income.source}</h4>
+              <span className="inline-block text-xs px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
+                {income.category}
+              </span>
+            </div>
+          </div>
+          <p className="text-xl font-bold text-green-600 dark:text-green-400 flex-shrink-0">
+            {formatCurrency(income.amount, currency)}
+          </p>
+        </div>
+        <div className="pl-[52px] flex items-start justify-between gap-3">
+          <div className="text-sm text-gray-500 dark:text-gray-400 flex-1 min-w-0">
+            <p className="truncate">
+              {formatDate(income.date, dateFormat)}
+              {income.description && ` • ${income.description}`}
+            </p>
+            {income.recurring && (
+              <span className="text-xs">Recurring</span>
+            )}
+          </div>
+          <div className="flex gap-2 flex-shrink-0">
+            <button
+              onClick={() => onEdit(income)}
+              className="btn-icon text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+              title="Edit"
+            >
+              <Edit className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => onDelete(income.id!)}
+              className="btn-icon text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+              title="Delete"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export function IncomeTab({ openForm }: IncomeTabProps = {}) {
@@ -545,54 +621,14 @@ export function IncomeTab({ openForm }: IncomeTabProps = {}) {
           </div>
         ) : (
           filteredIncomes.map((income) => (
-            <div
+            <SwipeableIncomeItem
               key={income.id}
-              className="card p-4 hover:shadow-md transition-all"
-            >
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <div className="flex items-start gap-3 flex-1 min-w-0">
-                  <div className="w-10 h-10 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
-                    <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-gray-900 dark:text-white mb-1.5">{income.source}</h4>
-                    <span className="inline-block text-xs px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
-                      {income.category}
-                    </span>
-                  </div>
-                </div>
-                <p className="text-xl font-bold text-green-600 dark:text-green-400 flex-shrink-0">
-                  {formatCurrency(income.amount, currency)}
-                </p>
-              </div>
-              <div className="pl-[52px] flex items-start justify-between gap-3">
-                <div className="text-sm text-gray-500 dark:text-gray-400 flex-1 min-w-0">
-                  <p className="truncate">
-                    {formatDate(income.date, dateFormat)}
-                    {income.description && ` • ${income.description}`}
-                  </p>
-                  {income.recurring && (
-                    <span className="text-xs">Recurring</span>
-                  )}
-                </div>
-                <div className="flex gap-2 flex-shrink-0">
-                  <button
-                    onClick={() => handleEdit(income)}
-                    className="btn-icon text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                    title="Edit"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(income.id)}
-                    className="btn-icon text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                    title="Delete"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
+              income={income}
+              currency={currency}
+              dateFormat={dateFormat}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
           ))
         )}
       </div>

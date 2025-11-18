@@ -11,9 +11,133 @@ import { toast } from 'sonner'
 import { useDeleteConfirm } from '@/components/ui/delete-confirm'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { haptics } from '@/lib/haptics'
+import { useSwipeToDelete } from '@/hooks/use-swipe'
 
 interface DebtTabProps {
   openForm?: boolean
+}
+
+// Swipeable Debt Item Wrapper
+interface SwipeableDebtItemProps {
+  debt: Debt
+  currency: string
+  dateFormat: string
+  onEdit: (debt: Debt) => void
+  onDelete: (id: string) => void
+  onMarkAsPaid: (id: string) => void
+}
+
+function SwipeableDebtItem({ debt, currency, dateFormat, onEdit, onDelete, onMarkAsPaid }: SwipeableDebtItemProps) {
+  const { swipeHandlers, swipeStyle } = useSwipeToDelete(() => {
+    onDelete(debt.id!)
+  })
+
+  const remaining = debt.amount - debt.paidAmount
+  const isPaid = debt.status === 'paid'
+  const isOwedToMe = debt.type === 'owed_to_me'
+
+  return (
+    <div className="relative overflow-hidden rounded-xl">
+      {/* Delete Background */}
+      <div className="absolute inset-0 bg-red-500 dark:bg-red-600 flex items-center justify-end px-6">
+        <Trash2 className="w-6 h-6 text-white" />
+      </div>
+
+      {/* Main Content */}
+      <div
+        {...swipeHandlers}
+        style={swipeStyle}
+        className={`card p-4 hover:shadow-md transition-shadow relative bg-white dark:bg-[#1A1A1A] ${
+          isPaid ? 'opacity-60' : ''
+        }`}
+      >
+        <div className="flex items-start justify-between gap-3 mb-2">
+          <div className="flex items-start gap-3 flex-1 min-w-0">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+              isPaid
+                ? 'bg-gray-200 dark:bg-gray-800'
+                : isOwedToMe
+                ? 'bg-green-100 dark:bg-green-900/30'
+                : 'bg-red-100 dark:bg-red-900/30'
+            }`}>
+              {isPaid ? (
+                <CheckCircle className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              ) : (
+                <AlertCircle className={`w-5 h-5 ${
+                  isOwedToMe ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                }`} />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-1.5">{debt.person}</h4>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className={`inline-block text-xs px-2 py-0.5 rounded-full ${
+                  isOwedToMe
+                    ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                    : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                }`}>
+                  {isOwedToMe ? 'Owed to me' : 'I owe'}
+                </span>
+                {isPaid && (
+                  <span className="inline-block text-xs px-2 py-0.5 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+                    Paid
+                  </span>
+                )}
+                {debt.interestRate > 0 && (
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {debt.interestRate}% interest
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+          <p className={`text-xl font-bold flex-shrink-0 ${
+            isPaid
+              ? 'text-gray-600 dark:text-gray-400 line-through'
+              : isOwedToMe
+              ? 'text-green-600 dark:text-green-400'
+              : 'text-red-600 dark:text-red-400'
+          }`}>
+            {formatCurrency(remaining, currency)}
+          </p>
+        </div>
+        <div className="pl-[52px] flex items-center gap-3">
+          <p className="text-sm text-gray-500 dark:text-gray-400 truncate flex-1">
+            {formatDate(debt.dueDate, dateFormat)}
+            {debt.description && ` • ${debt.description}`}
+            {!isPaid && debt.paidAmount > 0 && ` • ${formatCurrency(debt.paidAmount, currency)}/${formatCurrency(debt.amount, currency)}`}
+          </p>
+          <div className="flex gap-2 flex-shrink-0">
+            {!isPaid && (
+              <>
+                <button
+                  onClick={() => onEdit(debt)}
+                  className="btn-icon text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                  title="Edit"
+                >
+                  <Edit className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => onMarkAsPaid(debt.id!)}
+                  className="btn-icon text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
+                  title="Mark as paid"
+                >
+                  <CheckCircle className="w-4 h-4" />
+                </button>
+              </>
+            )}
+            <button
+              onClick={() => onDelete(debt.id!)}
+              className="btn-icon text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+              title="Delete"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export function DebtTab({ openForm }: DebtTabProps = {}) {
@@ -439,105 +563,17 @@ export function DebtTab({ openForm }: DebtTabProps = {}) {
             </button>
           </div>
         ) : (
-          debts.map((debt) => {
-            const remaining = debt.amount - debt.paidAmount
-            const isPaid = debt.status === 'paid'
-            const isOwedToMe = debt.type === 'owed_to_me'
-
-            return (
-              <div
-                key={debt.id}
-                className={`card p-4 hover:shadow-md transition-all ${
-                  isPaid ? 'opacity-60' : ''
-                }`}
-              >
-                <div className="flex items-start justify-between gap-3 mb-2">
-                  <div className="flex items-start gap-3 flex-1 min-w-0">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                      isPaid
-                        ? 'bg-gray-200 dark:bg-gray-800'
-                        : isOwedToMe
-                        ? 'bg-green-100 dark:bg-green-900/30'
-                        : 'bg-red-100 dark:bg-red-900/30'
-                    }`}>
-                      {isPaid ? (
-                        <CheckCircle className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                      ) : (
-                        <AlertCircle className={`w-5 h-5 ${
-                          isOwedToMe ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-                        }`} />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-semibold text-gray-900 dark:text-white mb-1.5">{debt.person}</h4>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className={`inline-block text-xs px-2 py-0.5 rounded-full ${
-                          isOwedToMe
-                            ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
-                            : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
-                        }`}>
-                          {isOwedToMe ? 'Owed to me' : 'I owe'}
-                        </span>
-                        {isPaid && (
-                          <span className="inline-block text-xs px-2 py-0.5 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
-                            Paid
-                          </span>
-                        )}
-                        {debt.interestRate > 0 && (
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
-                            {debt.interestRate}% interest
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <p className={`text-xl font-bold flex-shrink-0 ${
-                    isPaid
-                      ? 'text-gray-600 dark:text-gray-400 line-through'
-                      : isOwedToMe
-                      ? 'text-green-600 dark:text-green-400'
-                      : 'text-red-600 dark:text-red-400'
-                  }`}>
-                    {formatCurrency(remaining, currency)}
-                  </p>
-                </div>
-                <div className="pl-[52px] flex items-center gap-3">
-                  <p className="text-sm text-gray-500 dark:text-gray-400 truncate flex-1">
-                    {formatDate(debt.dueDate, dateFormat)}
-                    {debt.description && ` • ${debt.description}`}
-                    {!isPaid && debt.paidAmount > 0 && ` • ${formatCurrency(debt.paidAmount, currency)}/${formatCurrency(debt.amount, currency)}`}
-                  </p>
-                  <div className="flex gap-2 flex-shrink-0">
-                    {!isPaid && (
-                      <>
-                        <button
-                          onClick={() => handleEdit(debt)}
-                          className="btn-icon text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                          title="Edit"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => markAsPaid(debt.id)}
-                          className="btn-icon text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
-                          title="Mark as paid"
-                        >
-                          <CheckCircle className="w-4 h-4" />
-                        </button>
-                      </>
-                    )}
-                    <button
-                      onClick={() => handleDelete(debt.id)}
-                      className="btn-icon text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                      title="Delete"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )
-          })
+          debts.map((debt) => (
+            <SwipeableDebtItem
+              key={debt.id}
+              debt={debt}
+              currency={currency}
+              dateFormat={dateFormat}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onMarkAsPaid={markAsPaid}
+            />
+          ))
         )}
       </div>
 
