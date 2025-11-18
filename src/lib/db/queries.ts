@@ -301,7 +301,7 @@ export async function getWeightProgressData(days: number = 30) {
   const startDate = new Date(now)
   startDate.setDate(startDate.getDate() - days)
   
-  const weights = await db.weights
+  const weights = await db.weight
     .where('date')
     .between(startDate, now, true, true)
     .toArray()
