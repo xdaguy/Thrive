@@ -18,6 +18,10 @@ import { useSwipeToDelete } from '@/hooks/use-swipe'
 import { usePullToRefresh } from '@/hooks/use-pull-to-refresh'
 import { TaskCompletionChart } from '@/components/charts/task-completion-chart'
 import { getTaskCompletionData } from '@/lib/db/queries'
+import { useSearchFilter } from '@/hooks/use-search-filter'
+import { SearchBar } from '@/components/ui/search-bar'
+import { QuickFilters } from '@/components/ui/quick-filters'
+import { SortButton } from '@/components/ui/sort-button'
 
 // Swipeable Task Item Wrapper
 interface SwipeableTaskItemProps {
@@ -148,6 +152,7 @@ export default function TasksPage() {
       await loadChartData()
     }
   })
+
 
   async function loadChartData() {
     try {
@@ -332,7 +337,8 @@ export default function TasksPage() {
     }
   }
 
-  const filteredTasks = tasks.filter(task => {
+  // Apply status filter first
+  const statusFilteredTasks = tasks.filter(task => {
     const now = new Date()
     now.setHours(0, 0, 0, 0)
     const dueDate = task.dueDate ? new Date(task.dueDate) : null
@@ -347,6 +353,25 @@ export default function TasksPage() {
       return !task.completed && dueDate && dueDate.getTime() === now.getTime()
     }
     return true
+  })
+
+  // Search and filter
+  const {
+    searchQuery,
+    setSearchQuery,
+    sortField,
+    sortDirection,
+    filters: searchFilters,
+    filteredItems: filteredTasks,
+    hasActiveFilters,
+    handleSort,
+    updateFilters,
+    resetFilters
+  } = useSearchFilter(statusFilteredTasks, {
+    searchFields: ['title', 'description', 'category', 'tags'],
+    sortableFields: ['dueDate', 'priority', 'title', 'createdAt'],
+    defaultSortField: 'dueDate',
+    defaultSortDirection: 'asc'
   })
 
   const pendingCount = tasks.filter(t => !t.completed).length
@@ -432,6 +457,28 @@ export default function TasksPage() {
           <TaskCompletionChart data={taskCompletionData} />
         )}
       </motion.div>
+
+      {/* Search and Filters */}
+      <div className="card space-y-4">
+        <SearchBar
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Search tasks by title, description, category, or tags..."
+        />
+        <div>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Sort By</p>
+          <div className="flex flex-wrap gap-2">
+            <SortButton label="Due Date" field="dueDate" currentSortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
+            <SortButton label="Priority" field="priority" currentSortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
+            <SortButton label="Title" field="title" currentSortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
+          </div>
+        </div>
+        {hasActiveFilters && (
+          <button onClick={resetFilters} className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+            Reset search filters
+          </button>
+        )}
+      </div>
 
       {/* Filter Tabs */}
       <div className="card">

@@ -13,6 +13,10 @@ import { useDeleteConfirm } from '@/components/ui/delete-confirm'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { haptics } from '@/lib/haptics'
 import { useSwipeToDelete } from '@/hooks/use-swipe'
+import { useSearchFilter } from '@/hooks/use-search-filter'
+import { SearchBar } from '@/components/ui/search-bar'
+import { QuickFilters } from '@/components/ui/quick-filters'
+import { SortButton } from '@/components/ui/sort-button'
 
 interface ExerciseTabProps {
   openForm?: boolean
@@ -99,6 +103,25 @@ export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
     reps: '',
     date: new Date().toISOString().split('T')[0],
     note: ''
+  })
+
+  // Search and filter
+  const {
+    searchQuery,
+    setSearchQuery,
+    sortField,
+    sortDirection,
+    filters,
+    filteredItems: filteredExercises,
+    hasActiveFilters,
+    handleSort,
+    updateFilters,
+    resetFilters
+  } = useSearchFilter(exercises, {
+    searchFields: ['name', 'type', 'note'],
+    sortableFields: ['date', 'name', 'type', 'duration'],
+    defaultSortField: 'date',
+    defaultSortDirection: 'desc'
   })
 
   useEffect(() => {
@@ -267,6 +290,36 @@ export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
 
   return (
     <div className="space-y-6">
+      {/* Search and Filters */}
+      <div className="card space-y-4">
+        <SearchBar
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Search exercises by name, type, or note..."
+        />
+        <div>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Time Period</p>
+          <QuickFilters
+            value={filters.quickFilter || 'all'}
+            onChange={(value) => updateFilters({ quickFilter: value })}
+          />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Sort By</p>
+          <div className="flex flex-wrap gap-2">
+            <SortButton label="Date" field="date" currentSortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
+            <SortButton label="Name" field="name" currentSortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
+            <SortButton label="Type" field="type" currentSortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
+            <SortButton label="Duration" field="duration" currentSortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
+          </div>
+        </div>
+        {hasActiveFilters && (
+          <button onClick={resetFilters} className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+            Reset all filters
+          </button>
+        )}
+      </div>
+
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-gray-600 dark:text-gray-400">Total Exercise Time</p>
@@ -274,7 +327,7 @@ export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
             {totalMinutes} min
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            {exercises.length} sessions logged
+            {filteredExercises.length} sessions logged
           </p>
         </div>
         <button
@@ -422,7 +475,7 @@ export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
             </button>
           </div>
         ) : (
-          exercises.map((exercise) => (
+          filteredExercises.map((exercise) => (
             <SwipeableExerciseItem
               key={exercise.id}
               exercise={exercise}

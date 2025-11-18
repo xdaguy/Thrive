@@ -13,6 +13,10 @@ import { db } from '@/lib/db/schema'
 import { Skeleton, SkeletonTable } from '@/components/ui/skeleton'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useSwipeToDelete } from '@/hooks/use-swipe'
+import { useSearchFilter } from '@/hooks/use-search-filter'
+import { SearchBar } from '@/components/ui/search-bar'
+import { QuickFilters } from '@/components/ui/quick-filters'
+import { SortButton } from '@/components/ui/sort-button'
 
 interface MealsTabProps {
   openForm?: boolean
@@ -101,6 +105,25 @@ export function MealsTab({ openForm }: MealsTabProps = {}) {
     description: '',
     asExpected: true,
     date: new Date().toISOString().split('T')[0]
+  })
+
+  // Search and filter
+  const {
+    searchQuery,
+    setSearchQuery,
+    sortField,
+    sortDirection,
+    filters,
+    filteredItems: filteredMeals,
+    hasActiveFilters,
+    handleSort,
+    updateFilters,
+    resetFilters
+  } = useSearchFilter(meals, {
+    searchFields: ['description', 'mealType'],
+    sortableFields: ['date', 'mealType', 'description'],
+    defaultSortField: 'date',
+    defaultSortDirection: 'desc'
   })
 
   useEffect(() => {
@@ -248,6 +271,35 @@ export function MealsTab({ openForm }: MealsTabProps = {}) {
 
   return (
     <div className="space-y-6">
+      {/* Search and Filters */}
+      <div className="card space-y-4">
+        <SearchBar
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Search meals by description or type..."
+        />
+        <div>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Time Period</p>
+          <QuickFilters
+            value={filters.quickFilter || 'all'}
+            onChange={(value) => updateFilters({ quickFilter: value })}
+          />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Sort By</p>
+          <div className="flex flex-wrap gap-2">
+            <SortButton label="Date" field="date" currentSortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
+            <SortButton label="Type" field="mealType" currentSortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
+            <SortButton label="Description" field="description" currentSortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
+          </div>
+        </div>
+        {hasActiveFilters && (
+          <button onClick={resetFilters} className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+            Reset all filters
+          </button>
+        )}
+      </div>
+
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-gray-600 dark:text-gray-400">Meal Adherence</p>
@@ -255,7 +307,7 @@ export function MealsTab({ openForm }: MealsTabProps = {}) {
             {adherenceRate}%
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            {meals.length} meals logged
+            {filteredMeals.length} meals logged
           </p>
         </div>
         <button
@@ -378,7 +430,7 @@ export function MealsTab({ openForm }: MealsTabProps = {}) {
             </button>
           </div>
         ) : (
-          meals.map((meal) => (
+          filteredMeals.map((meal) => (
             <SwipeableMealItem
               key={meal.id}
               meal={meal}

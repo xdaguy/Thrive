@@ -27,6 +27,9 @@ import { useSwipeToDelete } from '@/hooks/use-swipe'
 import { usePullToRefresh } from '@/hooks/use-pull-to-refresh'
 import { RoutineHeatmapChart } from '@/components/charts/routine-heatmap-chart'
 import { getRoutineAdherenceData } from '@/lib/db/queries'
+import { useSearchFilter } from '@/hooks/use-search-filter'
+import { SearchBar } from '@/components/ui/search-bar'
+import { SortButton } from '@/components/ui/sort-button'
 
 // Swipeable Routine Item Wrapper
 interface SwipeableRoutineItemProps {
@@ -159,6 +162,25 @@ export default function RoutinesPage() {
       await loadRoutines()
       await loadChartData()
     }
+  })
+
+  // Search and filter
+  const {
+    searchQuery,
+    setSearchQuery,
+    sortField,
+    sortDirection,
+    filters,
+    filteredItems: filteredRoutines,
+    hasActiveFilters,
+    handleSort,
+    updateFilters,
+    resetFilters
+  } = useSearchFilter(routines, {
+    searchFields: ['name', 'timeOfDay'],
+    sortableFields: ['name', 'timeOfDay', 'createdAt'],
+    defaultSortField: 'name',
+    defaultSortDirection: 'asc'
   })
 
   async function loadChartData() {
@@ -428,6 +450,26 @@ export default function RoutinesPage() {
         className="space-y-6"
         style={{ paddingTop: showRefreshIndicator ? `${pullDistance}px` : '0' }}
       >
+      {/* Search and Filters */}
+      <motion.div {...fadeIn} className="card space-y-4">
+        <SearchBar
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Search routines by name or time of day..."
+        />
+        <div>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Sort By</p>
+          <div className="flex flex-wrap gap-2">
+            <SortButton label="Name" field="name" currentSortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
+            <SortButton label="Time of Day" field="timeOfDay" currentSortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
+          </div>
+        </div>
+        {hasActiveFilters && (
+          <button onClick={resetFilters} className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+            Reset all filters
+          </button>
+        )}
+      </motion.div>
       {/* Header */}
       <motion.div {...fadeIn} className="flex items-start sm:items-center justify-between gap-3">
         <div className="flex-1 min-w-0">
@@ -624,7 +666,7 @@ export default function RoutinesPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {routines.map((routine) => {
+          {filteredRoutines.map((routine) => {
             if (!routine.id) return null
             return (
               <SwipeableRoutineItem

@@ -13,6 +13,10 @@ import { useDeleteConfirm } from '@/components/ui/delete-confirm'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { haptics } from '@/lib/haptics'
 import { useSwipeToDelete } from '@/hooks/use-swipe'
+import { useSearchFilter } from '@/hooks/use-search-filter'
+import { SearchBar } from '@/components/ui/search-bar'
+import { QuickFilters } from '@/components/ui/quick-filters'
+import { SortButton } from '@/components/ui/sort-button'
 
 interface WeightTabProps {
   openForm?: boolean
@@ -92,6 +96,25 @@ export function WeightTab({ openForm }: WeightTabProps = {}) {
     weight: '',
     date: new Date().toISOString().split('T')[0],
     note: ''
+  })
+
+  // Search and filter
+  const {
+    searchQuery,
+    setSearchQuery,
+    sortField,
+    sortDirection,
+    filters,
+    filteredItems: filteredWeights,
+    hasActiveFilters,
+    handleSort,
+    updateFilters,
+    resetFilters
+  } = useSearchFilter(weights, {
+    searchFields: ['note', 'weight'],
+    sortableFields: ['date', 'weight'],
+    defaultSortField: 'date',
+    defaultSortDirection: 'desc'
   })
 
   useEffect(() => {
@@ -252,6 +275,34 @@ export function WeightTab({ openForm }: WeightTabProps = {}) {
 
   return (
     <div className="space-y-6">
+      {/* Search and Filters */}
+      <div className="card space-y-4">
+        <SearchBar
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Search weight entries by note..."
+        />
+        <div>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Time Period</p>
+          <QuickFilters
+            value={filters.quickFilter || 'all'}
+            onChange={(value) => updateFilters({ quickFilter: value })}
+          />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Sort By</p>
+          <div className="flex flex-wrap gap-2">
+            <SortButton label="Date" field="date" currentSortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
+            <SortButton label="Weight" field="weight" currentSortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
+          </div>
+        </div>
+        {hasActiveFilters && (
+          <button onClick={resetFilters} className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+            Reset all filters
+          </button>
+        )}
+      </div>
+
       <div className="flex items-center justify-between">
         <div>
           {latestWeight ? (
@@ -368,7 +419,7 @@ export function WeightTab({ openForm }: WeightTabProps = {}) {
             </button>
           </div>
         ) : (
-          weights.map((weight) => (
+          filteredWeights.map((weight) => (
             <SwipeableWeightItem
               key={weight.id}
               weight={weight}

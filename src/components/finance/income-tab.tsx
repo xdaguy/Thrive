@@ -13,6 +13,10 @@ import { useDeleteConfirm } from '@/components/ui/delete-confirm'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { haptics } from '@/lib/haptics'
 import { useSwipeToDelete } from '@/hooks/use-swipe'
+import { useSearchFilter } from '@/hooks/use-search-filter'
+import { SearchBar } from '@/components/ui/search-bar'
+import { QuickFilters } from '@/components/ui/quick-filters'
+import { SortButton } from '@/components/ui/sort-button'
 
 interface IncomeTabProps {
   openForm?: boolean
@@ -98,9 +102,6 @@ export function IncomeTab({ openForm }: IncomeTabProps = {}) {
   const [incomes, setIncomes] = useState<Income[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'month' | 'year' | 'custom'>('all')
-  const [customStartDate, setCustomStartDate] = useState('')
-  const [customEndDate, setCustomEndDate] = useState('')
   const [currency, setCurrency] = useState('USD')
   const [dateFormat, setDateFormat] = useState('MM/DD/YYYY')
   const [loading, setLoading] = useState(true)
@@ -112,6 +113,25 @@ export function IncomeTab({ openForm }: IncomeTabProps = {}) {
     date: new Date().toISOString().split('T')[0],
     description: '',
     recurring: false
+  })
+
+  // Search and filter
+  const {
+    searchQuery,
+    setSearchQuery,
+    sortField,
+    sortDirection,
+    filters,
+    filteredItems: filteredIncomes,
+    hasActiveFilters,
+    handleSort,
+    updateFilters,
+    resetFilters
+  } = useSearchFilter(incomes, {
+    searchFields: ['source', 'category', 'description'],
+    sortableFields: ['date', 'amount', 'source', 'category'],
+    defaultSortField: 'date',
+    defaultSortDirection: 'desc'
   })
 
   useEffect(() => {
@@ -297,147 +317,84 @@ export function IncomeTab({ openForm }: IncomeTabProps = {}) {
     }
   }
 
-  // Filter incomes based on date range
-  const filteredIncomes = incomes.filter((income) => {
-    const incomeDate = new Date(income.date)
-    incomeDate.setHours(0, 0, 0, 0)
-    const now = new Date()
-    
-    switch (dateFilter) {
-      case 'all':
-        return true
-      case 'today': {
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
-        return incomeDate.getTime() === today.getTime()
-      }
-      case 'month': {
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-        return incomeDate >= startOfMonth && incomeDate <= endOfMonth
-      }
-      case 'year': {
-        const startOfYear = new Date(now.getFullYear(), 0, 1)
-        const endOfYear = new Date(now.getFullYear(), 11, 31)
-        return incomeDate >= startOfYear && incomeDate <= endOfYear
-      }
-      case 'custom': {
-        if (!customStartDate && !customEndDate) return true
-        const start = customStartDate ? new Date(customStartDate) : new Date(0)
-        const end = customEndDate ? new Date(customEndDate) : new Date()
-        return incomeDate >= start && incomeDate <= end
-      }
-      default:
-        return true
-    }
-  })
-  
   const totalIncome = filteredIncomes.reduce((sum, income) => sum + income.amount, 0)
   const allTimeIncome = incomes.reduce((sum, income) => sum + income.amount, 0)
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Date Filter */}
-      <div className="card">
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <Calendar className="w-5 h-5 text-gray-400 flex-shrink-0" />
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setDateFilter('all')}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  dateFilter === 'all'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                }`}
-              >
-                All Time
-              </button>
-              <button
-                onClick={() => setDateFilter('today')}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  dateFilter === 'today'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                }`}
-              >
-                Today
-              </button>
-              <button
-                onClick={() => setDateFilter('month')}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  dateFilter === 'month'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                }`}
-              >
-                This Month
-              </button>
-              <button
-                onClick={() => setDateFilter('year')}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  dateFilter === 'year'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                }`}
-              >
-                This Year
-              </button>
-              <button
-                onClick={() => setDateFilter('custom')}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  dateFilter === 'custom'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                }`}
-              >
-                Custom Range
-              </button>
-            </div>
-          </div>
-          
-          <AnimatePresence mode="wait">
-            {dateFilter === 'custom' && (
-              <motion.div
-                initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                transition={{ 
-                  duration: 0.25,
-                  ease: [0.25, 0.1, 0.25, 1]
-                }}
-              >
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pl-0 sm:pl-8 pt-1">
-                  <input
-                    type="date"
-                    value={customStartDate}
-                    onChange={(e) => setCustomStartDate(e.target.value)}
-                    className="input text-sm py-2 flex-1"
-                    placeholder="Start date"
-                  />
-                  <span className="text-gray-500 text-sm text-center sm:text-left">to</span>
-                  <input
-                    type="date"
-                    value={customEndDate}
-                    onChange={(e) => setCustomEndDate(e.target.value)}
-                    className="input text-sm py-2 flex-1"
-                    placeholder="End date"
-                  />
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+      {/* Search and Filters */}
+      <div className="card space-y-4">
+        {/* Search Bar */}
+        <SearchBar
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Search income by source, category, or description..."
+        />
+
+        {/* Quick Filters */}
+        <div>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Time Period</p>
+          <QuickFilters
+            value={filters.quickFilter || 'all'}
+            onChange={(value) => updateFilters({ quickFilter: value })}
+          />
         </div>
+
+        {/* Sort Options */}
+        <div>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Sort By</p>
+          <div className="flex flex-wrap gap-2">
+            <SortButton
+              label="Date"
+              field="date"
+              currentSortField={sortField}
+              sortDirection={sortDirection}
+              onSort={handleSort}
+            />
+            <SortButton
+              label="Amount"
+              field="amount"
+              currentSortField={sortField}
+              sortDirection={sortDirection}
+              onSort={handleSort}
+            />
+            <SortButton
+              label="Source"
+              field="source"
+              currentSortField={sortField}
+              sortDirection={sortDirection}
+              onSort={handleSort}
+            />
+            <SortButton
+              label="Category"
+              field="category"
+              currentSortField={sortField}
+              sortDirection={sortDirection}
+              onSort={handleSort}
+            />
+          </div>
+        </div>
+
+        {/* Reset Filters Button */}
+        {hasActiveFilters && (
+          <button
+            onClick={resetFilters}
+            className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+          >
+            Reset all filters
+          </button>
+        )}
       </div>
 
       {/* Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
         <div className="card p-4 sm:p-5">
           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">
-            {dateFilter === 'all' ? 'Total Income' :
-             dateFilter === 'today' ? 'Today' :
-             dateFilter === 'month' ? 'This Month' :
-             dateFilter === 'year' ? 'This Year' : 'Selected Range'}
+            {filters.quickFilter === 'all' ? 'Total Income' :
+             filters.quickFilter === 'today' ? 'Today' :
+             filters.quickFilter === 'this-week' ? 'This Week' :
+             filters.quickFilter === 'this-month' ? 'This Month' :
+             filters.quickFilter === 'last-month' ? 'Last Month' : 'Filtered Total'}
           </p>
           <p className="text-2xl sm:text-3xl font-bold text-green-600 dark:text-green-400 truncate">
             {formatCurrency(totalIncome, currency)}
@@ -446,7 +403,7 @@ export function IncomeTab({ openForm }: IncomeTabProps = {}) {
             {filteredIncomes.length} {filteredIncomes.length === 1 ? 'entry' : 'entries'}
           </p>
         </div>
-        {dateFilter !== 'all' && (
+        {hasActiveFilters && (
           <div className="card p-4 sm:p-5">
             <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">All Time Total</p>
             <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate">
@@ -457,7 +414,7 @@ export function IncomeTab({ openForm }: IncomeTabProps = {}) {
             </p>
           </div>
         )}
-        <div className="card md:col-start-3 flex items-center justify-center p-3 sm:p-4">
+        <div className={`card ${!hasActiveFilters ? 'md:col-start-3' : ''} flex items-center justify-center p-3 sm:p-4`}>
           <button
             onClick={() => setShowForm(!showForm)}
             className="btn-primary flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base py-2 sm:py-2.5 touch-manipulation"
