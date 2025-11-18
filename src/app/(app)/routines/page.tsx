@@ -25,6 +25,8 @@ import { Skeleton, SkeletonTable } from '@/components/ui/skeleton'
 import { ErrorBoundary } from '@/components/providers/error-boundary'
 import { useSwipeToDelete } from '@/hooks/use-swipe'
 import { usePullToRefresh } from '@/hooks/use-pull-to-refresh'
+import { RoutineHeatmapChart } from '@/components/charts/routine-heatmap-chart'
+import { getRoutineAdherenceData } from '@/lib/db/queries'
 
 // Swipeable Routine Item Wrapper
 interface SwipeableRoutineItemProps {
@@ -149,15 +151,38 @@ export default function RoutinesPage() {
     timeOfDay: 'morning' as 'morning' | 'afternoon' | 'evening' | 'night',
     items: [{ id: generateId(), name: '', order: 0 }]
   })
+  const [routineAdherenceData, setRoutineAdherenceData] = useState<Array<{ date: string; completionRate: number }>>([])
+  const [chartLoading, setChartLoading] = useState(true)
 
   const { containerRef, pullHandlers, pullDistance, pullProgress, isRefreshing, showRefreshIndicator } = usePullToRefresh({
     onRefresh: async () => {
       await loadRoutines()
+      await loadChartData()
     }
   })
 
+  async function loadChartData() {
+    try {
+      setChartLoading(true)
+      const data = await getRoutineAdherenceData(14) // Last 14 days
+      setRoutineAdherenceData(data)
+      setChartLoading(false)
+    } catch (error) {
+      console.error('Failed to load chart data:', error)
+      setChartLoading(false)
+    }
+  }
+
   useEffect(() => {
     loadRoutines()
+    loadChartData()
+    
+    // Listen for routine completion changes
+    DataEvents.on(DATA_EVENTS.ROUTINE_CHANGED, loadChartData)
+    
+    return () => {
+      DataEvents.off(DATA_EVENTS.ROUTINE_CHANGED, loadChartData)
+    }
   }, [])
 
   async function loadRoutines() {
@@ -477,6 +502,20 @@ export default function RoutinesPage() {
             </div>
           </div>
         </motion.div>
+      </motion.div>
+
+      {/* Routine Adherence Heatmap */}
+      <motion.div {...fadeIn} className="card p-4 sm:p-5">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">
+          Routine Adherence (Last 14 Days)
+        </h3>
+        {chartLoading ? (
+          <div className="h-[200px] flex items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+          </div>
+        ) : (
+          <RoutineHeatmapChart data={routineAdherenceData} />
+        )}
       </motion.div>
 
       {/* Create Form - BottomSheet */}

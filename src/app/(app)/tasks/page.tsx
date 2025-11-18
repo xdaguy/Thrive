@@ -16,6 +16,8 @@ import { haptics } from '@/lib/haptics'
 import { useDeleteConfirm } from '@/components/ui/delete-confirm'
 import { useSwipeToDelete } from '@/hooks/use-swipe'
 import { usePullToRefresh } from '@/hooks/use-pull-to-refresh'
+import { TaskCompletionChart } from '@/components/charts/task-completion-chart'
+import { getTaskCompletionData } from '@/lib/db/queries'
 
 // Swipeable Task Item Wrapper
 interface SwipeableTaskItemProps {
@@ -137,21 +139,39 @@ export default function TasksPage() {
   })
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [taskCompletionData, setTaskCompletionData] = useState<Array<{ date: string; completed: number; total: number }>>([])
+  const [chartLoading, setChartLoading] = useState(true)
 
   const { containerRef, pullHandlers, pullDistance, pullProgress, isRefreshing, showRefreshIndicator } = usePullToRefresh({
     onRefresh: async () => {
       await loadTasks()
+      await loadChartData()
     }
   })
+
+  async function loadChartData() {
+    try {
+      setChartLoading(true)
+      const data = await getTaskCompletionData(7) // Last 7 days
+      setTaskCompletionData(data)
+      setChartLoading(false)
+    } catch (error) {
+      console.error('Failed to load chart data:', error)
+      setChartLoading(false)
+    }
+  }
 
   useEffect(() => {
     loadTasks()
     loadDateFormat()
+    loadChartData()
 
-    // Listen for settings changes
+    // Listen for changes
+    DataEvents.on(DATA_EVENTS.TASK_CHANGED, loadChartData)
     DataEvents.on(DATA_EVENTS.SETTINGS_CHANGED, loadDateFormat)
 
     return () => {
+      DataEvents.off(DATA_EVENTS.TASK_CHANGED, loadChartData)
       DataEvents.off(DATA_EVENTS.SETTINGS_CHANGED, loadDateFormat)
     }
   }, [])
@@ -397,6 +417,20 @@ export default function TasksPage() {
           <Plus className="w-5 h-5" />
           Add Task
         </button>
+      </motion.div>
+
+      {/* Task Completion Chart */}
+      <motion.div {...fadeIn} className="card p-4 sm:p-5">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">
+          Task Completion (Last 7 Days)
+        </h3>
+        {chartLoading ? (
+          <div className="h-[300px] flex items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+          </div>
+        ) : (
+          <TaskCompletionChart data={taskCompletionData} />
+        )}
       </motion.div>
 
       {/* Filter Tabs */}

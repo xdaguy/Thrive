@@ -313,6 +313,76 @@ export async function getWeightProgressData(days: number = 30) {
   }))
 }
 
+export async function getTaskCompletionData(days: number = 7) {
+  const result = []
+  const now = new Date()
+  
+  for (let i = days - 1; i >= 0; i--) {
+    const targetDate = new Date(now)
+    targetDate.setDate(targetDate.getDate() - i)
+    targetDate.setHours(0, 0, 0, 0)
+    
+    const nextDay = new Date(targetDate)
+    nextDay.setDate(nextDay.getDate() + 1)
+    
+    // Get tasks due on this day
+    const tasksForDay = await db.tasks
+      .where('dueDate')
+      .between(targetDate, nextDay, true, false)
+      .toArray()
+    
+    const completed = tasksForDay.filter(t => t.completed).length
+    const total = tasksForDay.length
+    
+    result.push({
+      date: targetDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      completed,
+      total
+    })
+  }
+  
+  return result
+}
+
+export async function getRoutineAdherenceData(days: number = 14) {
+  const result = []
+  const now = new Date()
+  
+  // Get all routines
+  const allRoutines = await db.routines.toArray()
+  const totalRoutines = allRoutines.length
+  
+  if (totalRoutines === 0) {
+    return []
+  }
+  
+  for (let i = days - 1; i >= 0; i--) {
+    const targetDate = new Date(now)
+    targetDate.setDate(targetDate.getDate() - i)
+    targetDate.setHours(0, 0, 0, 0)
+    
+    const nextDay = new Date(targetDate)
+    nextDay.setDate(nextDay.getDate() + 1)
+    
+    // Get completions for this day
+    const completions = await db.routineCompletions
+      .where('date')
+      .between(targetDate, nextDay, true, false)
+      .toArray()
+    
+    // Calculate average completion rate for the day
+    const totalRate = completions.reduce((sum, c) => sum + (c.completionRate || 0), 0)
+    const avgRate = completions.length > 0 ? Math.round(totalRate / completions.length) : 0
+    
+    result.push({
+      date: targetDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      completionRate: avgRate
+    })
+  }
+  
+  return result
+}
+
 export async function getTasksCompletedToday() {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
