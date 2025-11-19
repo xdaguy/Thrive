@@ -17,6 +17,8 @@ import { useSearchFilter } from '@/hooks/use-search-filter'
 import { SearchBar } from '@/components/ui/search-bar'
 import { QuickFilters } from '@/components/ui/quick-filters'
 import { SortButton } from '@/components/ui/sort-button'
+import { ExportButton } from '@/components/ui/export-button'
+import { exportMealsToCSV } from '@/lib/export'
 
 interface MealsTabProps {
   openForm?: boolean
@@ -297,6 +299,16 @@ export function MealsTab({ openForm }: MealsTabProps = {}) {
           <button onClick={resetFilters} className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
             Reset all filters
           </button>
+        )}
+        
+        {/* Export Button */}
+        {filteredMeals.length > 0 && (
+          <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+            <ExportButton
+              onClick={() => exportMealsToCSV(filteredMeals, dateFormat)}
+              label="Export Meal Data"
+            />
+          </div>
         )}
       </div>
 

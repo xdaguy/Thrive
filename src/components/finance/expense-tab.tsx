@@ -17,6 +17,8 @@ import { useSearchFilter } from '@/hooks/use-search-filter'
 import { SearchBar } from '@/components/ui/search-bar'
 import { QuickFilters } from '@/components/ui/quick-filters'
 import { SortButton } from '@/components/ui/sort-button'
+import { ExportButton } from '@/components/ui/export-button'
+import { exportExpenseToCSV } from '@/lib/export'
 
 interface ExpenseTabProps {
   openForm?: boolean
@@ -360,6 +362,16 @@ export function ExpenseTab({ openForm }: ExpenseTabProps = {}) {
           <button onClick={resetFilters} className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
             Reset all filters
           </button>
+        )}
+        
+        {/* Export Button */}
+        {filteredExpenses.length > 0 && (
+          <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+            <ExportButton
+              onClick={() => exportExpenseToCSV(filteredExpenses, currency, dateFormat)}
+              label="Export Expenses"
+            />
+          </div>
         )}
       </div>
 

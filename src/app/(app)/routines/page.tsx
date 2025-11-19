@@ -30,6 +30,8 @@ import { getRoutineAdherenceData } from '@/lib/db/queries'
 import { useSearchFilter } from '@/hooks/use-search-filter'
 import { SearchBar } from '@/components/ui/search-bar'
 import { SortButton } from '@/components/ui/sort-button'
+import { ExportButton } from '@/components/ui/export-button'
+import { exportRoutinesToCSV } from '@/lib/export'
 
 // Swipeable Routine Item Wrapper
 interface SwipeableRoutineItemProps {
@@ -468,6 +470,16 @@ export default function RoutinesPage() {
           <button onClick={resetFilters} className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
             Reset all filters
           </button>
+        )}
+        
+        {/* Export Button */}
+        {filteredRoutines.length > 0 && (
+          <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+            <ExportButton
+              onClick={() => exportRoutinesToCSV(filteredRoutines)}
+              label="Export Routines"
+            />
+          </div>
         )}
       </motion.div>
       {/* Header */}

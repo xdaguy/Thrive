@@ -17,6 +17,8 @@ import { useSearchFilter } from '@/hooks/use-search-filter'
 import { SearchBar } from '@/components/ui/search-bar'
 import { QuickFilters } from '@/components/ui/quick-filters'
 import { SortButton } from '@/components/ui/sort-button'
+import { ExportButton } from '@/components/ui/export-button'
+import { exportIncomeToCSV } from '@/lib/export'
 
 interface IncomeTabProps {
   openForm?: boolean
@@ -385,6 +387,16 @@ export function IncomeTab({ openForm }: IncomeTabProps = {}) {
           >
             Reset all filters
           </button>
+        )}
+        
+        {/* Export Button */}
+        {filteredIncomes.length > 0 && (
+          <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+            <ExportButton
+              onClick={() => exportIncomeToCSV(filteredIncomes, currency, dateFormat)}
+              label="Export Income"
+            />
+          </div>
         )}
       </div>
 

@@ -191,12 +191,20 @@
 
 ---
 
-## 2. **Advanced Reports & Export** 📄
-- PDF reports (monthly/yearly summary)
-- CSV export with custom date ranges
-- Printable views
-- Tax-ready export formats
-- Scheduled email reports (optional)
+## 2. **Advanced Reports & Export** 📄 🔄 20% COMPLETE
+**✅ Completed:**
+- ✅ CSV export for all data types (Income, Expense, Debt, Tasks, Weight, Exercise, Meals, Routines)
+- ✅ Export filtered data (respects current search/filter state)
+- ✅ Proper CSV escaping (handles commas, quotes, newlines)
+- ✅ Date-formatted exports with user's date format preference
+- ✅ Currency-formatted financial exports
+
+**⏳ Remaining:**
+- [ ] PDF reports (monthly/yearly summary)
+- [ ] Custom date range selection for exports
+- [ ] Printable views
+- [ ] Tax-ready export formats
+- [ ] Scheduled email reports (optional)
 
 ---
 
