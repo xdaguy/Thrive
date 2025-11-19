@@ -9,6 +9,7 @@ import { migrateData, validateDataStructure } from './migrations'
 import { mergeData } from './merge'
 import { createBackup } from './backup-manager'
 import { isCompatible, isNewerVersion } from './schema-version'
+import { DataEvents, DATA_EVENTS } from '../events'
 import type { BackupData, ImportOptions, ImportResult } from './types'
 
 /**
@@ -82,6 +83,20 @@ export async function importBackup(
     // Step 7: Import data
     const importStats = await importData(finalData, options.skipDuplicates)
     result.stats = importStats
+    
+    // Step 8: Emit data change events to refresh charts and UI
+    if (importStats.imported > 0) {
+      DataEvents.emit(DATA_EVENTS.INCOME_CHANGED)
+      DataEvents.emit(DATA_EVENTS.EXPENSE_CHANGED)
+      DataEvents.emit(DATA_EVENTS.DEBT_CHANGED)
+      DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
+      DataEvents.emit(DATA_EVENTS.WEIGHT_CHANGED)
+      DataEvents.emit(DATA_EVENTS.EXERCISE_CHANGED)
+      DataEvents.emit(DATA_EVENTS.MEAL_CHANGED)
+      DataEvents.emit(DATA_EVENTS.ROUTINE_CHANGED)
+      DataEvents.emit(DATA_EVENTS.ROUTINE_COMPLETION_CHANGED)
+      DataEvents.emit(DATA_EVENTS.SETTINGS_CHANGED)
+    }
     
     result.success = true
     result.message = `Successfully imported ${importStats.imported} entries`

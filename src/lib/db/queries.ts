@@ -211,12 +211,17 @@ export async function deleteMeal(id: string) {
 export async function getMonthlyIncome(year: number, month: number) {
   // Create date range for the month
   const startDate = new Date(year, month, 1)
-  const endDate = new Date(year, month + 1, 0, 23, 59, 59)
+  startDate.setHours(0, 0, 0, 0)
+  const endDate = new Date(year, month + 1, 0, 23, 59, 59, 999)
   
   // Use indexed query on date field for better performance
+  // Convert dates to ISO strings for comparison since IndexedDB stores dates as strings
+  const startISO = startDate.toISOString()
+  const endISO = endDate.toISOString()
+  
   const monthlyIncome = await db.income
     .where('date')
-    .between(startDate, endDate, true, true)
+    .between(startISO, endISO, true, true)
     .toArray()
   
   return monthlyIncome.reduce((sum, item) => sum + item.amount, 0)
@@ -225,12 +230,17 @@ export async function getMonthlyIncome(year: number, month: number) {
 export async function getMonthlyExpenses(year: number, month: number) {
   // Create date range for the month
   const startDate = new Date(year, month, 1)
-  const endDate = new Date(year, month + 1, 0, 23, 59, 59)
+  startDate.setHours(0, 0, 0, 0)
+  const endDate = new Date(year, month + 1, 0, 23, 59, 59, 999)
   
   // Use indexed query on date field for better performance
+  // Convert dates to ISO strings for comparison since IndexedDB stores dates as strings
+  const startISO = startDate.toISOString()
+  const endISO = endDate.toISOString()
+  
   const monthlyExpenses = await db.expenses
     .where('date')
-    .between(startDate, endDate, true, true)
+    .between(startISO, endISO, true, true)
     .toArray()
   
   return monthlyExpenses.reduce((sum, item) => sum + item.amount, 0)
@@ -272,12 +282,18 @@ export async function getFinancialTrendData(months: number = 6) {
 
 export async function getExpenseBreakdownData(months: number = 1) {
   const now = new Date()
+  now.setHours(23, 59, 59, 999)
   const startDate = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1)
+  startDate.setHours(0, 0, 0, 0)
+  
+  // Convert dates to ISO strings for comparison since IndexedDB stores dates as strings
+  const startISO = startDate.toISOString()
+  const endISO = now.toISOString()
   
   // Get all expenses for the time period
   const expenses = await db.expenses
     .where('date')
-    .between(startDate, now, true, true)
+    .between(startISO, endISO, true, true)
     .toArray()
   
   // Group by category and sum amounts
@@ -298,12 +314,18 @@ export async function getExpenseBreakdownData(months: number = 1) {
 
 export async function getWeightProgressData(days: number = 30) {
   const now = new Date()
+  now.setHours(23, 59, 59, 999)
   const startDate = new Date(now)
   startDate.setDate(startDate.getDate() - days)
+  startDate.setHours(0, 0, 0, 0)
+  
+  // Convert dates to ISO strings for comparison since IndexedDB stores dates as strings
+  const startISO = startDate.toISOString()
+  const endISO = now.toISOString()
   
   const weights = await db.weight
     .where('date')
-    .between(startDate, now, true, true)
+    .between(startISO, endISO, true, true)
     .toArray()
   
   // Format for chart
@@ -325,10 +347,14 @@ export async function getTaskCompletionData(days: number = 7) {
     const nextDay = new Date(targetDate)
     nextDay.setDate(nextDay.getDate() + 1)
     
+    // Convert dates to ISO strings for comparison since IndexedDB stores dates as strings
+    const targetISO = targetDate.toISOString()
+    const nextISO = nextDay.toISOString()
+    
     // Get tasks due on this day
     const tasksForDay = await db.tasks
       .where('dueDate')
-      .between(targetDate, nextDay, true, false)
+      .between(targetISO, nextISO, true, false)
       .toArray()
     
     const completed = tasksForDay.filter(t => t.completed).length
@@ -364,10 +390,14 @@ export async function getRoutineAdherenceData(days: number = 14) {
     const nextDay = new Date(targetDate)
     nextDay.setDate(nextDay.getDate() + 1)
     
+    // Convert dates to ISO strings for comparison since IndexedDB stores dates as strings
+    const targetISO = targetDate.toISOString()
+    const nextISO = nextDay.toISOString()
+    
     // Get completions for this day
     const completions = await db.routineCompletions
       .where('date')
-      .between(targetDate, nextDay, true, false)
+      .between(targetISO, nextISO, true, false)
       .toArray()
     
     // Calculate average completion rate for the day
