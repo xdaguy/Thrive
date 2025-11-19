@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Plus, Scale, Trash2, Edit, TrendingUp, TrendingDown, Loader2 } from 'lucide-react'
 import { addWeight, getAllWeight, deleteWeight, updateWeight, type Weight } from '@/lib/db/queries'
 import { formatDate } from '@/lib/constants'
@@ -14,12 +14,16 @@ import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { haptics } from '@/lib/haptics'
 import { useSwipeToDelete } from '@/hooks/use-swipe'
 import { useSearchFilter } from '@/hooks/use-search-filter'
+import { useSettings } from '@/hooks/use-settings'
+import { useErrorHandler } from '@/hooks/use-error-handler'
+import { useMinimumLoadingTime } from '@/hooks/use-minimum-loading'
 import { SearchBar } from '@/components/ui/search-bar'
 import { QuickFilters } from '@/components/ui/quick-filters'
 import { SortButton } from '@/components/ui/sort-button'
 import { ExportButton } from '@/components/ui/export-button'
 import { exportWeightToCSV } from '@/lib/export'
 import { DateRangePicker } from '@/components/ui/date-range-picker'
+import { MIN_LOADING_TIME_MS } from '@/lib/constants'
 
 interface WeightTabProps {
   openForm?: boolean
@@ -90,11 +94,12 @@ function SwipeableWeightItem({ weight, dateFormat, onEdit, onDelete }: Swipeable
 
 export function WeightTab({ openForm }: WeightTabProps = {}) {
   const { confirm: confirmDelete, DeleteDialog } = useDeleteConfirm()
+  const { weightUnit, dateFormat } = useSettings()
+  const { handleError } = useErrorHandler()
+  const { ensureMinimumTime } = useMinimumLoadingTime()
   const [weights, setWeights] = useState<Weight[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg')
-  const [dateFormat, setDateFormat] = useState('MM/DD/YYYY')
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [formData, setFormData] = useState({
@@ -124,14 +129,6 @@ export function WeightTab({ openForm }: WeightTabProps = {}) {
 
   useEffect(() => {
     loadWeights()
-    loadWeightUnit()
-
-    // Listen for settings changes
-    DataEvents.on(DATA_EVENTS.SETTINGS_CHANGED, loadWeightUnit)
-
-    return () => {
-      DataEvents.off(DATA_EVENTS.SETTINGS_CHANGED, loadWeightUnit)
-    }
   }, [])
 
   useEffect(() => {
@@ -141,33 +138,16 @@ export function WeightTab({ openForm }: WeightTabProps = {}) {
     }
   }, [openForm])
 
-  async function loadWeightUnit() {
-    try {
-      const settings = await db.settings.get('user_settings')
-      if (settings?.weightUnit) {
-        setWeightUnit(settings.weightUnit)
-      }
-      if (settings?.dateFormat) {
-        setDateFormat(settings.dateFormat)
-      }
-    } catch (error) {
-      console.error('Failed to load weight unit:', error)
-    }
-  }
-
   async function loadWeights() {
-    setLoading(true)
-    const startTime = Date.now()
-    
-    const data = await getAllWeight()
-    
-    // Ensure skeleton shows for at least 300ms
-    const elapsedTime = Date.now() - startTime
-    const remainingTime = Math.max(0, 300 - elapsedTime)
-    await new Promise(resolve => setTimeout(resolve, remainingTime))
-    
-    setWeights(data)
-    setLoading(false)
+    try {
+      setLoading(true)
+      const data = await ensureMinimumTime(getAllWeight(), MIN_LOADING_TIME_MS)
+      setWeights(data)
+    } catch (error) {
+      handleError(error, 'Failed to load weight entries')
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -223,9 +203,7 @@ export function WeightTab({ openForm }: WeightTabProps = {}) {
       DataEvents.emit(DATA_EVENTS.WEIGHT_CHANGED)
       haptics.success()
     } catch (error) {
-      console.error('Failed to save:', error)
-      toast.error('Failed to save. Please try again.')
-      haptics.error()
+      handleError(error, 'Failed to save weight entry')
       loadWeights()
     } finally {
       setSubmitting(false)
@@ -265,9 +243,7 @@ export function WeightTab({ openForm }: WeightTabProps = {}) {
       DataEvents.emit(DATA_EVENTS.WEIGHT_CHANGED)
       haptics.success()
     } catch (error) {
-      console.error('Failed to delete weight:', error)
-      toast.error('Failed to delete')
-      haptics.error()
+      handleError(error, 'Failed to delete weight entry')
       loadWeights()
     }
   }

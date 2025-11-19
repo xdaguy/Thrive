@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Plus, Activity, Trash2, Edit, Loader2, Dumbbell } from 'lucide-react'
 import { addExercise, getAllExercise, deleteExercise, updateExercise, type Exercise } from '@/lib/db/queries'
 import { EXERCISE_TYPES, formatDate } from '@/lib/constants'
@@ -14,12 +14,16 @@ import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { haptics } from '@/lib/haptics'
 import { useSwipeToDelete } from '@/hooks/use-swipe'
 import { useSearchFilter } from '@/hooks/use-search-filter'
+import { useSettings } from '@/hooks/use-settings'
+import { useErrorHandler } from '@/hooks/use-error-handler'
+import { useMinimumLoadingTime } from '@/hooks/use-minimum-loading'
 import { SearchBar } from '@/components/ui/search-bar'
 import { QuickFilters } from '@/components/ui/quick-filters'
 import { SortButton } from '@/components/ui/sort-button'
 import { ExportButton } from '@/components/ui/export-button'
 import { exportExerciseToCSV } from '@/lib/export'
 import { DateRangePicker } from '@/components/ui/date-range-picker'
+import { MIN_LOADING_TIME_MS } from '@/lib/constants'
 
 interface ExerciseTabProps {
   openForm?: boolean
@@ -94,10 +98,12 @@ function SwipeableExerciseItem({ exercise, dateFormat, onEdit, onDelete }: Swipe
 
 export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
   const { confirm: confirmDelete, DeleteDialog } = useDeleteConfirm()
+  const { dateFormat } = useSettings()
+  const { handleError } = useErrorHandler()
+  const { ensureMinimumTime } = useMinimumLoadingTime()
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [dateFormat, setDateFormat] = useState('MM/DD/YYYY')
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [formData, setFormData] = useState({
@@ -131,14 +137,6 @@ export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
 
   useEffect(() => {
     loadExercises()
-    loadDateFormat()
-
-    // Listen for settings changes
-    DataEvents.on(DATA_EVENTS.SETTINGS_CHANGED, loadDateFormat)
-
-    return () => {
-      DataEvents.off(DATA_EVENTS.SETTINGS_CHANGED, loadDateFormat)
-    }
   }, [])
 
   useEffect(() => {
@@ -148,30 +146,16 @@ export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
     }
   }, [openForm])
 
-  async function loadDateFormat() {
-    try {
-      const settings = await db.settings.get('user_settings')
-      if (settings?.dateFormat) {
-        setDateFormat(settings.dateFormat)
-      }
-    } catch (error) {
-      console.error('Failed to load date format:', error)
-    }
-  }
-
   async function loadExercises() {
-    setLoading(true)
-    const startTime = Date.now()
-    
-    const data = await getAllExercise()
-    
-    // Ensure skeleton shows for at least 300ms
-    const elapsedTime = Date.now() - startTime
-    const remainingTime = Math.max(0, 300 - elapsedTime)
-    await new Promise(resolve => setTimeout(resolve, remainingTime))
-    
-    setExercises(data)
-    setLoading(false)
+    try {
+      setLoading(true)
+      const data = await ensureMinimumTime(getAllExercise(), MIN_LOADING_TIME_MS)
+      setExercises(data)
+    } catch (error) {
+      handleError(error, 'Failed to load exercise entries')
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -234,9 +218,7 @@ export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
       DataEvents.emit(DATA_EVENTS.EXERCISE_CHANGED)
       haptics.success()
     } catch (error) {
-      console.error('Failed to save:', error)
-      toast.error('Failed to save. Please try again.')
-      haptics.error()
+      handleError(error, 'Failed to save exercise entry')
       loadExercises()
     } finally {
       setSubmitting(false)
@@ -284,14 +266,15 @@ export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
       DataEvents.emit(DATA_EVENTS.EXERCISE_CHANGED)
       haptics.success()
     } catch (error) {
-      console.error('Failed to delete exercise:', error)
-      toast.error('Failed to delete')
-      haptics.error()
+      handleError(error, 'Failed to delete exercise entry')
       loadExercises()
     }
   }
 
-  const totalMinutes = exercises.reduce((sum, ex) => sum + ex.duration, 0)
+  const totalMinutes = useMemo(
+    () => exercises.reduce((sum, ex) => sum + ex.duration, 0),
+    [exercises]
+  )
 
   return (
     <div className="space-y-6">

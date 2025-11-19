@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Plus, Repeat, Trash2, Edit, Loader2, RotateCw, Trophy, Target, X, CheckCircle, Circle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -28,10 +28,13 @@ import { usePullToRefresh } from '@/hooks/use-pull-to-refresh'
 import { RoutineHeatmapChart } from '@/components/charts/routine-heatmap-chart'
 import { getRoutineAdherenceData } from '@/lib/db/queries'
 import { useSearchFilter } from '@/hooks/use-search-filter'
+import { useErrorHandler } from '@/hooks/use-error-handler'
+import { useMinimumLoadingTime } from '@/hooks/use-minimum-loading'
 import { SearchBar } from '@/components/ui/search-bar'
 import { SortButton } from '@/components/ui/sort-button'
 import { ExportButton } from '@/components/ui/export-button'
 import { exportRoutinesToCSV } from '@/lib/export'
+import { MIN_LOADING_TIME_MS, CHART_DAYS_EXTENDED } from '@/lib/constants'
 
 // Swipeable Routine Item Wrapper
 interface SwipeableRoutineItemProps {
@@ -146,6 +149,8 @@ function SwipeableRoutineItem({ routine, completion, streak, onEdit, onDelete, o
 export default function RoutinesPage() {
   const searchParams = useSearchParams()
   const { confirm: confirmDelete, DeleteDialog } = useDeleteConfirm()
+  const { handleError } = useErrorHandler()
+  const { ensureMinimumTime } = useMinimumLoadingTime()
   const [routines, setRoutines] = useState<Routine[]>([])
   const [completions, setCompletions] = useState<Record<string, RoutineCompletion>>({})
   const [streaks, setStreaks] = useState<Record<string, number>>({})
@@ -190,11 +195,11 @@ export default function RoutinesPage() {
   async function loadChartData() {
     try {
       setChartLoading(true)
-      const data = await getRoutineAdherenceData(14) // Last 14 days
+      const data = await getRoutineAdherenceData(CHART_DAYS_EXTENDED)
       setRoutineAdherenceData(data)
-      setChartLoading(false)
     } catch (error) {
-      console.error('Failed to load chart data:', error)
+      handleError(error, 'Failed to load chart data', { showToast: false })
+    } finally {
       setChartLoading(false)
     }
   }
@@ -212,36 +217,38 @@ export default function RoutinesPage() {
   }, [])
 
   async function loadRoutines() {
-    setLoading(true)
-    const startTime = Date.now()
-    
-    const data = await getAllRoutines()
-    setRoutines(data)
-    
-    // Load today's completions and streaks for each routine
-    const completionsMap: Record<string, RoutineCompletion> = {}
-    const streaksMap: Record<string, number> = {}
-    
-    for (const routine of data) {
-      if (routine.id) {
-        const completion = await getTodayRoutineCompletion(routine.id)
-        if (completion) {
-          completionsMap[routine.id] = completion
+    try {
+      setLoading(true)
+      
+      const loadData = async () => {
+        const data = await getAllRoutines()
+        
+        // Load today's completions and streaks for each routine
+        const completionsMap: Record<string, RoutineCompletion> = {}
+        const streaksMap: Record<string, number> = {}
+        
+        for (const routine of data) {
+          if (routine.id) {
+            const completion = await getTodayRoutineCompletion(routine.id)
+            if (completion) {
+              completionsMap[routine.id] = completion
+            }
+            const streak = await getRoutineStreak(routine.id)
+            streaksMap[routine.id] = streak
+          }
         }
-        const streak = await getRoutineStreak(routine.id)
-        streaksMap[routine.id] = streak
+        
+        setRoutines(data)
+        setCompletions(completionsMap)
+        setStreaks(streaksMap)
       }
+      
+      await ensureMinimumTime(loadData(), MIN_LOADING_TIME_MS)
+    } catch (error) {
+      handleError(error, 'Failed to load routines')
+    } finally {
+      setLoading(false)
     }
-    
-    setCompletions(completionsMap)
-    setStreaks(streaksMap)
-    
-    // Ensure skeleton shows for at least 300ms
-    const elapsedTime = Date.now() - startTime
-    const remainingTime = Math.max(0, 300 - elapsedTime)
-    await new Promise(resolve => setTimeout(resolve, remainingTime))
-    
-    setLoading(false)
   }
 
   function addNewItem() {
@@ -321,9 +328,7 @@ export default function RoutinesPage() {
       DataEvents.emit(DATA_EVENTS.ROUTINE_CHANGED)
       haptics.success()
     } catch (error) {
-      console.error('Failed to save:', error)
-      toast.error('Failed to save. Please try again.')
-      haptics.error()
+      handleError(error, 'Failed to save routine')
       loadRoutines()
     } finally {
       setSubmitting(false)
@@ -368,9 +373,7 @@ export default function RoutinesPage() {
       DataEvents.emit(DATA_EVENTS.ROUTINE_CHANGED)
       haptics.success()
     } catch (error) {
-      console.error('Failed to delete routine:', error)
-      toast.error('Failed to delete')
-      haptics.error()
+      handleError(error, 'Failed to delete routine')
       loadRoutines()
     }
   }

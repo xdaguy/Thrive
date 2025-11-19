@@ -121,3 +121,9 @@ export function formatRelativeTime(date: Date | string): string {
   
   return formatDate(d)
 }
+
+// App Constants
+export const MIN_LOADING_TIME_MS = 300 // Minimum time to show loading skeleton for better UX
+export const MAX_AMOUNT_VALIDATION = 1000000000 // Maximum realistic amount for validation
+export const CHART_DAYS_DEFAULT = 7 // Default days for chart data
+export const CHART_DAYS_EXTENDED = 14 // Extended days for some charts

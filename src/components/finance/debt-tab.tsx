@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Plus, DollarSign, Trash2, Edit, Calendar, TrendingUp, Loader2, CreditCard, CheckCircle, AlertCircle } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/constants'
 import { db, generateId, type Debt } from '@/lib/db/schema'
@@ -13,12 +13,16 @@ import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { haptics } from '@/lib/haptics'
 import { useSwipeToDelete } from '@/hooks/use-swipe'
 import { useSearchFilter } from '@/hooks/use-search-filter'
+import { useSettings } from '@/hooks/use-settings'
+import { useErrorHandler } from '@/hooks/use-error-handler'
+import { useMinimumLoadingTime } from '@/hooks/use-minimum-loading'
 import { SearchBar } from '@/components/ui/search-bar'
 import { QuickFilters } from '@/components/ui/quick-filters'
 import { SortButton } from '@/components/ui/sort-button'
 import { ExportButton } from '@/components/ui/export-button'
 import { exportDebtToCSV } from '@/lib/export'
 import { DateRangePicker } from '@/components/ui/date-range-picker'
+import { MIN_LOADING_TIME_MS, MAX_AMOUNT_VALIDATION } from '@/lib/constants'
 
 interface DebtTabProps {
   openForm?: boolean
@@ -152,11 +156,12 @@ function SwipeableDebtItem({ debt, currency, dateFormat, onEdit, onDelete, onMar
 
 export function DebtTab({ openForm }: DebtTabProps = {}) {
   const { confirm: confirmDelete, DeleteDialog } = useDeleteConfirm()
+  const { currency, dateFormat } = useSettings()
+  const { handleError } = useErrorHandler()
+  const { ensureMinimumTime } = useMinimumLoadingTime()
   const [debts, setDebts] = useState<Debt[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [currency, setCurrency] = useState('USD')
-  const [dateFormat, setDateFormat] = useState('MM/DD/YYYY')
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [formData, setFormData] = useState({
@@ -190,14 +195,6 @@ export function DebtTab({ openForm }: DebtTabProps = {}) {
 
   useEffect(() => {
     loadDebts()
-    loadCurrency()
-
-    // Listen for settings changes
-    DataEvents.on(DATA_EVENTS.SETTINGS_CHANGED, loadCurrency)
-
-    return () => {
-      DataEvents.off(DATA_EVENTS.SETTINGS_CHANGED, loadCurrency)
-    }
   }, [])
 
   useEffect(() => {
@@ -207,33 +204,19 @@ export function DebtTab({ openForm }: DebtTabProps = {}) {
     }
   }, [openForm])
 
-  async function loadCurrency() {
-    try {
-      const settings = await db.settings.get('user_settings')
-      if (settings?.currency) {
-        setCurrency(settings.currency)
-      }
-      if (settings?.dateFormat) {
-        setDateFormat(settings.dateFormat)
-      }
-    } catch (error) {
-      console.error('Failed to load currency:', error)
-    }
-  }
-
   async function loadDebts() {
-    setLoading(true)
-    const startTime = Date.now()
-    
-    const data = await db.debts.orderBy('createdAt').reverse().toArray()
-    
-    // Ensure skeleton shows for at least 300ms
-    const elapsedTime = Date.now() - startTime
-    const remainingTime = Math.max(0, 300 - elapsedTime)
-    await new Promise(resolve => setTimeout(resolve, remainingTime))
-    
-    setDebts(data)
-    setLoading(false)
+    try {
+      setLoading(true)
+      const data = await ensureMinimumTime(
+        db.debts.orderBy('createdAt').reverse().toArray(),
+        MIN_LOADING_TIME_MS
+      )
+      setDebts(data)
+    } catch (error) {
+      handleError(error, 'Failed to load debt entries')
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -250,7 +233,7 @@ export function DebtTab({ openForm }: DebtTabProps = {}) {
       haptics.error()
       return
     }
-    if (amount > 1000000000) {
+    if (amount > MAX_AMOUNT_VALIDATION) {
       toast.error('Amount seems unrealistically high. Please check.')
       return
     }
@@ -326,9 +309,7 @@ export function DebtTab({ openForm }: DebtTabProps = {}) {
       DataEvents.emit(DATA_EVENTS.DEBT_CHANGED)
       haptics.success()
     } catch (error) {
-      console.error('Failed to save debt:', error)
-      toast.error('Failed to save. Please try again.')
-      haptics.error()
+      handleError(error, 'Failed to save debt entry')
       loadDebts()
     } finally {
       setSubmitting(false)
@@ -381,17 +362,13 @@ export function DebtTab({ openForm }: DebtTabProps = {}) {
         DataEvents.emit(DATA_EVENTS.DEBT_CHANGED)
         haptics.success()
       } catch (error) {
-        console.error('Failed to delete debt:', error)
-        toast.error('Failed to delete. Please try again.')
-        haptics.error()
+        handleError(error, 'Failed to delete debt entry')
         if (deletedDebt) {
           setDebts(prev => [deletedDebt, ...prev])
         }
       }
     } catch (error) {
-      console.error('Failed to delete debt:', error)
-      toast.error('Failed to delete. Please try again.')
-      haptics.error()
+      handleError(error, 'Failed to delete debt entry')
     }
   }
 

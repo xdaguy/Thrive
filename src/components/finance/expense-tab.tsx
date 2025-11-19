@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Plus, TrendingDown, Trash2, Edit, Calendar, Receipt, Loader2 } from 'lucide-react'
 import { addExpense, getAllExpenses, deleteExpense, updateExpense, type Expense } from '@/lib/db/queries'
 import { EXPENSE_CATEGORIES, PAYMENT_METHODS, formatCurrency, formatDate } from '@/lib/constants'
@@ -14,12 +14,16 @@ import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { haptics } from '@/lib/haptics'
 import { useSwipeToDelete } from '@/hooks/use-swipe'
 import { useSearchFilter } from '@/hooks/use-search-filter'
+import { useSettings } from '@/hooks/use-settings'
+import { useErrorHandler } from '@/hooks/use-error-handler'
+import { useMinimumLoadingTime } from '@/hooks/use-minimum-loading'
 import { SearchBar } from '@/components/ui/search-bar'
 import { QuickFilters } from '@/components/ui/quick-filters'
 import { SortButton } from '@/components/ui/sort-button'
 import { ExportButton } from '@/components/ui/export-button'
 import { exportExpenseToCSV } from '@/lib/export'
 import { DateRangePicker } from '@/components/ui/date-range-picker'
+import { MIN_LOADING_TIME_MS, MAX_AMOUNT_VALIDATION } from '@/lib/constants'
 
 interface ExpenseTabProps {
   openForm?: boolean
@@ -111,11 +115,12 @@ function SwipeableExpenseItem({ expense, currency, dateFormat, onEdit, onDelete 
 
 export function ExpenseTab({ openForm }: ExpenseTabProps = {}) {
   const { confirm: confirmDelete, DeleteDialog } = useDeleteConfirm()
+  const { currency, dateFormat } = useSettings()
+  const { handleError } = useErrorHandler()
+  const { ensureMinimumTime } = useMinimumLoadingTime()
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [currency, setCurrency] = useState('USD')
-  const [dateFormat, setDateFormat] = useState('MM/DD/YYYY')
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [formData, setFormData] = useState({
@@ -148,14 +153,6 @@ export function ExpenseTab({ openForm }: ExpenseTabProps = {}) {
 
   useEffect(() => {
     loadExpenses()
-    loadCurrency()
-
-    // Listen for settings changes
-    DataEvents.on(DATA_EVENTS.SETTINGS_CHANGED, loadCurrency)
-
-    return () => {
-      DataEvents.off(DATA_EVENTS.SETTINGS_CHANGED, loadCurrency)
-    }
   }, [])
 
   useEffect(() => {
@@ -165,33 +162,16 @@ export function ExpenseTab({ openForm }: ExpenseTabProps = {}) {
     }
   }, [openForm])
 
-  async function loadCurrency() {
-    try {
-      const settings = await db.settings.get('user_settings')
-      if (settings?.currency) {
-        setCurrency(settings.currency)
-      }
-      if (settings?.dateFormat) {
-        setDateFormat(settings.dateFormat)
-      }
-    } catch (error) {
-      console.error('Failed to load currency:', error)
-    }
-  }
-
   async function loadExpenses() {
-    setLoading(true)
-    const startTime = Date.now()
-    
-    const data = await getAllExpenses()
-    
-    // Ensure skeleton shows for at least 300ms
-    const elapsedTime = Date.now() - startTime
-    const remainingTime = Math.max(0, 300 - elapsedTime)
-    await new Promise(resolve => setTimeout(resolve, remainingTime))
-    
-    setExpenses(data)
-    setLoading(false)
+    try {
+      setLoading(true)
+      const data = await ensureMinimumTime(getAllExpenses(), MIN_LOADING_TIME_MS)
+      setExpenses(data)
+    } catch (error) {
+      handleError(error, 'Failed to load expense entries')
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -205,7 +185,7 @@ export function ExpenseTab({ openForm }: ExpenseTabProps = {}) {
       haptics.error()
       return
     }
-    if (amount > 1000000000) {
+    if (amount > MAX_AMOUNT_VALIDATION) {
       toast.error('Amount seems unrealistically high. Please check.')
       haptics.error()
       return
@@ -267,9 +247,7 @@ export function ExpenseTab({ openForm }: ExpenseTabProps = {}) {
       DataEvents.emit(DATA_EVENTS.EXPENSE_CHANGED)
       haptics.success()
     } catch (error) {
-      console.error('Failed to save expense:', error)
-      toast.error('Failed to save. Please try again.')
-      haptics.error()
+      handleError(error, 'Failed to save expense entry')
       loadExpenses()
     } finally {
       setSubmitting(false)
@@ -319,22 +297,24 @@ export function ExpenseTab({ openForm }: ExpenseTabProps = {}) {
         DataEvents.emit(DATA_EVENTS.EXPENSE_CHANGED)
         haptics.success()
       } catch (error) {
-        console.error('Failed to delete expense:', error)
-        toast.error('Failed to delete. Please try again.')
-        haptics.error()
+        handleError(error, 'Failed to delete expense entry')
         if (deletedExpense) {
           setExpenses(prev => [deletedExpense, ...prev])
         }
       }
     } catch (error) {
-      console.error('Failed to delete expense:', error)
-      toast.error('Failed to delete. Please try again.')
-      haptics.error()
+      handleError(error, 'Failed to delete expense entry')
     }
   }
 
-  const totalExpenses = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0)
-  const allTimeExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0)
+  const totalExpenses = useMemo(
+    () => filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0),
+    [filteredExpenses]
+  )
+  const allTimeExpenses = useMemo(
+    () => expenses.reduce((sum, expense) => sum + expense.amount, 0),
+    [expenses]
+  )
 
   return (
     <div className="space-y-4 sm:space-y-6">

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Wallet, TrendingUp, TrendingDown, CheckSquare, Heart, Target, RefreshCw, Loader2 } from 'lucide-react'
 import { motion } from 'framer-motion'
@@ -12,10 +12,18 @@ import { db } from '@/lib/db/schema'
 import { fadeIn, staggerContainer, staggerItem } from '@/lib/animations'
 import { Skeleton, SkeletonCard } from '@/components/ui/skeleton'
 import { usePullToRefresh } from '@/hooks/use-pull-to-refresh'
+import { useSettings } from '@/hooks/use-settings'
+import { useErrorHandler } from '@/hooks/use-error-handler'
+import { useMinimumLoadingTime } from '@/hooks/use-minimum-loading'
 import { FinanceTrendChart } from '@/components/charts/finance-trend-chart'
+import { MIN_LOADING_TIME_MS } from '@/lib/constants'
+import { logger } from '@/lib/logger'
 
 export default function DashboardPage() {
   const router = useRouter()
+  const { currency, name: userName } = useSettings()
+  const { handleError } = useErrorHandler()
+  const { ensureMinimumTime } = useMinimumLoadingTime()
   const [stats, setStats] = useState({
     balance: 0,
     monthlyIncome: 0,
@@ -25,8 +33,6 @@ export default function DashboardPage() {
   })
   const [tasks, setTasks] = useState<Task[]>([])
   const [routines, setRoutines] = useState<Routine[]>([])
-  const [userName, setUserName] = useState<string>('')
-  const [currency, setCurrency] = useState('USD')
   const [loading, setLoading] = useState(true)
   const [financeTrendData, setFinanceTrendData] = useState<Array<{ month: string; income: number; expenses: number }>>([])
   const [chartLoading, setChartLoading] = useState(true)
@@ -38,7 +44,6 @@ export default function DashboardPage() {
   })
 
   useEffect(() => {
-    loadUserName()
     loadStats()
     loadChartData()
     
@@ -48,7 +53,6 @@ export default function DashboardPage() {
     DataEvents.on(DATA_EVENTS.INCOME_CHANGED, loadChartData)
     DataEvents.on(DATA_EVENTS.EXPENSE_CHANGED, loadChartData)
     DataEvents.on(DATA_EVENTS.TASK_CHANGED, loadStats)
-    DataEvents.on(DATA_EVENTS.SETTINGS_CHANGED, loadUserName)
     DataEvents.on(DATA_EVENTS.SETTINGS_CHANGED, loadStats) // Reload stats when currency changes
     
     return () => {
@@ -57,71 +61,53 @@ export default function DashboardPage() {
       DataEvents.off(DATA_EVENTS.INCOME_CHANGED, loadChartData)
       DataEvents.off(DATA_EVENTS.EXPENSE_CHANGED, loadChartData)
       DataEvents.off(DATA_EVENTS.TASK_CHANGED, loadStats)
-      DataEvents.off(DATA_EVENTS.SETTINGS_CHANGED, loadUserName)
       DataEvents.off(DATA_EVENTS.SETTINGS_CHANGED, loadStats)
     }
   }, [])
 
-  async function loadUserName() {
-    try {
-      const settings = await db.settings.get('user_settings')
-      if (settings?.name) {
-        setUserName(settings.name)
-      }
-      if (settings?.currency) {
-        setCurrency(settings.currency)
-      }
-    } catch (error) {
-      console.error('Failed to load user name:', error)
-    }
-  }
-
   async function loadStats() {
     try {
-      const startTime = Date.now()
+      setLoading(true)
       
-      const now = new Date()
+      const loadData = async () => {
+        const now = new Date()
+        
+        const balance = await getTotalBalance()
+        const income = await getMonthlyIncome(now.getFullYear(), now.getMonth())
+        const expenses = await getMonthlyExpenses(now.getFullYear(), now.getMonth())
+        const completed = await getTasksCompletedToday()
+        const total = await getTotalTasksToday()
+
+        // Load actual tasks and routines
+        const allTasks = await getAllTasks()
+        const allRoutines = await getAllRoutines()
+
+        // Filter tasks for today
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        const todaysTasks = allTasks.filter(task => {
+          if (!task.dueDate) return false
+          const dueDate = new Date(task.dueDate)
+          dueDate.setHours(0, 0, 0, 0)
+          return dueDate.getTime() === today.getTime()
+        }).slice(0, 5) // Show max 5 tasks
+
+        // Set stats and UI state
+        setStats({
+          balance,
+          monthlyIncome: income,
+          monthlyExpenses: expenses,
+          tasksCompleted: completed,
+          totalTasks: total
+        })
+        setTasks(todaysTasks)
+        setRoutines(allRoutines.slice(0, 3))
+      }
       
-      const balance = await getTotalBalance()
-      const income = await getMonthlyIncome(now.getFullYear(), now.getMonth())
-      const expenses = await getMonthlyExpenses(now.getFullYear(), now.getMonth())
-      const completed = await getTasksCompletedToday()
-      const total = await getTotalTasksToday()
-
-      // Load actual tasks and routines
-      const allTasks = await getAllTasks()
-      const allRoutines = await getAllRoutines()
-
-      // Filter tasks for today
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      const todaysTasks = allTasks.filter(task => {
-        if (!task.dueDate) return false
-        const dueDate = new Date(task.dueDate)
-        dueDate.setHours(0, 0, 0, 0)
-        return dueDate.getTime() === today.getTime()
-      }).slice(0, 5) // Show max 5 tasks
-
-      // Ensure skeleton shows for at least 300ms for better UX
-      const elapsedTime = Date.now() - startTime
-      const minDisplayTime = 300
-      const remainingTime = Math.max(0, minDisplayTime - elapsedTime)
-      
-      await new Promise(resolve => setTimeout(resolve, remainingTime))
-
-      // Set stats and UI state
-      setStats({
-        balance,
-        monthlyIncome: income,
-        monthlyExpenses: expenses,
-        tasksCompleted: completed,
-        totalTasks: total
-      })
-      setTasks(todaysTasks)
-      setRoutines(allRoutines.slice(0, 3))
-      setLoading(false)
+      await ensureMinimumTime(loadData(), MIN_LOADING_TIME_MS)
     } catch (error) {
-      console.error('Failed to load stats:', error)
+      handleError(error, 'Failed to load dashboard stats', { showToast: false })
+    } finally {
       setLoading(false)
     }
   }
@@ -133,7 +119,8 @@ export default function DashboardPage() {
       setFinanceTrendData(data)
       setChartLoading(false)
     } catch (error) {
-      console.error('Failed to load chart data:', error)
+      handleError(error, 'Failed to load chart data', { showToast: false })
+    } finally {
       setChartLoading(false)
     }
   }

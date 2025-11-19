@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Plus, CheckCircle2, Circle, Trash2, Edit, Calendar, Tag, AlertCircle, Loader2, Filter, CheckSquare, Square } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -19,12 +19,16 @@ import { usePullToRefresh } from '@/hooks/use-pull-to-refresh'
 import { TaskCompletionChart } from '@/components/charts/task-completion-chart'
 import { getTaskCompletionData } from '@/lib/db/queries'
 import { useSearchFilter } from '@/hooks/use-search-filter'
+import { useSettings } from '@/hooks/use-settings'
+import { useErrorHandler } from '@/hooks/use-error-handler'
+import { useMinimumLoadingTime } from '@/hooks/use-minimum-loading'
 import { SearchBar } from '@/components/ui/search-bar'
 import { QuickFilters } from '@/components/ui/quick-filters'
 import { SortButton } from '@/components/ui/sort-button'
 import { ExportButton } from '@/components/ui/export-button'
 import { exportTasksToCSV } from '@/lib/export'
 import { DateRangePicker } from '@/components/ui/date-range-picker'
+import { MIN_LOADING_TIME_MS, CHART_DAYS_DEFAULT } from '@/lib/constants'
 
 // Swipeable Task Item Wrapper
 interface SwipeableTaskItemProps {
@@ -133,11 +137,13 @@ function SwipeableTaskItem({ task, dateFormat, onToggle, onEdit, onDelete }: Swi
 export default function TasksPage() {
   const searchParams = useSearchParams()
   const { confirm: confirmDelete, DeleteDialog } = useDeleteConfirm()
+  const { dateFormat } = useSettings()
+  const { handleError } = useErrorHandler()
+  const { ensureMinimumTime } = useMinimumLoadingTime()
   const [tasks, setTasks] = useState<Task[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed' | 'overdue' | 'today'>('all')
-  const [dateFormat, setDateFormat] = useState('MM/DD/YYYY')
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -162,27 +168,24 @@ export default function TasksPage() {
   async function loadChartData() {
     try {
       setChartLoading(true)
-      const data = await getTaskCompletionData(7) // Last 7 days
+      const data = await getTaskCompletionData(CHART_DAYS_DEFAULT)
       setTaskCompletionData(data)
-      setChartLoading(false)
     } catch (error) {
-      console.error('Failed to load chart data:', error)
+      handleError(error, 'Failed to load chart data', { showToast: false })
+    } finally {
       setChartLoading(false)
     }
   }
 
   useEffect(() => {
     loadTasks()
-    loadDateFormat()
     loadChartData()
 
     // Listen for changes
     DataEvents.on(DATA_EVENTS.TASK_CHANGED, loadChartData)
-    DataEvents.on(DATA_EVENTS.SETTINGS_CHANGED, loadDateFormat)
 
     return () => {
       DataEvents.off(DATA_EVENTS.TASK_CHANGED, loadChartData)
-      DataEvents.off(DATA_EVENTS.SETTINGS_CHANGED, loadDateFormat)
     }
   }, [])
 
@@ -194,30 +197,16 @@ export default function TasksPage() {
     }
   }, [searchParams])
 
-  async function loadDateFormat() {
-    try {
-      const settings = await db.settings.get('user_settings')
-      if (settings?.dateFormat) {
-        setDateFormat(settings.dateFormat)
-      }
-    } catch (error) {
-      console.error('Failed to load date format:', error)
-    }
-  }
-
   async function loadTasks() {
-    setLoading(true)
-    const startTime = Date.now()
-    
-    const data = await getAllTasks()
-    
-    // Ensure skeleton shows for at least 300ms
-    const elapsedTime = Date.now() - startTime
-    const remainingTime = Math.max(0, 300 - elapsedTime)
-    await new Promise(resolve => setTimeout(resolve, remainingTime))
-    
-    setTasks(data)
-    setLoading(false)
+    try {
+      setLoading(true)
+      const data = await ensureMinimumTime(getAllTasks(), MIN_LOADING_TIME_MS)
+      setTasks(data)
+    } catch (error) {
+      handleError(error, 'Failed to load tasks')
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -279,9 +268,7 @@ export default function TasksPage() {
       DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
       haptics.success()
     } catch (error) {
-      console.error('Failed to save:', error)
-      toast.error('Failed to save. Please try again.')
-      haptics.error()
+      handleError(error, 'Failed to save task')
       loadTasks()
     } finally {
       setSubmitting(false)
@@ -335,9 +322,7 @@ export default function TasksPage() {
       DataEvents.emit(DATA_EVENTS.TASK_CHANGED)
       haptics.success()
     } catch (error) {
-      console.error('Failed to delete task:', error)
-      toast.error('Failed to delete')
-      haptics.error()
+      handleError(error, 'Failed to delete task')
       loadTasks()
     }
   }

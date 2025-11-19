@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Plus, TrendingUp, Trash2, Edit, Calendar, Loader2 } from 'lucide-react'
 import { addIncome, getAllIncome, deleteIncome, updateIncome, type Income } from '@/lib/db/queries'
 import { INCOME_CATEGORIES, formatCurrency, formatDate } from '@/lib/constants'
@@ -14,12 +14,17 @@ import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { haptics } from '@/lib/haptics'
 import { useSwipeToDelete } from '@/hooks/use-swipe'
 import { useSearchFilter } from '@/hooks/use-search-filter'
+import { useSettings } from '@/hooks/use-settings'
+import { useErrorHandler } from '@/hooks/use-error-handler'
+import { useMinimumLoadingTime } from '@/hooks/use-minimum-loading'
 import { SearchBar } from '@/components/ui/search-bar'
 import { QuickFilters } from '@/components/ui/quick-filters'
 import { SortButton } from '@/components/ui/sort-button'
 import { ExportButton } from '@/components/ui/export-button'
 import { exportIncomeToCSV } from '@/lib/export'
 import { DateRangePicker } from '@/components/ui/date-range-picker'
+import { MIN_LOADING_TIME_MS, MAX_AMOUNT_VALIDATION } from '@/lib/constants'
+import { logger } from '@/lib/logger'
 
 interface IncomeTabProps {
   openForm?: boolean
@@ -104,11 +109,12 @@ function SwipeableIncomeItem({ income, currency, dateFormat, onEdit, onDelete }:
 
 export function IncomeTab({ openForm }: IncomeTabProps = {}) {
   const { confirm: confirmDelete, DeleteDialog } = useDeleteConfirm()
+  const { currency, dateFormat } = useSettings()
+  const { handleError } = useErrorHandler()
+  const { ensureMinimumTime } = useMinimumLoadingTime()
   const [incomes, setIncomes] = useState<Income[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [currency, setCurrency] = useState('USD')
-  const [dateFormat, setDateFormat] = useState('MM/DD/YYYY')
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [formData, setFormData] = useState({
@@ -141,14 +147,6 @@ export function IncomeTab({ openForm }: IncomeTabProps = {}) {
 
   useEffect(() => {
     loadIncomes()
-    loadCurrency()
-
-    // Listen for settings changes
-    DataEvents.on(DATA_EVENTS.SETTINGS_CHANGED, loadCurrency)
-
-    return () => {
-      DataEvents.off(DATA_EVENTS.SETTINGS_CHANGED, loadCurrency)
-    }
   }, [])
 
   useEffect(() => {
@@ -158,33 +156,16 @@ export function IncomeTab({ openForm }: IncomeTabProps = {}) {
     }
   }, [openForm])
 
-  async function loadCurrency() {
-    try {
-      const settings = await db.settings.get('user_settings')
-      if (settings?.currency) {
-        setCurrency(settings.currency)
-      }
-      if (settings?.dateFormat) {
-        setDateFormat(settings.dateFormat)
-      }
-    } catch (error) {
-      console.error('Failed to load currency:', error)
-    }
-  }
-
   async function loadIncomes() {
-    setLoading(true)
-    const startTime = Date.now()
-    
-    const data = await getAllIncome()
-    
-    // Ensure skeleton shows for at least 300ms
-    const elapsedTime = Date.now() - startTime
-    const remainingTime = Math.max(0, 300 - elapsedTime)
-    await new Promise(resolve => setTimeout(resolve, remainingTime))
-    
-    setIncomes(data)
-    setLoading(false)
+    try {
+      setLoading(true)
+      const data = await ensureMinimumTime(getAllIncome(), MIN_LOADING_TIME_MS)
+      setIncomes(data)
+    } catch (error) {
+      handleError(error, 'Failed to load income entries')
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -198,7 +179,7 @@ export function IncomeTab({ openForm }: IncomeTabProps = {}) {
       haptics.error()
       return
     }
-    if (amount > 1000000000) {
+    if (amount > MAX_AMOUNT_VALIDATION) {
       toast.error('Amount seems unrealistically high. Please check.')
       haptics.error()
       return
@@ -268,9 +249,7 @@ export function IncomeTab({ openForm }: IncomeTabProps = {}) {
       haptics.success()
     } catch (error) {
       // ROLLBACK on error
-      console.error('Failed to save income:', error)
-      toast.error('Failed to save. Please try again.')
-      haptics.error()
+      handleError(error, 'Failed to save income entry')
       loadIncomes() // Reload from DB to restore correct state
     } finally {
       setSubmitting(false)
@@ -316,14 +295,18 @@ export function IncomeTab({ openForm }: IncomeTabProps = {}) {
       DataEvents.emit(DATA_EVENTS.INCOME_CHANGED)
       haptics.success()
     } catch (error) {
-      console.error('Failed to delete income:', error)
-      toast.error('Failed to delete')
-      haptics.error()
+      handleError(error, 'Failed to delete income entry')
     }
   }
 
-  const totalIncome = filteredIncomes.reduce((sum, income) => sum + income.amount, 0)
-  const allTimeIncome = incomes.reduce((sum, income) => sum + income.amount, 0)
+  const totalIncome = useMemo(
+    () => filteredIncomes.reduce((sum, income) => sum + income.amount, 0),
+    [filteredIncomes]
+  )
+  const allTimeIncome = useMemo(
+    () => incomes.reduce((sum, income) => sum + income.amount, 0),
+    [incomes]
+  )
 
   return (
     <div className="space-y-4 sm:space-y-6">

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Plus, Coffee, Trash2, Edit, Loader2, Utensils, CheckCircle, XCircle } from 'lucide-react'
 import { addMeal, getAllMeals, deleteMeal, updateMeal, type Meal } from '@/lib/db/queries'
 import { MEAL_TYPES, formatDate } from '@/lib/constants'
@@ -14,12 +14,16 @@ import { Skeleton, SkeletonTable } from '@/components/ui/skeleton'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useSwipeToDelete } from '@/hooks/use-swipe'
 import { useSearchFilter } from '@/hooks/use-search-filter'
+import { useSettings } from '@/hooks/use-settings'
+import { useErrorHandler } from '@/hooks/use-error-handler'
+import { useMinimumLoadingTime } from '@/hooks/use-minimum-loading'
 import { SearchBar } from '@/components/ui/search-bar'
 import { QuickFilters } from '@/components/ui/quick-filters'
 import { SortButton } from '@/components/ui/sort-button'
 import { ExportButton } from '@/components/ui/export-button'
 import { exportMealsToCSV } from '@/lib/export'
 import { DateRangePicker } from '@/components/ui/date-range-picker'
+import { MIN_LOADING_TIME_MS } from '@/lib/constants'
 
 interface MealsTabProps {
   openForm?: boolean
@@ -99,10 +103,12 @@ function SwipeableMealItem({ meal, dateFormat, onEdit, onDelete }: SwipeableMeal
 
 export function MealsTab({ openForm }: MealsTabProps = {}) {
   const { confirm: confirmDelete, DeleteDialog } = useDeleteConfirm()
+  const { dateFormat } = useSettings()
+  const { handleError } = useErrorHandler()
+  const { ensureMinimumTime } = useMinimumLoadingTime()
   const [meals, setMeals] = useState<Meal[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [dateFormat, setDateFormat] = useState('MM/DD/YYYY')
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [formData, setFormData] = useState({
@@ -133,14 +139,6 @@ export function MealsTab({ openForm }: MealsTabProps = {}) {
 
   useEffect(() => {
     loadMeals()
-    loadDateFormat()
-
-    // Listen for settings changes
-    DataEvents.on(DATA_EVENTS.SETTINGS_CHANGED, loadDateFormat)
-
-    return () => {
-      DataEvents.off(DATA_EVENTS.SETTINGS_CHANGED, loadDateFormat)
-    }
   }, [])
 
   useEffect(() => {
@@ -150,30 +148,16 @@ export function MealsTab({ openForm }: MealsTabProps = {}) {
     }
   }, [openForm])
 
-  async function loadDateFormat() {
-    try {
-      const settings = await db.settings.get('user_settings')
-      if (settings?.dateFormat) {
-        setDateFormat(settings.dateFormat)
-      }
-    } catch (error) {
-      console.error('Failed to load date format:', error)
-    }
-  }
-
   async function loadMeals() {
-    setLoading(true)
-    const startTime = Date.now()
-    
-    const data = await getAllMeals()
-    
-    // Ensure skeleton shows for at least 300ms
-    const elapsedTime = Date.now() - startTime
-    const remainingTime = Math.max(0, 300 - elapsedTime)
-    await new Promise(resolve => setTimeout(resolve, remainingTime))
-    
-    setMeals(data)
-    setLoading(false)
+    try {
+      setLoading(true)
+      const data = await ensureMinimumTime(getAllMeals(), MIN_LOADING_TIME_MS)
+      setMeals(data)
+    } catch (error) {
+      handleError(error, 'Failed to load meal entries')
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -219,9 +203,7 @@ export function MealsTab({ openForm }: MealsTabProps = {}) {
       DataEvents.emit(DATA_EVENTS.MEAL_CHANGED)
       haptics.success()
     } catch (error) {
-      console.error('Failed to save:', error)
-      toast.error('Failed to save. Please try again.')
-      haptics.error()
+      handleError(error, 'Failed to save meal entry')
       loadMeals()
     } finally {
       setSubmitting(false)
@@ -263,16 +245,17 @@ export function MealsTab({ openForm }: MealsTabProps = {}) {
       DataEvents.emit(DATA_EVENTS.MEAL_CHANGED)
       haptics.success()
     } catch (error) {
-      console.error('Failed to delete meal:', error)
-      toast.error('Failed to delete. Please try again.')
-      haptics.error()
+      handleError(error, 'Failed to delete meal entry')
       loadMeals()
     }
   }
 
-  const adherenceRate = meals.length > 0
-    ? Math.round((meals.filter(m => m.asExpected).length / meals.length) * 100)
-    : 0
+  const adherenceRate = useMemo(() => 
+    meals.length > 0
+      ? Math.round((meals.filter(m => m.asExpected).length / meals.length) * 100)
+      : 0,
+    [meals]
+  )
 
   return (
     <div className="space-y-6">
