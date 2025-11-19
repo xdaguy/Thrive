@@ -458,8 +458,8 @@ export default function TasksPage() {
         />
         {/* Custom Date Range (for Due Date filtering) */}
         <DateRangePicker
-          startDate={filters.dateRange?.start ? filters.dateRange.start.toISOString().split('T')[0] : null}
-          endDate={filters.dateRange?.end ? filters.dateRange.end.toISOString().split('T')[0] : null}
+          startDate={searchFilters.dateRange?.start ? searchFilters.dateRange.start.toISOString().split('T')[0] : null}
+          endDate={searchFilters.dateRange?.end ? searchFilters.dateRange.end.toISOString().split('T')[0] : null}
           onChange={(start, end) => {
             updateFilters({
               dateRange: {
