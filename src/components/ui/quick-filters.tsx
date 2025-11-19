@@ -20,6 +20,8 @@ export function QuickFilters({ value, onChange }: QuickFiltersProps) {
         <button
           key={filter.value}
           onClick={() => onChange(filter.value)}
+          aria-label={`Filter by ${filter.label.toLowerCase()}`}
+          aria-pressed={value === filter.value}
           className={`
             px-3 py-1.5 rounded-lg text-sm font-medium transition-all
             ${value === filter.value

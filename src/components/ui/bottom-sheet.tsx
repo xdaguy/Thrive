@@ -3,6 +3,8 @@
 import { useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { FocusTrap } from './focus-trap'
+import { A11Y_LABELS } from '@/lib/a11y'
 
 interface BottomSheetProps {
   isOpen: boolean
@@ -58,26 +60,30 @@ export function BottomSheet({ isOpen, onClose, title, children }: BottomSheetPro
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
             className="fixed bottom-0 left-0 right-0 z-50 md:hidden"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="bottom-sheet-title"
           >
-            <div className="bg-white dark:bg-[#1A1A1A] rounded-t-3xl shadow-2xl max-h-[90vh] overflow-hidden flex flex-col">
-              {/* Handle Bar - More Visible */}
-              <div className="flex justify-center pt-4 pb-3 bg-gray-50 dark:bg-[#0A0A0A] rounded-t-3xl">
-                <div className="w-16 h-1.5 bg-gray-400 dark:bg-gray-600 rounded-full" />
-              </div>
+            <FocusTrap active={isOpen} onEscape={onClose}>
+              <div className="bg-white dark:bg-[#1A1A1A] rounded-t-3xl shadow-2xl max-h-[90vh] overflow-hidden flex flex-col">
+                {/* Handle Bar - More Visible */}
+                <div className="flex justify-center pt-4 pb-3 bg-gray-50 dark:bg-[#0A0A0A] rounded-t-3xl">
+                  <div className="w-16 h-1.5 bg-gray-400 dark:bg-gray-600 rounded-full" aria-hidden="true" />
+                </div>
 
-              {/* Header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {title}
-                </h3>
-                <button
-                  onClick={onClose}
-                  className="btn-icon"
-                  aria-label="Close"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800">
+                  <h3 id="bottom-sheet-title" className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {title}
+                  </h3>
+                  <button
+                    onClick={onClose}
+                    className="btn-icon"
+                    aria-label={A11Y_LABELS.CLOSE}
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
 
               {/* Content - Scrollable */}
               <div className="flex-1 overflow-y-auto overscroll-contain px-6 py-4">
@@ -93,33 +99,38 @@ export function BottomSheet({ isOpen, onClose, title, children }: BottomSheetPro
             exit={{ opacity: 0 }}
             onClick={onClose}
             className="fixed inset-0 bg-black/50 z-40 hidden md:flex items-center justify-center"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="desktop-modal-title"
           >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white dark:bg-[#1A1A1A] rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col m-4"
-            >
-              {/* Header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800">
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                  {title}
-                </h3>
-                <button
-                  onClick={onClose}
-                  className="btn-icon"
-                  aria-label="Close"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
+            <FocusTrap active={isOpen} onEscape={onClose}>
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-white dark:bg-[#1A1A1A] rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col m-4"
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800">
+                  <h3 id="desktop-modal-title" className="text-xl font-semibold text-gray-900 dark:text-white">
+                    {title}
+                  </h3>
+                  <button
+                    onClick={onClose}
+                    className="btn-icon"
+                    aria-label={A11Y_LABELS.CLOSE}
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
 
-              {/* Content - Scrollable */}
-              <div className="flex-1 overflow-y-auto px-6 py-6">
-                {children}
-              </div>
-            </motion.div>
+                {/* Content - Scrollable */}
+                <div className="flex-1 overflow-y-auto px-6 py-6">
+                  {children}
+                </div>
+              </motion.div>
+            </FocusTrap>
           </motion.div>
         </>
       )}

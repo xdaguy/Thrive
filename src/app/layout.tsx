@@ -83,6 +83,10 @@ export default function RootLayout({
                 gap={12}
                 visibleToasts={3}
                 offset={20}
+                toastOptions={{
+                  role: 'status',
+                  'aria-live': 'polite',
+                }}
               />
               {children}
             </DBProvider>

@@ -31,6 +31,7 @@ export function SearchBar({ value, onChange, placeholder = 'Search...', autoFocu
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
+        aria-label={placeholder || 'Search'}
         className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 
                    bg-white dark:bg-gray-800 text-gray-900 dark:text-white
                    placeholder:text-gray-400 dark:placeholder:text-gray-500
@@ -43,8 +44,9 @@ export function SearchBar({ value, onChange, placeholder = 'Search...', autoFocu
           onClick={() => onChange('')}
           className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
           aria-label="Clear search"
+          type="button"
         >
-          <X className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+          <X className="w-4 h-4 text-gray-400 dark:text-gray-500" aria-hidden="true" />
         </button>
       )}
     </div>

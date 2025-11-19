@@ -13,9 +13,17 @@ interface SortButtonProps {
 export function SortButton({ label, field, currentSortField, sortDirection, onSort }: SortButtonProps) {
   const isActive = currentSortField === field
   
+  const directionText = isActive 
+    ? sortDirection === 'asc' ? 'ascending' : 'descending'
+    : 'not sorted'
+  
+  const ariaLabel = `${label}, ${directionText}. Click to ${isActive && sortDirection === 'asc' ? 'sort descending' : 'sort ascending'}`
+
   return (
     <button
       onClick={() => onSort(field)}
+      aria-label={ariaLabel}
+      aria-sort={isActive ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
       className={`
         inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all
         ${isActive
@@ -27,12 +35,12 @@ export function SortButton({ label, field, currentSortField, sortDirection, onSo
       {label}
       {isActive ? (
         sortDirection === 'asc' ? (
-          <ArrowUp className="w-3.5 h-3.5" />
+          <ArrowUp className="w-3.5 h-3.5" aria-hidden="true" />
         ) : (
-          <ArrowDown className="w-3.5 h-3.5" />
+          <ArrowDown className="w-3.5 h-3.5" aria-hidden="true" />
         )
       ) : (
-        <ArrowUpDown className="w-3.5 h-3.5 opacity-50" />
+        <ArrowUpDown className="w-3.5 h-3.5 opacity-50" aria-hidden="true" />
       )}
     </button>
   )

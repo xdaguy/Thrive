@@ -79,16 +79,18 @@ function SwipeableIncomeItem({ income, currency, dateFormat, onEdit, onDelete }:
             <button
               onClick={() => onEdit(income)}
               className="btn-icon text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+              aria-label={`Edit income from ${income.source}`}
               title="Edit"
             >
-              <Edit className="w-4 h-4" />
+              <Edit className="w-4 h-4" aria-hidden="true" />
             </button>
             <button
               onClick={() => onDelete(income.id!)}
               className="btn-icon text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+              aria-label={`Delete income from ${income.source}`}
               title="Delete"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-4 h-4" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -418,8 +420,9 @@ export function IncomeTab({ openForm }: IncomeTabProps = {}) {
           <button
             onClick={() => setShowForm(!showForm)}
             className="btn-primary flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base py-2 sm:py-2.5 touch-manipulation"
+            aria-label="Add new income entry"
           >
-            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
             Add Income
           </button>
         </div>
@@ -545,6 +548,7 @@ export function IncomeTab({ openForm }: IncomeTabProps = {}) {
               type="submit" 
               className="btn-primary" 
               disabled={submitting}
+              aria-label={editingId ? 'Save income changes' : 'Add income entry'}
             >
               {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {editingId ? 'Update Income' : 'Save Income'}
@@ -554,6 +558,7 @@ export function IncomeTab({ openForm }: IncomeTabProps = {}) {
               onClick={handleCancelEdit}
               className="btn-secondary"
               disabled={submitting}
+              aria-label="Cancel and close form"
             >
               Cancel
             </button>
