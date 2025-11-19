@@ -16,20 +16,34 @@ interface FocusTrapProps {
 export function FocusTrap({ children, active = true, onEscape }: FocusTrapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const previousFocusRef = useRef<HTMLElement | null>(null)
+  const hasInitializedRef = useRef(false)
+  const onEscapeRef = useRef(onEscape)
+
+  // Keep onEscape ref updated without triggering re-renders
+  useEffect(() => {
+    onEscapeRef.current = onEscape
+  }, [onEscape])
 
   useEffect(() => {
-    if (!active || !containerRef.current) return
+    if (!active || !containerRef.current) {
+      hasInitializedRef.current = false
+      return
+    }
 
-    // Store previously focused element
-    previousFocusRef.current = document.activeElement as HTMLElement
+    // Only store previous focus and initialize trap on first activation
+    if (!hasInitializedRef.current) {
+      // Store previously focused element only on first activation
+      previousFocusRef.current = document.activeElement as HTMLElement
+      hasInitializedRef.current = true
+    }
 
-    // Trap focus
-    const cleanup = trapFocus(containerRef.current)
+    // Trap focus - don't auto-focus to avoid stealing focus from inputs
+    const cleanup = trapFocus(containerRef.current, false)
 
     // Handle Escape key
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && onEscape) {
-        onEscape()
+      if (e.key === 'Escape' && onEscapeRef.current) {
+        onEscapeRef.current()
       }
     }
 
@@ -39,11 +53,11 @@ export function FocusTrap({ children, active = true, onEscape }: FocusTrapProps)
       cleanup()
       document.removeEventListener('keydown', handleEscape)
       // Restore focus when unmounting
-      if (previousFocusRef.current) {
+      if (!active && previousFocusRef.current) {
         restoreFocus(previousFocusRef.current)
       }
     }
-  }, [active, onEscape])
+  }, [active]) // Removed onEscape from dependencies
 
   return (
     <div ref={containerRef} tabIndex={-1}>

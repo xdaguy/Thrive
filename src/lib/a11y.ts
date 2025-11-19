@@ -91,7 +91,7 @@ export class ScreenReader {
 /**
  * Focus trap utility for modals
  */
-export function trapFocus(element: HTMLElement) {
+export function trapFocus(element: HTMLElement, autoFocus = false) {
   const focusableElements = element.querySelectorAll<HTMLElement>(
     'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
   )
@@ -119,8 +119,17 @@ export function trapFocus(element: HTMLElement) {
 
   element.addEventListener('keydown', handleTabKey)
 
-  // Focus first element
-  firstElement?.focus()
+  // Only auto-focus first element if explicitly requested and no element is already focused
+  // This prevents stealing focus from input fields when user is typing
+  if (autoFocus && !element.contains(document.activeElement)) {
+    // Find first input/textarea/select, otherwise use first focusable element
+    const firstInput = element.querySelector<HTMLElement>('input, textarea, select')
+    if (firstInput) {
+      firstInput.focus()
+    } else if (firstElement) {
+      firstElement.focus()
+    }
+  }
 
   // Return cleanup function
   return () => {
