@@ -110,16 +110,18 @@ function SwipeableTaskItem({ task, dateFormat, onToggle, onEdit, onDelete }: Swi
           <button
             onClick={() => onEdit(task)}
             className="btn-icon text-blue-600 dark:text-blue-400"
+            aria-label={`Edit task: ${task.title}`}
             title="Edit"
           >
-            <Edit className="w-4 h-4" />
+            <Edit className="w-4 h-4" aria-hidden="true" />
           </button>
           <button
             onClick={() => onDelete(task.id!)}
             className="btn-icon text-red-600 dark:text-red-400"
+            aria-label={`Delete task: ${task.title}`}
             title="Delete"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
       </motion.div>
@@ -440,8 +442,9 @@ export default function TasksPage() {
         <button
           onClick={() => setShowForm(!showForm)}
           className="btn-primary flex items-center gap-2"
+          aria-label="Add new task"
         >
-          <Plus className="w-5 h-5" />
+          <Plus className="w-5 h-5" aria-hidden="true" />
           Add Task
         </button>
       </motion.div>
@@ -632,11 +635,22 @@ export default function TasksPage() {
           </div>
 
           <div className="flex gap-3">
-            <button type="submit" className="btn-primary" disabled={submitting}>
-              {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            <button 
+              type="submit" 
+              className="btn-primary" 
+              disabled={submitting}
+              aria-label={editingId ? 'Save task changes' : 'Add task'}
+            >
+              {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />}
               {editingId ? 'Update Task' : 'Save Task'}
             </button>
-            <button type="button" onClick={handleCancelEdit} className="btn-secondary" disabled={submitting}>
+            <button 
+              type="button" 
+              onClick={handleCancelEdit} 
+              className="btn-secondary" 
+              disabled={submitting}
+              aria-label="Cancel and close form"
+            >
               Cancel
             </button>
           </div>

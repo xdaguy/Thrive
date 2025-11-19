@@ -88,16 +88,18 @@ function SwipeableExpenseItem({ expense, currency, dateFormat, onEdit, onDelete 
             <button
               onClick={() => onEdit(expense)}
               className="btn-icon text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+              aria-label={`Edit expense for ${expense.description || expense.category}`}
               title="Edit"
             >
-              <Edit className="w-4 h-4" />
+              <Edit className="w-4 h-4" aria-hidden="true" />
             </button>
             <button
               onClick={() => onDelete(expense.id!)}
               className="btn-icon text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+              aria-label={`Delete expense for ${expense.description || expense.category}`}
               title="Delete"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-4 h-4" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -407,8 +409,9 @@ export function ExpenseTab({ openForm }: ExpenseTabProps = {}) {
           <button
             onClick={() => setShowForm(!showForm)}
             className="btn-primary flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base py-2 sm:py-2.5 touch-manipulation"
+            aria-label="Add new expense entry"
           >
-            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
             Add Expense
           </button>
         </div>
@@ -536,8 +539,9 @@ export function ExpenseTab({ openForm }: ExpenseTabProps = {}) {
               type="submit" 
               className="btn-primary"
               disabled={submitting}
+              aria-label={editingId ? 'Save expense changes' : 'Add expense entry'}
             >
-              {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />}
               {editingId ? 'Update Expense' : 'Save Expense'}
             </button>
             <button
@@ -545,6 +549,7 @@ export function ExpenseTab({ openForm }: ExpenseTabProps = {}) {
               onClick={handleCancelEdit}
               className="btn-secondary"
               disabled={submitting}
+              aria-label="Cancel and close form"
             >
               Cancel
             </button>

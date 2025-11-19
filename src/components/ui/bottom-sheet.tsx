@@ -90,6 +90,7 @@ export function BottomSheet({ isOpen, onClose, title, children }: BottomSheetPro
                 {children}
               </div>
             </div>
+            </FocusTrap>
           </motion.div>
 
           {/* Desktop Modal Fallback */}

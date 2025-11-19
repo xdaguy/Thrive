@@ -85,16 +85,18 @@ function SwipeableRoutineItem({ routine, completion, streak, onEdit, onDelete, o
             <button
               onClick={() => onEdit(routine)}
               className="btn-icon text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+              aria-label={`Edit routine: ${routine.name}`}
               title="Edit"
             >
-              <Edit className="w-4 h-4" />
+              <Edit className="w-4 h-4" aria-hidden="true" />
             </button>
             <button
               onClick={() => onDelete(routine.id!)}
               className="btn-icon text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+              aria-label={`Delete routine: ${routine.name}`}
               title="Delete"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-4 h-4" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -495,8 +497,9 @@ export default function RoutinesPage() {
         <button
           onClick={() => setShowForm(!showForm)}
           className="btn-primary flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base py-2 sm:py-2.5 flex-shrink-0"
+          aria-label="Create new routine"
         >
-          <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+          <Plus className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
           <span className="hidden sm:inline">Create</span>
           <span className="sm:hidden">New</span>
         </button>
@@ -651,11 +654,22 @@ export default function RoutinesPage() {
           </div>
 
           <div className="flex gap-3">
-            <button type="submit" className="btn-primary" disabled={submitting}>
-              {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            <button 
+              type="submit" 
+              className="btn-primary" 
+              disabled={submitting}
+              aria-label={editingId ? 'Save routine changes' : 'Create routine'}
+            >
+              {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />}
               {editingId ? 'Update Routine' : 'Create Routine'}
             </button>
-            <button type="button" onClick={handleCancelEdit} className="btn-secondary" disabled={submitting}>
+            <button 
+              type="button" 
+              onClick={handleCancelEdit} 
+              className="btn-secondary" 
+              disabled={submitting}
+              aria-label="Cancel and close form"
+            >
               Cancel
             </button>
           </div>

@@ -77,16 +77,18 @@ function SwipeableMealItem({ meal, dateFormat, onEdit, onDelete }: SwipeableMeal
           <button
             onClick={() => onEdit(meal)}
             className="btn-icon text-blue-600 dark:text-blue-400"
+            aria-label={`Edit meal from ${formatDate(meal.date, dateFormat)}`}
             title="Edit meal"
           >
-            <Edit className="w-5 h-5" />
+            <Edit className="w-5 h-5" aria-hidden="true" />
           </button>
           <button
             onClick={() => onDelete(meal.id!)}
             className="btn-icon text-red-600 dark:text-red-400"
+            aria-label={`Delete meal from ${formatDate(meal.date, dateFormat)}`}
             title="Delete meal"
           >
-            <Trash2 className="w-5 h-5" />
+            <Trash2 className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -325,8 +327,9 @@ export function MealsTab({ openForm }: MealsTabProps = {}) {
         <button
           onClick={() => setShowForm(!showForm)}
           className="btn-primary flex items-center gap-2"
+          aria-label="Log new meal entry"
         >
-          <Plus className="w-5 h-5" />
+          <Plus className="w-5 h-5" aria-hidden="true" />
           Log Meal
         </button>
       </div>
@@ -416,11 +419,22 @@ export function MealsTab({ openForm }: MealsTabProps = {}) {
           </div>
 
           <div className="flex gap-3">
-            <button type="submit" className="btn-primary" disabled={submitting}>
-              {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            <button 
+              type="submit" 
+              className="btn-primary" 
+              disabled={submitting}
+              aria-label={editingId ? 'Save meal changes' : 'Add meal entry'}
+            >
+              {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />}
               {editingId ? 'Update' : 'Save'}
             </button>
-            <button type="button" onClick={handleCancelEdit} className="btn-secondary" disabled={submitting}>
+            <button 
+              type="button" 
+              onClick={handleCancelEdit} 
+              className="btn-secondary" 
+              disabled={submitting}
+              aria-label="Cancel and close form"
+            >
               Cancel
             </button>
           </div>

@@ -68,16 +68,18 @@ function SwipeableWeightItem({ weight, dateFormat, onEdit, onDelete }: Swipeable
           <button
             onClick={() => onEdit(weight)}
             className="btn-icon text-blue-600 dark:text-blue-400"
+            aria-label={`Edit weight entry from ${formatDate(weight.date, dateFormat)}`}
             title="Edit weight"
           >
-            <Edit className="w-5 h-5" />
+            <Edit className="w-5 h-5" aria-hidden="true" />
           </button>
           <button
             onClick={() => onDelete(weight.id!)}
             className="btn-icon text-red-600 dark:text-red-400"
+            aria-label={`Delete weight entry from ${formatDate(weight.date, dateFormat)}`}
             title="Delete weight"
           >
-            <Trash2 className="w-5 h-5" />
+            <Trash2 className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -342,8 +344,9 @@ export function WeightTab({ openForm }: WeightTabProps = {}) {
         <button
           onClick={() => setShowForm(!showForm)}
           className="btn-primary flex items-center gap-2"
+          aria-label="Log new weight entry"
         >
-          <Plus className="w-5 h-5" />
+          <Plus className="w-5 h-5" aria-hidden="true" />
           Log Weight
         </button>
       </div>
@@ -405,11 +408,22 @@ export function WeightTab({ openForm }: WeightTabProps = {}) {
           </div>
 
           <div className="flex gap-3">
-            <button type="submit" className="btn-primary" disabled={submitting}>
-              {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            <button 
+              type="submit" 
+              className="btn-primary" 
+              disabled={submitting}
+              aria-label={editingId ? 'Save weight changes' : 'Add weight entry'}
+            >
+              {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />}
               {editingId ? 'Update' : 'Save'}
             </button>
-            <button type="button" onClick={handleCancelEdit} className="btn-secondary" disabled={submitting}>
+            <button 
+              type="button" 
+              onClick={handleCancelEdit} 
+              className="btn-secondary" 
+              disabled={submitting}
+              aria-label="Cancel and close form"
+            >
               Cancel
             </button>
           </div>

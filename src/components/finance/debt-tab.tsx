@@ -119,25 +119,28 @@ function SwipeableDebtItem({ debt, currency, dateFormat, onEdit, onDelete, onMar
                 <button
                   onClick={() => onEdit(debt)}
                   className="btn-icon text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                  aria-label={`Edit debt with ${debt.person}`}
                   title="Edit"
                 >
-                  <Edit className="w-4 h-4" />
+                  <Edit className="w-4 h-4" aria-hidden="true" />
                 </button>
                 <button
                   onClick={() => onMarkAsPaid(debt.id!)}
                   className="btn-icon text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
+                  aria-label={`Mark debt with ${debt.person} as paid`}
                   title="Mark as paid"
                 >
-                  <CheckCircle className="w-4 h-4" />
+                  <CheckCircle className="w-4 h-4" aria-hidden="true" />
                 </button>
               </>
             )}
             <button
               onClick={() => onDelete(debt.id!)}
               className="btn-icon text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+              aria-label={`Delete debt with ${debt.person}`}
               title="Delete"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-4 h-4" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -480,8 +483,9 @@ export function DebtTab({ openForm }: DebtTabProps = {}) {
         <button
           onClick={() => setShowForm(!showForm)}
           className="btn-primary flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base py-2 sm:py-2.5 touch-manipulation"
+          aria-label="Add new debt entry"
         >
-          <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+          <Plus className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
           Add Debt
         </button>
       </div>
@@ -596,8 +600,9 @@ export function DebtTab({ openForm }: DebtTabProps = {}) {
               type="submit" 
               className="btn-primary"
               disabled={submitting}
+              aria-label={editingId ? 'Save debt changes' : 'Add debt entry'}
             >
-              {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />}
               {editingId ? 'Update Debt' : 'Save Debt'}
             </button>
             <button 
@@ -605,6 +610,7 @@ export function DebtTab({ openForm }: DebtTabProps = {}) {
               onClick={handleCancelEdit} 
               className="btn-secondary"
               disabled={submitting}
+              aria-label="Cancel and close form"
             >
               Cancel
             </button>
