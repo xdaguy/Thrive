@@ -19,6 +19,7 @@ import { QuickFilters } from '@/components/ui/quick-filters'
 import { SortButton } from '@/components/ui/sort-button'
 import { ExportButton } from '@/components/ui/export-button'
 import { exportIncomeToCSV } from '@/lib/export'
+import { DateRangePicker } from '@/components/ui/date-range-picker'
 
 interface IncomeTabProps {
   openForm?: boolean
@@ -340,9 +341,29 @@ export function IncomeTab({ openForm }: IncomeTabProps = {}) {
           <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Time Period</p>
           <QuickFilters
             value={filters.quickFilter || 'all'}
-            onChange={(value) => updateFilters({ quickFilter: value })}
+            onChange={(value) => {
+              // Clear custom date range when using quick filter
+              updateFilters({ quickFilter: value, dateRange: undefined })
+            }}
           />
         </div>
+
+        {/* Custom Date Range */}
+        <DateRangePicker
+          startDate={filters.dateRange?.start ? filters.dateRange.start.toISOString().split('T')[0] : null}
+          endDate={filters.dateRange?.end ? filters.dateRange.end.toISOString().split('T')[0] : null}
+          onChange={(start, end) => {
+            // Clear quick filter when using custom date range
+            updateFilters({
+              quickFilter: 'all',
+              dateRange: {
+                start: start ? new Date(start) : null,
+                end: end ? new Date(end + 'T23:59:59') : null // Include full day
+              }
+            })
+          }}
+          onClear={() => updateFilters({ dateRange: undefined })}
+        />
 
         {/* Sort Options */}
         <div>

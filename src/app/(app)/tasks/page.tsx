@@ -24,6 +24,7 @@ import { QuickFilters } from '@/components/ui/quick-filters'
 import { SortButton } from '@/components/ui/sort-button'
 import { ExportButton } from '@/components/ui/export-button'
 import { exportTasksToCSV } from '@/lib/export'
+import { DateRangePicker } from '@/components/ui/date-range-picker'
 
 // Swipeable Task Item Wrapper
 interface SwipeableTaskItemProps {
@@ -470,6 +471,21 @@ export default function TasksPage() {
           onChange={setSearchQuery}
           placeholder="Search tasks by title, description, category, or tags..."
         />
+        {/* Custom Date Range (for Due Date filtering) */}
+        <DateRangePicker
+          startDate={filters.dateRange?.start ? filters.dateRange.start.toISOString().split('T')[0] : null}
+          endDate={filters.dateRange?.end ? filters.dateRange.end.toISOString().split('T')[0] : null}
+          onChange={(start, end) => {
+            updateFilters({
+              dateRange: {
+                start: start ? new Date(start) : null,
+                end: end ? new Date(end + 'T23:59:59') : null
+              }
+            })
+          }}
+          onClear={() => updateFilters({ dateRange: undefined })}
+        />
+
         <div>
           <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Sort By</p>
           <div className="flex flex-wrap gap-2">

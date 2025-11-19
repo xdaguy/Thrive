@@ -196,7 +196,7 @@
 
 ---
 
-## 2. **Advanced Reports & Export** 📄 🔄 20% COMPLETE
+## 2. **Advanced Reports & Export** 📄 🔄 40% COMPLETE
 **✅ Completed:**
 - ✅ CSV export for all data types (Income, Expense, Debt, Tasks, Weight, Exercise, Meals, Routines)
 - ✅ Export filtered data (respects current search/filter state)
@@ -206,7 +206,7 @@
 
 **⏳ Remaining:**
 - [ ] PDF reports (monthly/yearly summary)
-- [ ] Custom date range selection for exports
+- [x] Custom date range selection for exports ✅
 - [ ] Printable views
 - [ ] Tax-ready export formats
 - [ ] Scheduled email reports (optional)

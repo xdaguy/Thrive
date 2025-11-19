@@ -19,6 +19,7 @@ import { QuickFilters } from '@/components/ui/quick-filters'
 import { SortButton } from '@/components/ui/sort-button'
 import { ExportButton } from '@/components/ui/export-button'
 import { exportExerciseToCSV } from '@/lib/export'
+import { DateRangePicker } from '@/components/ui/date-range-picker'
 
 interface ExerciseTabProps {
   openForm?: boolean
@@ -305,9 +306,27 @@ export function ExerciseTab({ openForm }: ExerciseTabProps = {}) {
           <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Time Period</p>
           <QuickFilters
             value={filters.quickFilter || 'all'}
-            onChange={(value) => updateFilters({ quickFilter: value })}
+            onChange={(value) => {
+              updateFilters({ quickFilter: value, dateRange: undefined })
+            }}
           />
         </div>
+
+        {/* Custom Date Range */}
+        <DateRangePicker
+          startDate={filters.dateRange?.start ? filters.dateRange.start.toISOString().split('T')[0] : null}
+          endDate={filters.dateRange?.end ? filters.dateRange.end.toISOString().split('T')[0] : null}
+          onChange={(start, end) => {
+            updateFilters({
+              quickFilter: 'all',
+              dateRange: {
+                start: start ? new Date(start) : null,
+                end: end ? new Date(end + 'T23:59:59') : null
+              }
+            })
+          }}
+          onClear={() => updateFilters({ dateRange: undefined })}
+        />
         <div>
           <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Sort By</p>
           <div className="flex flex-wrap gap-2">
